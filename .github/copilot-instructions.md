@@ -19,10 +19,12 @@ npx vitest run src/scoring.test.ts  # Run a single test file
 - CI runs in `.github/workflows/ci.yml` and enforces: `npm run lint`, `npm test`, and `npm run build` on PRs and `main`.
 - Keep warnings at zero (`--max-warnings 0`) so regressions are surfaced early during refactors.
 - Import-boundary parser tests live in `src/validation.imports.test.ts` and should stay green when changing parsing rules.
+- Pure-domain validation tests live in `src/validation.test.ts`.
+- Storage failure-path tests live in `src/storage.test.ts`.
 
 ## Architecture
 
-Single-page React 19 + Vite + TypeScript app. No router, no state management library. All state lives in `App.tsx` as a single `Session` object, auto-saved to `localStorage` via `storage.ts`.
+Single-page React 19 + Vite + TypeScript app. No router, no state management library. All state lives in `App.tsx` as a single `Session` object with local-first persistence through `storage.ts`.
 
 Core data flow:
 - `Session` (in `types.ts`) is the root data model: players, rotas (match schedules), and results (submitted scores).
@@ -30,6 +32,7 @@ Core data flow:
 - `scoring.ts` contains two pure functions: `applyOrReplaceRotaResult` (upserts a scored rota into the session) and `calculateStandings` (derives `StandingRow[]` from session data). Both are tested in `scoring.test.ts`.
 - `validation.ts` validates players, individual court scores, rotas, and full session setup. It also owns import parsing for players, rotas, and full sessions using `unknown` input plus shape checks.
 - JSON import flow in `App.tsx` is: JSON parse -> shape parse (`parseImported*`) -> domain validation -> state update.
+- Session persistence flow in `App.tsx` is: mutate session -> persist via `saveSession` result -> apply state + surface storage warnings.
 
 Key domain concepts:
 - A Rota is one round of matches: 3 courts, each with a left pair and right pair. With 16 players and 3 courts, 4 players sit out per rota.
@@ -40,7 +43,7 @@ Module map:
 - `types.ts`: all shared interfaces, no logic
 - `scoring.ts`: pure score calculation
 - `validation.ts`: import parsing + validation, returns `ValidationResult` (`{ valid, errors }`) and `ParseImportResult<T>` for import boundaries
-- `storage.ts`: thin `localStorage` wrapper (`STORAGE_KEY = "padel-americano-session-v1"`)
+- `storage.ts`: guarded storage API returning explicit load/save/clear results (`STORAGE_KEY = "padel-americano-session-v1"`)
 - `exporters.ts`: CSV export (standings + full results)
 - `rotaProvider.ts`: rota import and validation
 - `sampleData.ts`: 16 sample players + 3 sample rotas (pre-loaded into the JSON import textareas)
@@ -48,6 +51,8 @@ Module map:
 - `components/StandingsTable.tsx`: live standings
 - `components/SessionHistory.tsx`: submitted rota history
 - `validation.imports.test.ts`: trust-boundary tests for malformed and valid import payloads
+- `validation.test.ts`: pure validation tests for players/rotas/session setup
+- `storage.test.ts`: storage robustness tests (corruption, read/write/remove failure paths)
 
 ## Design system
 
