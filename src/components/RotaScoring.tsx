@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Edit3 } from "lucide-react";
+import { Check, ChevronUp, Edit3 } from "lucide-react";
 import { applyOrReplaceRotaResult } from "../scoring";
 import type { CourtScore, RotaResult, Session } from "../types";
 import { combineValidation, validateCourtScore } from "../validation";
@@ -80,6 +80,8 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
             rightScore: 0,
           };
           const courtValidation = validateCourtScore(score, session.pointsPerCourt);
+          const leading: "left" | "right" | null =
+            score.leftScore === score.rightScore ? null : score.leftScore > score.rightScore ? "left" : "right";
           return (
             <article className="court-card" key={court.courtNumber}>
               <div className="court-head">
@@ -87,7 +89,11 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
                 <span>{session.pointsPerCourt} total</span>
               </div>
               <div className="score-row">
-                <div className="pair left-pair">
+                <div
+                  className={`pair left-pair${leading === "left" ? " leading" : ""}`}
+                  aria-label={leading === "left" ? "Leading pair" : undefined}
+                >
+                  {leading === "left" && <ChevronUp size={14} className="leading-glyph" aria-hidden="true" />}
                   <span>{playerName(court.leftPair.player1Id)}</span>
                   <span>{playerName(court.leftPair.player2Id)}</span>
                   <ScoreSpinner
@@ -98,7 +104,11 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
                   />
                 </div>
                 <div className="versus">vs</div>
-                <div className="pair right-pair">
+                <div
+                  className={`pair right-pair${leading === "right" ? " leading" : ""}`}
+                  aria-label={leading === "right" ? "Leading pair" : undefined}
+                >
+                  {leading === "right" && <ChevronUp size={14} className="leading-glyph" aria-hidden="true" />}
                   <span>{playerName(court.rightPair.player1Id)}</span>
                   <span>{playerName(court.rightPair.player2Id)}</span>
                   <ScoreSpinner
