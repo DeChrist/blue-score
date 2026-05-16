@@ -48,6 +48,21 @@ This section captures current architecture decisions that guide future changes.
 - Lint warnings fail the build (`--max-warnings 0`).
 
 6. **ADR-006: Step 2 import trust boundary (implemented)**
+- Import parsing (`parseImported*` functions) in `validation.ts` defends against malformed external data.
+- Boundary tests live in `validation.imports.test.ts`.
+
+7. **ADR-007: Do not use React Testing Library (RTL) at this stage**
+
+_Rationale:_ The codebase is young and single-file in core logic. Pure-function tests (scoring, validation) deliver high coverage and fast feedback without the overhead of DOM mocking and component test setup.
+
+_When RTL becomes valuable:_ Add RTL when we encounter regression patterns that pure-function tests cannot catch:
+- **State synchronization bugs** (e.g., when props change and local state gets out of sync with no logic to re-sync). Example: [May 2026 regression](https://github.com/searls/blue-score/issues/X) where score UI failed to initialize after rotas were imported because state was captured before data arrived.
+  - *Test case:* Render RotaScoring with no rotas, then async-load rotas, assert scores initialize with balanced defaults.
+- **Multi-component orchestration** (e.g., if App.tsx logic becomes too complex to test via session mutations alone).
+- **Touch/wheel interaction edge cases** in ScoreSpinner (currently manual testing; RTL would automate).
+- **Accessibility regressions** in keyboard navigation or ARIA labels.
+
+_Cost:* Adding RTL requires `@testing-library/react`, test utilities, and time investment in DOM debugging. Pure functions remain the first line of defense.
 - Import paths no longer cast JSON directly with generic `parseJson<T>`.
 - Import flow is: JSON parse -> shape parse (`parseImportedPlayers`, `parseImportedRotas`, `parseImportedSession`) -> domain validation -> state update.
 - Parser boundary behavior is covered by `src/validation.imports.test.ts`.

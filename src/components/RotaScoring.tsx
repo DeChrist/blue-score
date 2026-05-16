@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronUp, Edit3 } from "lucide-react";
-import { applyOrReplaceRotaResult } from "../scoring";
+import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
 import type { CourtScore, RotaResult, Session } from "../types";
 import { combineValidation, validateCourtScore } from "../validation";
 
@@ -15,9 +15,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
   const existingResult = session.results.find((result) => result.rotaNumber === rota?.rotaNumber);
   const playerName = (id: string) => session.players.find((player) => player.id === id)?.displayName ?? id;
   const [scores, setScores] = useState<CourtScore[]>(() =>
-    existingResult?.scores ??
-    rota?.courts.map((court) => ({ courtNumber: court.courtNumber, leftScore: 12, rightScore: 12 })) ??
-    [],
+    existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []),
   );
 
   if (!rota) {
@@ -33,15 +31,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
   const isSubmitted = Boolean(existingResult);
 
   function changeScore(courtNumber: number, side: "leftScore" | "rightScore", value: number) {
-    const clamped = Math.max(0, Math.min(session.pointsPerCourt, value));
-    const other = side === "leftScore" ? "rightScore" : "leftScore";
-    setScores((current) =>
-      current.map((score) =>
-        score.courtNumber === courtNumber
-          ? { ...score, [side]: clamped, [other]: session.pointsPerCourt - clamped }
-          : score,
-      ),
-    );
+    setScores((current) => updateCourtScore(current, courtNumber, side, value, session.pointsPerCourt));
   }
 
   function submit() {
