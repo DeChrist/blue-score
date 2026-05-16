@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, ChevronUp, Edit3 } from "lucide-react";
 import { applyOrReplaceRotaResult } from "../scoring";
 import type { CourtScore, RotaResult, Session } from "../types";
