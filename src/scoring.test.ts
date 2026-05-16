@@ -49,6 +49,22 @@ const baseSession: Session = {
   ],
 };
 
+const twoRotaSession: Session = {
+  ...baseSession,
+  rotas: [
+    baseSession.rotas[0],
+    {
+      rotaNumber: 2,
+      courts: [
+        { courtNumber: 1, leftPair: { player1Id: "p13", player2Id: "p14" }, rightPair: { player1Id: "p15", player2Id: "p16" } },
+        { courtNumber: 2, leftPair: { player1Id: "p1", player2Id: "p3" }, rightPair: { player1Id: "p5", player2Id: "p7" } },
+        { courtNumber: 3, leftPair: { player1Id: "p2", player2Id: "p4" }, rightPair: { player1Id: "p6", player2Id: "p8" } },
+      ],
+      sitOutPlayerIds: ["p9", "p10", "p11", "p12"],
+    },
+  ],
+};
+
 describe("scoring", () => {
   it("awards a 15-9 court score to both players on each side", () => {
     // Apply one full rota result with three courts.
@@ -116,6 +132,102 @@ describe("scoring", () => {
     expect(calculateStandings(edited).find((row) => row.playerId === "p1")?.totalPoints).toBe(10);
     // Only one stored result should exist for rota 1.
     expect(edited.results).toHaveLength(1);
+  });
+
+  it("advances current rota to the first unsubmitted rota", () => {
+    const session = applyOrReplaceRotaResult(twoRotaSession, {
+      rotaNumber: 1,
+      submittedAt: "2026-01-01T00:01:00.000Z",
+      scores: [
+        { courtNumber: 1, leftScore: 15, rightScore: 9 },
+        { courtNumber: 2, leftScore: 12, rightScore: 12 },
+        { courtNumber: 3, leftScore: 24, rightScore: 0 },
+      ],
+    });
+
+    expect(session.currentRotaNumber).toBe(2);
+  });
+
+  it("keeps current rota as submitted rota when all rotas are submitted", () => {
+    const afterSecond = applyOrReplaceRotaResult(twoRotaSession, {
+      rotaNumber: 2,
+      submittedAt: "2026-01-01T00:01:00.000Z",
+      scores: [
+        { courtNumber: 1, leftScore: 12, rightScore: 12 },
+        { courtNumber: 2, leftScore: 14, rightScore: 10 },
+        { courtNumber: 3, leftScore: 8, rightScore: 16 },
+      ],
+    });
+
+    expect(afterSecond.currentRotaNumber).toBe(1);
+
+    const afterAllSubmitted = applyOrReplaceRotaResult(afterSecond, {
+      rotaNumber: 1,
+      submittedAt: "2026-01-01T00:02:00.000Z",
+      scores: [
+        { courtNumber: 1, leftScore: 15, rightScore: 9 },
+        { courtNumber: 2, leftScore: 12, rightScore: 12 },
+        { courtNumber: 3, leftScore: 24, rightScore: 0 },
+      ],
+    });
+
+    expect(afterAllSubmitted.currentRotaNumber).toBe(1);
+  });
+
+  it("ignores result rows that reference a missing rota", () => {
+    const sessionWithUnknownResult: Session = {
+      ...baseSession,
+      results: [
+        {
+          rotaNumber: 99,
+          submittedAt: "2026-01-01T00:05:00.000Z",
+          scores: [{ courtNumber: 1, leftScore: 24, rightScore: 0 }],
+        },
+      ],
+    };
+
+    const standings = calculateStandings(sessionWithUnknownResult);
+    expect(standings.find((row) => row.playerId === "p1")?.totalPoints).toBe(0);
+    expect(standings.find((row) => row.playerId === "p13")?.rotasSatOut).toBe(0);
+  });
+
+  it("assigns shared rank for tied totals and computes averages from played rotas", () => {
+    const tieSession: Session = {
+      id: "tie-session",
+      name: "Tie Test",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      pointsPerCourt: 24,
+      players: [
+        { id: "a", displayName: "Alex" },
+        { id: "b", displayName: "Blair" },
+        { id: "c", displayName: "Casey" },
+        { id: "d", displayName: "Drew" },
+        { id: "e", displayName: "Evan" },
+        { id: "f", displayName: "Fin" },
+      ],
+      rotas: [
+        {
+          rotaNumber: 1,
+          courts: [{ courtNumber: 1, leftPair: { player1Id: "a", player2Id: "b" }, rightPair: { player1Id: "c", player2Id: "d" } }],
+          sitOutPlayerIds: ["e", "f"],
+        },
+      ],
+      results: [
+        {
+          rotaNumber: 1,
+          submittedAt: "2026-01-01T00:01:00.000Z",
+          scores: [{ courtNumber: 1, leftScore: 14, rightScore: 10 }],
+        },
+      ],
+      currentRotaNumber: 1,
+    };
+
+    const standings = calculateStandings(tieSession);
+    expect(standings.find((row) => row.playerId === "a")?.rank).toBe(1);
+    expect(standings.find((row) => row.playerId === "b")?.rank).toBe(1);
+    expect(standings.find((row) => row.playerId === "c")?.rank).toBe(3);
+    expect(standings.find((row) => row.playerId === "e")?.averagePointsWhenPlaying).toBe(0);
+    expect(standings.find((row) => row.playerId === "a")?.averagePointsWhenPlaying).toBe(14);
   });
 });
 
