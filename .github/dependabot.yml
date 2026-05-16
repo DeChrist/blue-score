@@ -1,0 +1,6 @@
+# See https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference
+updates:
+  - package-ecosystem: "npm"
+    directory: "/" 
+    schedule:
+      interval: "weekly"
