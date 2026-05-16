@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyOrReplaceRotaResult, calculateStandings, initializeCourtScores, updateCourtScore } from "./scoring";
-import type { Session } from "./types";
+import type { CourtScore, Session } from "./types";
 import { validateCourtScore, validateRota } from "./validation";
 
 // Fixture map for this file:
