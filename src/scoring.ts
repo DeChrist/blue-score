@@ -1,7 +1,52 @@
-import type { RotaResult, Session, StandingRow } from "./types";
+import type { CourtScore, RotaResult, Session, StandingRow } from "./types";
 
 function playersForPair(pair: { player1Id: string; player2Id: string }): string[] {
   return [pair.player1Id, pair.player2Id];
+}
+
+/**
+ * Initialize court scores for a rota with balanced defaults based on pointsPerCourt.
+ * Each court starts at floor(pointsPerCourt / 2) for left, remainder for right.
+ */
+export function initializeCourtScores(
+  courts: { courtNumber: number }[],
+  pointsPerCourt: number,
+): CourtScore[] {
+  const leftStart = Math.floor(pointsPerCourt / 2);
+  return courts.map((court) => ({
+    courtNumber: court.courtNumber,
+    leftScore: leftStart,
+    rightScore: pointsPerCourt - leftStart,
+  }));
+}
+
+/**
+ * Update a court score in an array, creating the entry if missing.
+ * Ensures leftScore + rightScore = pointsPerCourt by mirroring the opposite side.
+ * Returns a new sorted array (by courtNumber).
+ */
+export function updateCourtScore(
+  scores: CourtScore[],
+  courtNumber: number,
+  side: "leftScore" | "rightScore",
+  value: number,
+  pointsPerCourt: number,
+): CourtScore[] {
+  const clamped = Math.max(0, Math.min(pointsPerCourt, value));
+  const rightScore = side === "rightScore" ? clamped : pointsPerCourt - clamped;
+  const leftScore = side === "leftScore" ? clamped : pointsPerCourt - clamped;
+
+  const index = scores.findIndex((score) => score.courtNumber === courtNumber);
+  if (index === -1) {
+    return [
+      ...scores,
+      { courtNumber, leftScore, rightScore },
+    ].sort((a, b) => a.courtNumber - b.courtNumber);
+  }
+
+  return scores.map((score) =>
+    score.courtNumber === courtNumber ? { ...score, leftScore, rightScore } : score,
+  );
 }
 
 export function applyOrReplaceRotaResult(session: Session, result: RotaResult): Session {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyOrReplaceRotaResult, calculateStandings } from "./scoring";
+import { applyOrReplaceRotaResult, calculateStandings, initializeCourtScores, updateCourtScore } from "./scoring";
 import type { Session } from "./types";
 import { validateCourtScore, validateRota } from "./validation";
 
@@ -228,6 +228,51 @@ describe("scoring", () => {
     expect(standings.find((row) => row.playerId === "c")?.rank).toBe(3);
     expect(standings.find((row) => row.playerId === "e")?.averagePointsWhenPlaying).toBe(0);
     expect(standings.find((row) => row.playerId === "a")?.averagePointsWhenPlaying).toBe(14);
+  });
+
+  it("initializes court scores balanced based on pointsPerCourt", () => {
+    const courts = [{ courtNumber: 1 }, { courtNumber: 2 }, { courtNumber: 3 }];
+    const scores = initializeCourtScores(courts, 24);
+    expect(scores).toEqual([
+      { courtNumber: 1, leftScore: 12, rightScore: 12 },
+      { courtNumber: 2, leftScore: 12, rightScore: 12 },
+      { courtNumber: 3, leftScore: 12, rightScore: 12 },
+    ]);
+    scores.forEach((score) => {
+      expect(score.leftScore + score.rightScore).toBe(24);
+    });
+  });
+
+  it("initializes court scores with odd pointsPerCourt (e.g., 25 → 12-13)", () => {
+    const courts = [{ courtNumber: 1 }];
+    const scores = initializeCourtScores(courts, 25);
+    expect(scores[0]).toEqual({ courtNumber: 1, leftScore: 12, rightScore: 13 });
+    expect(scores[0].leftScore + scores[0].rightScore).toBe(25);
+  });
+
+  it("updates a court score and mirrors the opposite side", () => {
+    const initial: CourtScore[] = [{ courtNumber: 1, leftScore: 12, rightScore: 12 }];
+    // Update left side to 15 → right should become 9 (total 24)
+    const updated = updateCourtScore(initial, 1, "leftScore", 15, 24);
+    expect(updated[0]).toEqual({ courtNumber: 1, leftScore: 15, rightScore: 9 });
+  });
+
+  it("creates a missing court score when updating", () => {
+    const initial: CourtScore[] = [{ courtNumber: 1, leftScore: 12, rightScore: 12 }];
+    // Update court 2 which doesn't exist yet → should create it
+    const updated = updateCourtScore(initial, 2, "rightScore", 8, 24);
+    expect(updated).toHaveLength(2);
+    expect(updated.find((s) => s.courtNumber === 2)).toEqual({ courtNumber: 2, leftScore: 16, rightScore: 8 });
+  });
+
+  it("clamps score values to [0, pointsPerCourt]", () => {
+    const initial: CourtScore[] = [];
+    // Try to set left to 100 (exceeds 24) → should clamp to 24
+    const updated = updateCourtScore(initial, 1, "leftScore", 100, 24);
+    expect(updated[0]).toEqual({ courtNumber: 1, leftScore: 24, rightScore: 0 });
+    // Try to set right to -5 → should clamp to 0
+    const clamped = updateCourtScore(updated, 1, "rightScore", -5, 24);
+    expect(clamped[0]).toEqual({ courtNumber: 1, leftScore: 24, rightScore: 0 });
   });
 });
 

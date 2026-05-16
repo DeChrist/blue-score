@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronUp, Edit3 } from "lucide-react";
-import { applyOrReplaceRotaResult } from "../scoring";
+import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
 import type { CourtScore, RotaResult, Session } from "../types";
 import { combineValidation, validateCourtScore } from "../validation";
 
@@ -10,22 +10,12 @@ interface Props {
   onSessionChange: (session: Session) => void;
 }
 
-function initialScoresForRota(session: Session, rota: Session["rotas"][number] | undefined): CourtScore[] {
-  if (!rota) return [];
-  const leftStart = Math.floor(session.pointsPerCourt / 2);
-  return rota.courts.map((court) => ({
-    courtNumber: court.courtNumber,
-    leftScore: leftStart,
-    rightScore: session.pointsPerCourt - leftStart,
-  }));
-}
-
 export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Props) {
   const rota = session.rotas.find((item) => item.rotaNumber === selectedRotaNumber) ?? session.rotas[0];
   const existingResult = session.results.find((result) => result.rotaNumber === rota?.rotaNumber);
   const playerName = (id: string) => session.players.find((player) => player.id === id)?.displayName ?? id;
   const [scores, setScores] = useState<CourtScore[]>(() =>
-    existingResult?.scores ?? initialScoresForRota(session, rota),
+    existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []),
   );
 
   if (!rota) {
@@ -41,24 +31,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
   const isSubmitted = Boolean(existingResult);
 
   function changeScore(courtNumber: number, side: "leftScore" | "rightScore", value: number) {
-    const clamped = Math.max(0, Math.min(session.pointsPerCourt, value));
-    const rightScore = side === "rightScore" ? clamped : session.pointsPerCourt - clamped;
-    const leftScore = side === "leftScore" ? clamped : session.pointsPerCourt - clamped;
-    setScores((current) => {
-      const index = current.findIndex((score) => score.courtNumber === courtNumber);
-      if (index === -1) {
-        return [
-          ...current,
-          { courtNumber, leftScore, rightScore },
-        ].sort((a, b) => a.courtNumber - b.courtNumber);
-      }
-
-      return current.map((score) =>
-        score.courtNumber === courtNumber
-          ? { ...score, leftScore, rightScore }
-          : score,
-      );
-    });
+    setScores((current) => updateCourtScore(current, courtNumber, side, value, session.pointsPerCourt));
   }
 
   function submit() {
