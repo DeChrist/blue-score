@@ -61,6 +61,7 @@ export default function App() {
     if (warning) setNotice(warning);
   }
 
+  // Most callers only need side effects; a few branch on saveResult.ok for success messaging.
   function commitSession(next: Session) {
     const saveResult = saveSession(next);
     setStorageWarning(saveResult.warning);

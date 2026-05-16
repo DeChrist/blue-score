@@ -58,6 +58,14 @@ const validSession: Session = {
 };
 
 describe("storage", () => {
+  it("returns null session with no warning on cold start", () => {
+    const mock = createMockStorage();
+    const result = loadSession({ storage: mock.storage });
+
+    expect(result.session).toBeNull();
+    expect(result.warning).toBeUndefined();
+  });
+
   it("loads a valid stored session", () => {
     const mock = createMockStorage({ [STORAGE_KEY]: JSON.stringify(validSession) });
     const result = loadSession({ storage: mock.storage });
