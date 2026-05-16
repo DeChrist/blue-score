@@ -42,19 +42,20 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
 
   function changeScore(courtNumber: number, side: "leftScore" | "rightScore", value: number) {
     const clamped = Math.max(0, Math.min(session.pointsPerCourt, value));
-    const other = side === "leftScore" ? "rightScore" : "leftScore";
+    const rightScore = side === "rightScore" ? clamped : session.pointsPerCourt - clamped;
+    const leftScore = side === "leftScore" ? clamped : session.pointsPerCourt - clamped;
     setScores((current) => {
       const index = current.findIndex((score) => score.courtNumber === courtNumber);
       if (index === -1) {
         return [
           ...current,
-          { courtNumber, [side]: clamped, [other]: session.pointsPerCourt - clamped } as CourtScore,
+          { courtNumber, leftScore, rightScore },
         ].sort((a, b) => a.courtNumber - b.courtNumber);
       }
 
       return current.map((score) =>
         score.courtNumber === courtNumber
-          ? { ...score, [side]: clamped, [other]: session.pointsPerCourt - clamped }
+          ? { ...score, leftScore, rightScore }
           : score,
       );
     });
