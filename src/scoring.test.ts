@@ -49,6 +49,22 @@ const baseSession: Session = {
   ],
 };
 
+const twoRotaSession: Session = {
+  ...baseSession,
+  rotas: [
+    baseSession.rotas[0],
+    {
+      rotaNumber: 2,
+      courts: [
+        { courtNumber: 1, leftPair: { player1Id: "p13", player2Id: "p14" }, rightPair: { player1Id: "p15", player2Id: "p16" } },
+        { courtNumber: 2, leftPair: { player1Id: "p1", player2Id: "p3" }, rightPair: { player1Id: "p5", player2Id: "p7" } },
+        { courtNumber: 3, leftPair: { player1Id: "p2", player2Id: "p4" }, rightPair: { player1Id: "p6", player2Id: "p8" } },
+      ],
+      sitOutPlayerIds: ["p9", "p10", "p11", "p12"],
+    },
+  ],
+};
+
 describe("scoring", () => {
   it("awards a 15-9 court score to both players on each side", () => {
     // Apply one full rota result with three courts.
@@ -119,22 +135,6 @@ describe("scoring", () => {
   });
 
   it("advances current rota to the first unsubmitted rota", () => {
-    const twoRotaSession: Session = {
-      ...baseSession,
-      rotas: [
-        baseSession.rotas[0],
-        {
-          rotaNumber: 2,
-          courts: [
-            { courtNumber: 1, leftPair: { player1Id: "p13", player2Id: "p14" }, rightPair: { player1Id: "p15", player2Id: "p16" } },
-            { courtNumber: 2, leftPair: { player1Id: "p1", player2Id: "p3" }, rightPair: { player1Id: "p5", player2Id: "p7" } },
-            { courtNumber: 3, leftPair: { player1Id: "p2", player2Id: "p4" }, rightPair: { player1Id: "p6", player2Id: "p8" } },
-          ],
-          sitOutPlayerIds: ["p9", "p10", "p11", "p12"],
-        },
-      ],
-    };
-
     const session = applyOrReplaceRotaResult(twoRotaSession, {
       rotaNumber: 1,
       submittedAt: "2026-01-01T00:01:00.000Z",
@@ -149,22 +149,6 @@ describe("scoring", () => {
   });
 
   it("keeps current rota as submitted rota when all rotas are submitted", () => {
-    const twoRotaSession: Session = {
-      ...baseSession,
-      rotas: [
-        baseSession.rotas[0],
-        {
-          rotaNumber: 2,
-          courts: [
-            { courtNumber: 1, leftPair: { player1Id: "p13", player2Id: "p14" }, rightPair: { player1Id: "p15", player2Id: "p16" } },
-            { courtNumber: 2, leftPair: { player1Id: "p1", player2Id: "p3" }, rightPair: { player1Id: "p5", player2Id: "p7" } },
-            { courtNumber: 3, leftPair: { player1Id: "p2", player2Id: "p4" }, rightPair: { player1Id: "p6", player2Id: "p8" } },
-          ],
-          sitOutPlayerIds: ["p9", "p10", "p11", "p12"],
-        },
-      ],
-    };
-
     const afterSecond = applyOrReplaceRotaResult(twoRotaSession, {
       rotaNumber: 2,
       submittedAt: "2026-01-01T00:01:00.000Z",
