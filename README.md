@@ -19,6 +19,43 @@ The app stores the full session in `localStorage` under `padel-americano-session
 
 Rota generation is intentionally not implemented. `StaticRotaProvider` imports precomputed rota JSON, while `PlaceholderGeneratedRotaProvider` defines the future provider boundary.
 
+## Architecture Decisions (ADR Snapshot)
+
+This section captures current architecture decisions that guide future changes.
+
+1. **ADR-001: Keep React + Vite SPA architecture**
+- Single-page, browser-only app.
+- No router and no external state-management library at this stage.
+- `App.tsx` remains the root state owner for `Session`.
+
+2. **ADR-002: Keep domain logic pure and isolated**
+- Scoring logic stays in `src/scoring.ts` as pure functions.
+- Validation and import parsing live in `src/validation.ts`.
+- UI components consume these boundaries instead of duplicating rules.
+
+3. **ADR-003: Local-first persistence**
+- Session data is stored in browser `localStorage` only.
+- Persistence key remains `padel-americano-session-v1`.
+- No network sync or tracking by default.
+
+4. **ADR-004: Preserve design-system-driven CSS**
+- Keep styling in `src/styles.css` guided by `design-system/MASTER.md`.
+- Do not adopt Tailwind at this stage.
+
+5. **ADR-005: Step 1 quality gates (implemented)**
+- ESLint v9 flat config is active via `eslint.config.js`.
+- CI enforces `npm run lint`, `npm test`, and `npm run build` on PRs and `main`.
+- Lint warnings fail the build (`--max-warnings 0`).
+
+6. **ADR-006: Step 2 import trust boundary (implemented)**
+- Import paths no longer cast JSON directly with generic `parseJson<T>`.
+- Import flow is: JSON parse -> shape parse (`parseImportedPlayers`, `parseImportedRotas`, `parseImportedSession`) -> domain validation -> state update.
+- Parser boundary behavior is covered by `src/validation.imports.test.ts`.
+
+7. **ADR-007: Test strategy is incremental, not over-scaffolded**
+- Tests remain close to current needs and grow as features demand.
+- Current high-value boundaries are covered first (scoring and import parsing).
+
 ## Mobile Testing From Local Dev
 
 Use this section to test quickly on a real iPhone without CI/CD.

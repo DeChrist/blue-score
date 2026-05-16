@@ -8,8 +8,8 @@ import { StaticRotaProvider } from "./rotaProvider";
 import { calculateStandings } from "./scoring";
 import { samplePlayers, sampleRotas } from "./sampleData";
 import { clearSession, loadSession, saveSession } from "./storage";
-import type { Player, Rota, Session } from "./types";
-import { validateSessionSetup } from "./validation";
+import type { Player, Session } from "./types";
+import { parseImportedPlayers, parseImportedRotas, parseImportedSession, validatePlayers, validateSessionSetup } from "./validation";
 
 const COURTS = 3;
 
@@ -36,8 +36,13 @@ function downloadText(filename: string, text: string, type = "text/plain") {
   URL.revokeObjectURL(url);
 }
 
-function parseJson<T>(text: string): T {
-  return JSON.parse(text) as T;
+function parseJsonInput(text: string, label: string): { value: unknown | null; error: string | null } {
+  try {
+    return { value: JSON.parse(text), error: null };
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Unknown JSON parsing error.";
+    return { value: null, error: `Could not parse ${label} JSON: ${detail}` };
+  }
 }
 
 export default function App() {
@@ -70,18 +75,44 @@ export default function App() {
 
   function loadPlayers() {
     if (!session) return;
-    try {
-      setSession({ ...session, players: parseJson<Player[]>(playerJson), results: [] });
-      setSetupErrors([]);
-    } catch (error) {
-      setSetupErrors([error instanceof Error ? error.message : "Could not parse players JSON."]);
+    const parsedJson = parseJsonInput(playerJson, "players");
+    if (parsedJson.error) {
+      setSetupErrors([parsedJson.error]);
+      return;
     }
+
+    const importedPlayers = parseImportedPlayers(parsedJson.value);
+    if (!importedPlayers.value) {
+      setSetupErrors(importedPlayers.errors);
+      return;
+    }
+
+    const playerValidation = validatePlayers(importedPlayers.value);
+    if (!playerValidation.valid) {
+      setSetupErrors(playerValidation.errors);
+      return;
+    }
+
+    setSession({ ...session, players: importedPlayers.value, results: [] });
+    setSetupErrors([]);
   }
 
   async function loadRotas() {
     if (!session) return;
+    const parsedJson = parseJsonInput(rotaJson, "rotas");
+    if (parsedJson.error) {
+      setSetupErrors([parsedJson.error]);
+      return;
+    }
+
+    const importedRotas = parseImportedRotas(parsedJson.value);
+    if (!importedRotas.value) {
+      setSetupErrors(importedRotas.errors);
+      return;
+    }
+
     try {
-      const provider = new StaticRotaProvider(parseJson<Rota[]>(rotaJson));
+      const provider = new StaticRotaProvider(importedRotas.value);
       const rotas = await provider.getRotas({ players: session.players, courts: COURTS, pointsPerCourt: session.pointsPerCourt });
       setSession({ ...session, rotas, results: [], currentRotaNumber: rotas[0]?.rotaNumber ?? 1 });
       setSelectedRotaNumber(rotas[0]?.rotaNumber ?? 1);
@@ -102,20 +133,28 @@ export default function App() {
   }
 
   function importFullSession() {
-    try {
-      const imported = parseJson<Session>(sessionJson);
-      const validation = validateSessionSetup(imported, COURTS);
-      if (!validation.valid) {
-        setSetupErrors(validation.errors);
-        return;
-      }
-      setSession(imported);
-      setSelectedRotaNumber(imported.currentRotaNumber);
-      setSetupErrors([]);
-      setNotice("Session imported.");
-    } catch (error) {
-      setSetupErrors([error instanceof Error ? error.message : "Could not import session JSON."]);
+    const parsedJson = parseJsonInput(sessionJson, "session");
+    if (parsedJson.error) {
+      setSetupErrors([parsedJson.error]);
+      return;
     }
+
+    const importedSession = parseImportedSession(parsedJson.value);
+    if (!importedSession.value) {
+      setSetupErrors(importedSession.errors);
+      return;
+    }
+
+    const validation = validateSessionSetup(importedSession.value, COURTS);
+    if (!validation.valid) {
+      setSetupErrors(validation.errors);
+      return;
+    }
+
+    setSession(importedSession.value);
+    setSelectedRotaNumber(importedSession.value.currentRotaNumber);
+    setSetupErrors([]);
+    setNotice("Session imported.");
   }
 
   function addPlayer() {
