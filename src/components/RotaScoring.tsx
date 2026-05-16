@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Edit3 } from "lucide-react";
 import { applyOrReplaceRotaResult } from "../scoring";
 import type { CourtScore, RotaResult, Session } from "../types";
@@ -40,10 +40,15 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
   const validation = combineValidation(scores.map((score) => validateCourtScore(score, session.pointsPerCourt)));
   const isSubmitted = Boolean(existingResult);
 
-  function updateScore(courtNumber: number, side: "leftScore" | "rightScore", value: string) {
-    const parsed = value === "" ? Number.NaN : Number(value);
+  function changeScore(courtNumber: number, side: "leftScore" | "rightScore", value: number) {
+    const clamped = Math.max(0, Math.min(session.pointsPerCourt, value));
+    const other = side === "leftScore" ? "rightScore" : "leftScore";
     setScores((current) =>
-      current.map((score) => (score.courtNumber === courtNumber ? { ...score, [side]: parsed } : score)),
+      current.map((score) =>
+        score.courtNumber === courtNumber
+          ? { ...score, [side]: clamped, [other]: session.pointsPerCourt - clamped }
+          : score,
+      ),
     );
   }
 
@@ -85,26 +90,22 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
                 <div className="pair left-pair">
                   <span>{playerName(court.leftPair.player1Id)}</span>
                   <span>{playerName(court.leftPair.player2Id)}</span>
-                  <input
-                    aria-label={`Court ${court.courtNumber} left score`}
-                    inputMode="numeric"
-                    type="number"
-                    min="0"
-                    value={Number.isNaN(score.leftScore) ? "" : score.leftScore}
-                    onChange={(event) => updateScore(court.courtNumber, "leftScore", event.target.value)}
+                  <ScoreSpinner
+                    label={`Court ${court.courtNumber} left score`}
+                    value={score.leftScore}
+                    max={session.pointsPerCourt}
+                    onChange={(v) => changeScore(court.courtNumber, "leftScore", v)}
                   />
                 </div>
                 <div className="versus">vs</div>
                 <div className="pair right-pair">
                   <span>{playerName(court.rightPair.player1Id)}</span>
                   <span>{playerName(court.rightPair.player2Id)}</span>
-                  <input
-                    aria-label={`Court ${court.courtNumber} right score`}
-                    inputMode="numeric"
-                    type="number"
-                    min="0"
-                    value={Number.isNaN(score.rightScore) ? "" : score.rightScore}
-                    onChange={(event) => updateScore(court.courtNumber, "rightScore", event.target.value)}
+                  <ScoreSpinner
+                    label={`Court ${court.courtNumber} right score`}
+                    value={score.rightScore}
+                    max={session.pointsPerCourt}
+                    onChange={(v) => changeScore(court.courtNumber, "rightScore", v)}
                   />
                 </div>
               </div>
@@ -125,5 +126,87 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
       </button>
       {!validation.valid && <p className="error prominent">{validation.errors[0]}</p>}
     </section>
+  );
+}
+
+interface ScoreSpinnerProps {
+  value: number;
+  max: number;
+  label: string;
+  onChange: (value: number) => void;
+}
+
+function ScoreSpinner({ value, max, label, onChange }: ScoreSpinnerProps) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  // Non-passive wheel listener so we can prevent page scroll while adjusting
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    function onWheel(e: WheelEvent) {
+      e.preventDefault();
+      onChange(Math.max(0, Math.min(max, value + (e.deltaY < 0 ? 1 : -1))));
+    }
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [value, max, onChange]);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartY.current = e.touches[0].clientY;
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    if (touchStartY.current === null) return;
+    const delta = touchStartY.current - e.touches[0].clientY;
+    if (Math.abs(delta) >= 18) {
+      onChange(Math.max(0, Math.min(max, value + (delta > 0 ? 1 : -1))));
+      touchStartY.current = e.touches[0].clientY;
+    }
+  }
+
+  function handleTouchEnd() {
+    touchStartY.current = null;
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const parsed = e.target.value === "" ? 0 : Number(e.target.value);
+    if (!Number.isNaN(parsed)) onChange(Math.max(0, Math.min(max, parsed)));
+  }
+
+  return (
+    <div
+      className="score-spinner"
+      ref={wrapRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <button
+        type="button"
+        className="stepper-btn"
+        aria-label={`Decrease ${label}`}
+        onClick={() => onChange(Math.max(0, value - 1))}
+      >
+        −
+      </button>
+      <input
+        aria-label={label}
+        inputMode="numeric"
+        type="number"
+        min="0"
+        max={max}
+        value={Number.isNaN(value) ? "" : value}
+        onChange={handleInputChange}
+      />
+      <button
+        type="button"
+        className="stepper-btn"
+        aria-label={`Increase ${label}`}
+        onClick={() => onChange(Math.min(max, value + 1))}
+      >
+        +
+      </button>
+    </div>
   );
 }
