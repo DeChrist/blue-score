@@ -231,6 +231,8 @@ export default function App() {
   const fullSessionJson = JSON.stringify(session, null, 2);
   const standingsCsv = exportStandingsCsv(standings);
   const resultsCsv = exportResultsCsv(session);
+  const selectedRota = session.rotas.find((rota) => rota.rotaNumber === selectedRotaNumber);
+  const selectedRotaKey = `${selectedRotaNumber}-${selectedRota?.courts.length ?? 0}-${session.pointsPerCourt}`;
 
   return (
     <main className="app-shell">
@@ -329,7 +331,7 @@ export default function App() {
 
         <section className="main-stack">
           <RotaScoring
-            key={`${selectedRotaNumber}-${session.results.find((result) => result.rotaNumber === selectedRotaNumber)?.submittedAt ?? "open"}`}
+            key={`${selectedRotaKey}-${session.results.find((result) => result.rotaNumber === selectedRotaNumber)?.submittedAt ?? "open"}`}
             session={session}
             selectedRotaNumber={selectedRotaNumber}
             onSessionChange={updateSession}
