@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Clipboard, Download, FileDown, Plus, RotateCcw, Save, Trash2, Upload } from "lucide-react";
 import { SessionHistory } from "./components/SessionHistory";
 import { StandingsTable } from "./components/StandingsTable";
@@ -46,25 +46,30 @@ function parseJsonInput(text: string, label: string): { value: unknown | null; e
 }
 
 export default function App() {
-  const [storedAtLoad] = useState<Session | null>(() => loadSession());
-  const [session, setSession] = useState<Session | null>(storedAtLoad ? null : newSession());
+  const [storedAtLoad] = useState(() => loadSession());
+  const [session, setSession] = useState<Session | null>(storedAtLoad.session ? null : newSession());
   const [setupErrors, setSetupErrors] = useState<string[]>([]);
   const [playerJson, setPlayerJson] = useState(JSON.stringify(samplePlayers, null, 2));
   const [rotaJson, setRotaJson] = useState(JSON.stringify(sampleRotas, null, 2));
   const [sessionJson, setSessionJson] = useState("");
   const [selectedRotaNumber, setSelectedRotaNumber] = useState(1);
-  const [notice, setNotice] = useState("");
-
-  useEffect(() => {
-    if (session) {
-      saveSession(session);
-    }
-  }, [session]);
+  const [notice, setNotice] = useState(storedAtLoad.warning ?? "");
 
   const standings = useMemo(() => (session ? calculateStandings(session) : []), [session]);
 
-  function updateSession(next: Session) {
+  function setStorageWarning(warning?: string) {
+    if (warning) setNotice(warning);
+  }
+
+  function commitSession(next: Session) {
+    const saveResult = saveSession(next);
+    setStorageWarning(saveResult.warning);
     setSession(next);
+    return saveResult;
+  }
+
+  function updateSession(next: Session) {
+    commitSession(next);
     setSelectedRotaNumber(next.currentRotaNumber);
   }
 
@@ -93,7 +98,7 @@ export default function App() {
       return;
     }
 
-    setSession({ ...session, players: importedPlayers.value, results: [] });
+    commitSession({ ...session, players: importedPlayers.value, results: [] });
     setSetupErrors([]);
   }
 
@@ -114,7 +119,7 @@ export default function App() {
     try {
       const provider = new StaticRotaProvider(importedRotas.value);
       const rotas = await provider.getRotas({ players: session.players, courts: COURTS, pointsPerCourt: session.pointsPerCourt });
-      setSession({ ...session, rotas, results: [], currentRotaNumber: rotas[0]?.rotaNumber ?? 1 });
+      commitSession({ ...session, rotas, results: [], currentRotaNumber: rotas[0]?.rotaNumber ?? 1 });
       setSelectedRotaNumber(rotas[0]?.rotaNumber ?? 1);
       setSetupErrors([]);
     } catch (error) {
@@ -151,15 +156,17 @@ export default function App() {
       return;
     }
 
-    setSession(importedSession.value);
+    const saveResult = commitSession(importedSession.value);
     setSelectedRotaNumber(importedSession.value.currentRotaNumber);
     setSetupErrors([]);
-    setNotice("Session imported.");
+    if (saveResult.ok) {
+      setNotice("Session imported.");
+    }
   }
 
   function addPlayer() {
     if (!session) return;
-    setSession({
+    commitSession({
       ...session,
       players: [...session.players, { id: `player-${session.players.length + 1}`, displayName: "" }],
     });
@@ -167,7 +174,7 @@ export default function App() {
 
   function updatePlayer(index: number, patch: Partial<Player>) {
     if (!session) return;
-    setSession({
+    commitSession({
       ...session,
       players: session.players.map((player, playerIndex) => (playerIndex === index ? { ...player, ...patch } : player)),
     });
@@ -175,11 +182,12 @@ export default function App() {
 
   function removePlayer(index: number) {
     if (!session) return;
-    setSession({ ...session, players: session.players.filter((_, playerIndex) => playerIndex !== index), results: [] });
+    commitSession({ ...session, players: session.players.filter((_, playerIndex) => playerIndex !== index), results: [] });
   }
 
-  if (!session && storedAtLoad) {
-    const storedText = JSON.stringify(storedAtLoad, null, 2);
+  if (!session && storedAtLoad.session) {
+    const restoredSession = storedAtLoad.session;
+    const storedText = JSON.stringify(restoredSession, null, 2);
     return (
       <main className="app-shell">
         <section className="panel restore-panel">
@@ -190,8 +198,8 @@ export default function App() {
               className="primary"
               type="button"
               onClick={() => {
-                setSession(storedAtLoad);
-                setSelectedRotaNumber(storedAtLoad.currentRotaNumber);
+                commitSession(restoredSession);
+                setSelectedRotaNumber(restoredSession.currentRotaNumber);
               }}
             >
               Continue existing session
@@ -203,8 +211,8 @@ export default function App() {
               className="danger"
               type="button"
               onClick={() => {
-                clearSession();
-                setSession(newSession());
+                setStorageWarning(clearSession().warning);
+                commitSession(newSession());
                 setSelectedRotaNumber(1);
               }}
             >
@@ -234,10 +242,13 @@ export default function App() {
           className="danger"
           type="button"
           onClick={() => {
-            clearSession();
-            setSession(newSession());
+            const clearResult = clearSession();
+            setStorageWarning(clearResult.warning);
+            const saveResult = commitSession(newSession());
             setSelectedRotaNumber(1);
-            setNotice("Started a fresh session.");
+            if (clearResult.ok && saveResult.ok) {
+              setNotice("Started a fresh session.");
+            }
           }}
         >
           <RotateCcw size={18} /> New
@@ -254,7 +265,7 @@ export default function App() {
           </div>
           <label>
             Session name
-            <input value={session.name} onChange={(event) => setSession({ ...session, name: event.target.value })} />
+            <input value={session.name} onChange={(event) => commitSession({ ...session, name: event.target.value })} />
           </label>
           <label>
             Points per court
@@ -262,7 +273,7 @@ export default function App() {
               type="number"
               min="1"
               value={session.pointsPerCourt}
-              onChange={(event) => setSession({ ...session, pointsPerCourt: Number(event.target.value), results: [] })}
+              onChange={(event) => commitSession({ ...session, pointsPerCourt: Number(event.target.value), results: [] })}
             />
           </label>
 
