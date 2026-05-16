@@ -1,7 +1,253 @@
-import type { CourtScore, Player, Rota, Session, ValidationResult } from "./types";
+import type { CourtMatch, CourtScore, Pair, Player, Rota, RotaResult, Session, ValidationResult } from "./types";
 
 const ok = (): ValidationResult => ({ valid: true, errors: [] });
 const fail = (errors: string[]): ValidationResult => ({ valid: errors.length === 0, errors });
+
+export interface ParseImportResult<T> {
+  value: T | null;
+  errors: string[];
+}
+
+type UnknownRecord = Record<string, unknown>;
+
+const parseOk = <T>(value: T): ParseImportResult<T> => ({ value, errors: [] });
+const parseFail = <T>(errors: string[]): ParseImportResult<T> => ({ value: null, errors });
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readRequiredString(record: UnknownRecord, key: string, path: string, errors: string[]): string {
+  const value = record[key];
+  if (typeof value !== "string") {
+    errors.push(`${path}.${key} must be a string.`);
+    return "";
+  }
+  return value;
+}
+
+function readOptionalString(record: UnknownRecord, key: string, path: string, errors: string[]): string | undefined {
+  const value = record[key];
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") {
+    errors.push(`${path}.${key} must be a string when provided.`);
+    return undefined;
+  }
+  return value;
+}
+
+function readRequiredInteger(record: UnknownRecord, key: string, path: string, errors: string[]): number {
+  const value = record[key];
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    errors.push(`${path}.${key} must be an integer.`);
+    return 0;
+  }
+  return value;
+}
+
+function readStringArray(value: unknown, path: string, errors: string[]): string[] {
+  if (!Array.isArray(value)) {
+    errors.push(`${path} must be an array of strings.`);
+    return [];
+  }
+
+  const values: string[] = [];
+  value.forEach((item, index) => {
+    if (typeof item !== "string") {
+      errors.push(`${path}[${index}] must be a string.`);
+      return;
+    }
+    values.push(item);
+  });
+  return values;
+}
+
+function parsePair(value: unknown, path: string, errors: string[]): Pair | null {
+  if (!isRecord(value)) {
+    errors.push(`${path} must be an object.`);
+    return null;
+  }
+
+  return {
+    player1Id: readRequiredString(value, "player1Id", path, errors),
+    player2Id: readRequiredString(value, "player2Id", path, errors),
+  };
+}
+
+function parseCourtMatch(value: unknown, path: string, errors: string[]): CourtMatch | null {
+  if (!isRecord(value)) {
+    errors.push(`${path} must be an object.`);
+    return null;
+  }
+
+  const leftPair = parsePair(value.leftPair, `${path}.leftPair`, errors);
+  const rightPair = parsePair(value.rightPair, `${path}.rightPair`, errors);
+  if (!leftPair || !rightPair) return null;
+
+  return {
+    courtNumber: readRequiredInteger(value, "courtNumber", path, errors),
+    leftPair,
+    rightPair,
+  };
+}
+
+function parseRota(value: unknown, path: string): ParseImportResult<Rota> {
+  if (!isRecord(value)) {
+    return parseFail([`${path} must be an object.`]);
+  }
+
+  const errors: string[] = [];
+
+  const rawCourts = value.courts;
+  const courts: CourtMatch[] = [];
+  if (!Array.isArray(rawCourts)) {
+    errors.push(`${path}.courts must be an array.`);
+  } else {
+    rawCourts.forEach((court, index) => {
+      const parsedCourt = parseCourtMatch(court, `${path}.courts[${index}]`, errors);
+      if (parsedCourt) courts.push(parsedCourt);
+    });
+  }
+
+  const rota: Rota = {
+    rotaNumber: readRequiredInteger(value, "rotaNumber", path, errors),
+    courts,
+    sitOutPlayerIds: readStringArray(value.sitOutPlayerIds, `${path}.sitOutPlayerIds`, errors),
+  };
+
+  if (errors.length > 0) return parseFail(errors);
+  return parseOk(rota);
+}
+
+function parseCourtScore(value: unknown, path: string, errors: string[]): CourtScore | null {
+  if (!isRecord(value)) {
+    errors.push(`${path} must be an object.`);
+    return null;
+  }
+
+  return {
+    courtNumber: readRequiredInteger(value, "courtNumber", path, errors),
+    leftScore: readRequiredInteger(value, "leftScore", path, errors),
+    rightScore: readRequiredInteger(value, "rightScore", path, errors),
+  };
+}
+
+function parseRotaResult(value: unknown, path: string): ParseImportResult<RotaResult> {
+  if (!isRecord(value)) {
+    return parseFail([`${path} must be an object.`]);
+  }
+
+  const errors: string[] = [];
+
+  const rawScores = value.scores;
+  const scores: CourtScore[] = [];
+  if (!Array.isArray(rawScores)) {
+    errors.push(`${path}.scores must be an array.`);
+  } else {
+    rawScores.forEach((score, index) => {
+      const parsedScore = parseCourtScore(score, `${path}.scores[${index}]`, errors);
+      if (parsedScore) scores.push(parsedScore);
+    });
+  }
+
+  const result: RotaResult = {
+    rotaNumber: readRequiredInteger(value, "rotaNumber", path, errors),
+    scores,
+    submittedAt: readRequiredString(value, "submittedAt", path, errors),
+  };
+
+  if (errors.length > 0) return parseFail(errors);
+  return parseOk(result);
+}
+
+function parseRotaResults(value: unknown, path: string): ParseImportResult<RotaResult[]> {
+  if (!Array.isArray(value)) {
+    return parseFail([`${path} must be an array.`]);
+  }
+
+  const errors: string[] = [];
+  const results: RotaResult[] = [];
+  value.forEach((result, index) => {
+    const parsedResult = parseRotaResult(result, `${path}[${index}]`);
+    errors.push(...parsedResult.errors);
+    if (parsedResult.value) results.push(parsedResult.value);
+  });
+
+  if (errors.length > 0) return parseFail(errors);
+  return parseOk(results);
+}
+
+export function parseImportedPlayers(input: unknown): ParseImportResult<Player[]> {
+  const errors: string[] = [];
+  if (!Array.isArray(input)) {
+    return parseFail(["Players JSON must be an array."]);
+  }
+
+  const players: Player[] = [];
+  input.forEach((value, index) => {
+    const path = `players[${index}]`;
+    if (!isRecord(value)) {
+      errors.push(`${path} must be an object.`);
+      return;
+    }
+
+    const aliases = value.aliases === undefined ? undefined : readStringArray(value.aliases, `${path}.aliases`, errors);
+
+    players.push({
+      id: readRequiredString(value, "id", path, errors),
+      displayName: readRequiredString(value, "displayName", path, errors),
+      firstName: readOptionalString(value, "firstName", path, errors),
+      lastName: readOptionalString(value, "lastName", path, errors),
+      aliases,
+    });
+  });
+
+  if (errors.length > 0) return parseFail(errors);
+  return parseOk(players);
+}
+
+export function parseImportedRotas(input: unknown): ParseImportResult<Rota[]> {
+  const errors: string[] = [];
+  if (!Array.isArray(input)) {
+    return parseFail(["Rotas JSON must be an array."]);
+  }
+
+  const rotas: Rota[] = [];
+  input.forEach((rota, index) => {
+    const parsedRota = parseRota(rota, `rotas[${index}]`);
+    errors.push(...parsedRota.errors);
+    if (parsedRota.value) rotas.push(parsedRota.value);
+  });
+
+  if (errors.length > 0) return parseFail(errors);
+  return parseOk(rotas);
+}
+
+export function parseImportedSession(input: unknown): ParseImportResult<Session> {
+  if (!isRecord(input)) {
+    return parseFail(["Session JSON must be an object."]);
+  }
+
+  const errors: string[] = [];
+  const playersResult = parseImportedPlayers(input.players);
+  const rotasResult = parseImportedRotas(input.rotas);
+  const resultsResult = parseRotaResults(input.results, "session.results");
+  errors.push(...playersResult.errors, ...rotasResult.errors, ...resultsResult.errors);
+
+  const session: Session = {
+    id: readRequiredString(input, "id", "session", errors),
+    name: readRequiredString(input, "name", "session", errors),
+    createdAt: readRequiredString(input, "createdAt", "session", errors),
+    pointsPerCourt: readRequiredInteger(input, "pointsPerCourt", "session", errors),
+    players: playersResult.value ?? [],
+    rotas: rotasResult.value ?? [],
+    results: resultsResult.value ?? [],
+    currentRotaNumber: readRequiredInteger(input, "currentRotaNumber", "session", errors),
+  };
+
+  if (errors.length > 0) return parseFail(errors);
+  return parseOk(session);
+}
 
 export function combineValidation(results: ValidationResult[]): ValidationResult {
   return fail(results.flatMap((result) => result.errors));

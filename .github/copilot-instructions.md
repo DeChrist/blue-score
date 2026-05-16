@@ -18,6 +18,7 @@ npx vitest run src/scoring.test.ts  # Run a single test file
 - Linting uses ESLint v9 flat config in `eslint.config.js`.
 - CI runs in `.github/workflows/ci.yml` and enforces: `npm run lint`, `npm test`, and `npm run build` on PRs and `main`.
 - Keep warnings at zero (`--max-warnings 0`) so regressions are surfaced early during refactors.
+- Import-boundary parser tests live in `src/validation.imports.test.ts` and should stay green when changing parsing rules.
 
 ## Architecture
 
@@ -27,7 +28,8 @@ Core data flow:
 - `Session` (in `types.ts`) is the root data model: players, rotas (match schedules), and results (submitted scores).
 - `App.tsx` owns session state. It passes the session down as props and receives updated sessions via `onSessionChange` callbacks.
 - `scoring.ts` contains two pure functions: `applyOrReplaceRotaResult` (upserts a scored rota into the session) and `calculateStandings` (derives `StandingRow[]` from session data). Both are tested in `scoring.test.ts`.
-- `validation.ts` validates players, individual court scores, rotas, and full session setup. Validation runs eagerly (shown in UI) and again before submit.
+- `validation.ts` validates players, individual court scores, rotas, and full session setup. It also owns import parsing for players, rotas, and full sessions using `unknown` input plus shape checks.
+- JSON import flow in `App.tsx` is: JSON parse -> shape parse (`parseImported*`) -> domain validation -> state update.
 
 Key domain concepts:
 - A Rota is one round of matches: 3 courts, each with a left pair and right pair. With 16 players and 3 courts, 4 players sit out per rota.
@@ -37,7 +39,7 @@ Key domain concepts:
 Module map:
 - `types.ts`: all shared interfaces, no logic
 - `scoring.ts`: pure score calculation
-- `validation.ts`: validation, returns `ValidationResult` (`{ valid, errors }`)
+- `validation.ts`: import parsing + validation, returns `ValidationResult` (`{ valid, errors }`) and `ParseImportResult<T>` for import boundaries
 - `storage.ts`: thin `localStorage` wrapper (`STORAGE_KEY = "padel-americano-session-v1"`)
 - `exporters.ts`: CSV export (standings + full results)
 - `rotaProvider.ts`: rota import and validation
@@ -45,6 +47,7 @@ Module map:
 - `components/RotaScoring.tsx`: scoring panel + `ScoreSpinner` (scroll wheel + touch swipe + stepper buttons)
 - `components/StandingsTable.tsx`: live standings
 - `components/SessionHistory.tsx`: submitted rota history
+- `validation.imports.test.ts`: trust-boundary tests for malformed and valid import payloads
 
 ## Design system
 
