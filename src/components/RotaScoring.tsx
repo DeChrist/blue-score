@@ -20,14 +20,6 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
     [],
   );
 
-  useEffect(() => {
-    setScores(
-      existingResult?.scores ??
-        rota?.courts.map((court) => ({ courtNumber: court.courtNumber, leftScore: 12, rightScore: 12 })) ??
-        [],
-    );
-  }, [existingResult, rota]);
-
   if (!rota) {
     return (
       <section className="panel hero-panel">

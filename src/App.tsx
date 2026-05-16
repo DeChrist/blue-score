@@ -53,7 +53,6 @@ export default function App() {
   useEffect(() => {
     if (session) {
       saveSession(session);
-      setSelectedRotaNumber(session.currentRotaNumber);
     }
   }, [session]);
 
@@ -61,6 +60,7 @@ export default function App() {
 
   function updateSession(next: Session) {
     setSession(next);
+    setSelectedRotaNumber(next.currentRotaNumber);
   }
 
   function copy(text: string, label: string) {
@@ -84,6 +84,7 @@ export default function App() {
       const provider = new StaticRotaProvider(parseJson<Rota[]>(rotaJson));
       const rotas = await provider.getRotas({ players: session.players, courts: COURTS, pointsPerCourt: session.pointsPerCourt });
       setSession({ ...session, rotas, results: [], currentRotaNumber: rotas[0]?.rotaNumber ?? 1 });
+      setSelectedRotaNumber(rotas[0]?.rotaNumber ?? 1);
       setSetupErrors([]);
     } catch (error) {
       setSetupErrors([error instanceof Error ? error.message : "Could not import rotas."]);
@@ -109,6 +110,7 @@ export default function App() {
         return;
       }
       setSession(imported);
+      setSelectedRotaNumber(imported.currentRotaNumber);
       setSetupErrors([]);
       setNotice("Session imported.");
     } catch (error) {
@@ -145,7 +147,14 @@ export default function App() {
           <h1>Padel Americano</h1>
           <p>There is an existing session in this browser.</p>
           <div className="actions">
-            <button className="primary" type="button" onClick={() => setSession(storedAtLoad)}>
+            <button
+              className="primary"
+              type="button"
+              onClick={() => {
+                setSession(storedAtLoad);
+                setSelectedRotaNumber(storedAtLoad.currentRotaNumber);
+              }}
+            >
               Continue existing session
             </button>
             <button type="button" onClick={() => downloadText("padel-americano-session.json", storedText, "application/json")}>
@@ -157,6 +166,7 @@ export default function App() {
               onClick={() => {
                 clearSession();
                 setSession(newSession());
+                setSelectedRotaNumber(1);
               }}
             >
               <RotateCcw size={18} /> Start new session
@@ -187,6 +197,7 @@ export default function App() {
           onClick={() => {
             clearSession();
             setSession(newSession());
+            setSelectedRotaNumber(1);
             setNotice("Started a fresh session.");
           }}
         >
@@ -266,7 +277,12 @@ export default function App() {
         </section>
 
         <section className="main-stack">
-          <RotaScoring session={session} selectedRotaNumber={selectedRotaNumber} onSessionChange={updateSession} />
+          <RotaScoring
+            key={`${selectedRotaNumber}-${session.results.find((result) => result.rotaNumber === selectedRotaNumber)?.submittedAt ?? "open"}`}
+            session={session}
+            selectedRotaNumber={selectedRotaNumber}
+            onSessionChange={updateSession}
+          />
 
           <section className="panel rota-jump">
             <div className="section-title">

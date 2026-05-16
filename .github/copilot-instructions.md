@@ -7,10 +7,17 @@ This file provides coding guidance for AI coding agents working in this reposito
 ```bash
 npm run dev          # Start dev server (binds 0.0.0.0:5173 for LAN access)
 npm run mobile-test  # Dev server + Cloudflare tunnel for mobile device testing
+npm run lint         # ESLint v9 flat-config linting (warnings fail)
 npm run build        # Type-check (tsc -b) then bundle with Vite
 npm test             # Run Vitest suite (vitest run, not watch)
 npx vitest run src/scoring.test.ts  # Run a single test file
 ```
+
+## Quality gates
+
+- Linting uses ESLint v9 flat config in `eslint.config.js`.
+- CI runs in `.github/workflows/ci.yml` and enforces: `npm run lint`, `npm test`, and `npm run build` on PRs and `main`.
+- Keep warnings at zero (`--max-warnings 0`) so regressions are surfaced early during refactors.
 
 ## Architecture
 
