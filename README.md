@@ -15,7 +15,7 @@ npm run dev
 npm test
 ```
 
-The app stores the full session in `localStorage` under `padel-americano-session-v1`.
+The app stores the full session in `localStorage` under `padel-americano-session-v1`, with guarded read/write/clear handling.
 
 Rota generation is intentionally not implemented. `StaticRotaProvider` imports precomputed rota JSON, while `PlaceholderGeneratedRotaProvider` defines the future provider boundary.
 
@@ -55,6 +55,22 @@ This section captures current architecture decisions that guide future changes.
 7. **ADR-007: Test strategy is incremental, not over-scaffolded**
 - Tests remain close to current needs and grow as features demand.
 - Current high-value boundaries are covered first (scoring and import parsing).
+
+8. **ADR-008: Step 3 pure-function coverage expansion (implemented)**
+- Expanded pure-domain tests in `src/scoring.test.ts` for non-obvious scoring behavior:
+	- `currentRotaNumber` advancement,
+	- all-rotas-submitted fallback,
+	- ignored orphan results,
+	- tie rank/average behavior.
+- Added `src/validation.test.ts` for session/player/rota validation edge cases and happy paths.
+- Kept test growth incremental without broad folder scaffolding changes.
+
+9. **ADR-009: Step 4 storage hardening (implemented)**
+- `src/storage.ts` now uses explicit result types (`LoadSessionResult`, `StorageActionResult`) instead of silent failures.
+- Stored session loads are shape-validated through import parsing; corrupted/invalid payloads are reset.
+- Save and clear operations are guarded against unavailable or failing browser storage and return user-facing warnings.
+- `src/App.tsx` now commits session updates through storage-aware persistence flow, surfacing storage warnings in notices.
+- Added `src/storage.test.ts` to cover corrupted data handling and storage failure paths.
 
 ## Mobile Testing From Local Dev
 
