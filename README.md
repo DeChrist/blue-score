@@ -29,7 +29,7 @@ This section captures current architecture decisions that guide future changes.
 - `App.tsx` remains the root state owner for `Session`.
 
 2. **ADR-002: Keep domain logic pure and isolated**
-- Scoring logic stays in `src/scoring.ts` as pure functions.
+- Scoring logic stays in `src/scoring.ts` as pure utilities.
 - Validation and import parsing live in `src/validation.ts`.
 - UI components consume these boundaries instead of duplicating rules.
 
@@ -56,22 +56,19 @@ This section captures current architecture decisions that guide future changes.
 _Rationale:_ The codebase is young and single-file in core logic. Pure-function tests (scoring, validation) deliver high coverage and fast feedback without the overhead of DOM mocking and component test setup.
 
 _When RTL becomes valuable:_ Add RTL when we encounter regression patterns that pure-function tests cannot catch:
-- **State synchronization bugs** (e.g., when props change and local state gets out of sync with no logic to re-sync). Example: [May 2026 regression](https://github.com/searls/blue-score/issues/X) where score UI failed to initialize after rotas were imported because state was captured before data arrived.
+- **State synchronization bugs** (e.g., when props change and local state gets out of sync with no logic to re-sync). Example: regression where score UI failed to initialize after rotas were imported because state was captured before data arrived.
   - *Test case:* Render RotaScoring with no rotas, then async-load rotas, assert scores initialize with balanced defaults.
 - **Multi-component orchestration** (e.g., if App.tsx logic becomes too complex to test via session mutations alone).
 - **Touch/wheel interaction edge cases** in ScoreSpinner (currently manual testing; RTL would automate).
 - **Accessibility regressions** in keyboard navigation or ARIA labels.
 
 _Cost:* Adding RTL requires `@testing-library/react`, test utilities, and time investment in DOM debugging. Pure functions remain the first line of defense.
-- Import paths no longer cast JSON directly with generic `parseJson<T>`.
-- Import flow is: JSON parse -> shape parse (`parseImportedPlayers`, `parseImportedRotas`, `parseImportedSession`) -> domain validation -> state update.
-- Parser boundary behavior is covered by `src/validation.imports.test.ts`.
 
-7. **ADR-007: Test strategy is incremental, not over-scaffolded**
+8. **ADR-008: Test strategy is incremental, not over-scaffolded**
 - Tests remain close to current needs and grow as features demand.
 - Current high-value boundaries are covered first (scoring and import parsing).
 
-8. **ADR-008: Step 3 pure-function coverage expansion (implemented)**
+9. **ADR-009: Step 3 pure-function coverage expansion (implemented)**
 - Expanded pure-domain tests in `src/scoring.test.ts` for non-obvious scoring behavior:
 	- `currentRotaNumber` advancement,
 	- all-rotas-submitted fallback,
@@ -80,12 +77,20 @@ _Cost:* Adding RTL requires `@testing-library/react`, test utilities, and time i
 - Added `src/validation.test.ts` for session/player/rota validation edge cases and happy paths.
 - Kept test growth incremental without broad folder scaffolding changes.
 
-9. **ADR-009: Step 4 storage hardening (implemented)**
+10. **ADR-010: Step 4 storage hardening (implemented)**
 - `src/storage.ts` now uses explicit result types (`LoadSessionResult`, `StorageActionResult`) instead of silent failures.
 - Stored session loads are shape-validated through import parsing; corrupted/invalid payloads are reset.
 - Save and clear operations are guarded against unavailable or failing browser storage and return user-facing warnings.
 - `src/App.tsx` now commits session updates through storage-aware persistence flow, surfacing storage warnings in notices.
 - Added `src/storage.test.ts` to cover corrupted data handling and storage failure paths.
+
+11. **ADR-011: Scoring regression guardrails (implemented)**
+- Keep score initialization and score update rules as pure helpers in `src/scoring.ts`.
+- `RotaScoring.tsx` should consume those helpers instead of re-implementing score math in UI handlers.
+- Any scoring behavior change should include targeted tests in `src/scoring.test.ts` for:
+	- balanced initialization from `pointsPerCourt`,
+	- upsert behavior when a court score row is missing,
+	- mirrored/clamped score updates.
 
 ## Mobile Testing From Local Dev
 
