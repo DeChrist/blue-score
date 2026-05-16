@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { samplePlayers, sampleRotas } from "./sampleData";
 import type { Session } from "./types";
 import { STORAGE_KEY, clearSession, loadSession, saveSession } from "./storage";
 
@@ -72,6 +73,39 @@ describe("storage", () => {
 
     expect(result.session?.id).toBe(validSession.id);
     expect(result.warning).toBeUndefined();
+  });
+
+  it("loads a draft setup session without requiring complete setup validation", () => {
+    const mock = createMockStorage({ [STORAGE_KEY]: JSON.stringify(validSession) });
+    const result = loadSession({ storage: mock.storage });
+
+    expect(result.session?.players).toHaveLength(0);
+    expect(result.warning).toBeUndefined();
+  });
+
+  it("clears stored sessions with invalid submitted results", () => {
+    const invalidSubmittedSession: Session = {
+      ...validSession,
+      players: samplePlayers,
+      rotas: sampleRotas,
+      results: [
+        {
+          rotaNumber: 1,
+          submittedAt: "2026-05-16T10:05:00.000Z",
+          scores: [
+            { courtNumber: 1, leftScore: 15, rightScore: 8 },
+            { courtNumber: 2, leftScore: 13, rightScore: 11 },
+            { courtNumber: 3, leftScore: 9, rightScore: 15 },
+          ],
+        },
+      ],
+    };
+    const mock = createMockStorage({ [STORAGE_KEY]: JSON.stringify(invalidSubmittedSession) });
+    const result = loadSession({ storage: mock.storage });
+
+    expect(result.session).toBeNull();
+    expect(result.warning).toBe("Stored session data was invalid and has been reset.");
+    expect(mock.data.has(STORAGE_KEY)).toBe(false);
   });
 
   it("clears corrupted JSON and returns a warning", () => {

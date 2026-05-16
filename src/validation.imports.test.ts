@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { samplePlayers, sampleRotas } from "./sampleData";
-import { parseImportedPlayers, parseImportedRotas, parseImportedSession } from "./validation";
+import { parseImportedPlayers, parseImportedRotas, parseImportedSession, validateSessionResults } from "./validation";
 
 describe("import parsers", () => {
   it("parses valid players JSON", () => {
@@ -105,5 +105,121 @@ describe("import parsers", () => {
     expect(result.errors).toContain("session.results[0].rotaNumber must be an integer.");
     expect(result.errors).toContain("session.results[0].submittedAt must be a string.");
     expect(result.errors).toContain("session.results[0].scores[0].leftScore must be an integer.");
+  });
+
+  it("rejects imported session results with invalid score totals", () => {
+    const result = parseImportedSession({
+      id: "session-1",
+      name: "Session",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      pointsPerCourt: 24,
+      players: samplePlayers,
+      rotas: sampleRotas,
+      results: [
+        {
+          rotaNumber: 1,
+          submittedAt: "2026-05-16T10:05:00.000Z",
+          scores: [
+            { courtNumber: 1, leftScore: 15, rightScore: 8 },
+            { courtNumber: 2, leftScore: 13, rightScore: 11 },
+            { courtNumber: 3, leftScore: 9, rightScore: 15 },
+          ],
+        },
+      ],
+      currentRotaNumber: 1,
+    });
+
+    expect(result.value).not.toBeNull();
+    const validation = validateSessionResults(result.value!);
+    expect(validation.valid).toBe(false);
+    expect(validation.errors).toContain("Court 1: scores must total 24.");
+  });
+
+  it("rejects duplicate results for the same rota", () => {
+    const result = parseImportedSession({
+      id: "session-1",
+      name: "Session",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      pointsPerCourt: 24,
+      players: samplePlayers,
+      rotas: sampleRotas,
+      results: [
+        {
+          rotaNumber: 1,
+          submittedAt: "2026-05-16T10:05:00.000Z",
+          scores: [
+            { courtNumber: 1, leftScore: 12, rightScore: 12 },
+            { courtNumber: 2, leftScore: 13, rightScore: 11 },
+            { courtNumber: 3, leftScore: 9, rightScore: 15 },
+          ],
+        },
+        {
+          rotaNumber: 1,
+          submittedAt: "2026-05-16T10:08:00.000Z",
+          scores: [
+            { courtNumber: 1, leftScore: 10, rightScore: 14 },
+            { courtNumber: 2, leftScore: 12, rightScore: 12 },
+            { courtNumber: 3, leftScore: 16, rightScore: 8 },
+          ],
+        },
+      ],
+      currentRotaNumber: 1,
+    });
+
+    expect(result.value).not.toBeNull();
+    const validation = validateSessionResults(result.value!);
+    expect(validation.valid).toBe(false);
+    expect(validation.errors).toContain("Session has duplicate result for rota 1.");
+  });
+
+  it("rejects imported session results with missing court scores", () => {
+    const result = parseImportedSession({
+      id: "session-1",
+      name: "Session",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      pointsPerCourt: 24,
+      players: samplePlayers,
+      rotas: sampleRotas,
+      results: [
+        {
+          rotaNumber: 1,
+          submittedAt: "2026-05-16T10:05:00.000Z",
+          scores: [
+            { courtNumber: 1, leftScore: 12, rightScore: 12 },
+            { courtNumber: 2, leftScore: 13, rightScore: 11 },
+          ],
+        },
+      ],
+      currentRotaNumber: 1,
+    });
+
+    expect(result.value).not.toBeNull();
+    const validation = validateSessionResults(result.value!);
+    expect(validation.valid).toBe(false);
+    expect(validation.errors).toContain("Result for rota 1 is missing score for court 3.");
+  });
+
+  it("rejects imported session results for unknown rota numbers", () => {
+    const result = parseImportedSession({
+      id: "session-1",
+      name: "Session",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      pointsPerCourt: 24,
+      players: samplePlayers,
+      rotas: sampleRotas,
+      results: [
+        {
+          rotaNumber: 99,
+          submittedAt: "2026-05-16T10:05:00.000Z",
+          scores: [{ courtNumber: 1, leftScore: 12, rightScore: 12 }],
+        },
+      ],
+      currentRotaNumber: 1,
+    });
+
+    expect(result.value).not.toBeNull();
+    const validation = validateSessionResults(result.value!);
+    expect(validation.valid).toBe(false);
+    expect(validation.errors).toContain("Result for rota 99 references an unknown rota.");
   });
 });

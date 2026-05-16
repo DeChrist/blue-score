@@ -337,6 +337,59 @@ export function validateRotas(rotas: Rota[], players: Player[], courts: number):
   return combineValidation(rotas.map((rota) => validateRota(rota, players, courts)));
 }
 
+export function validateRotaResult(
+  result: RotaResult,
+  session: Pick<Session, "rotas" | "pointsPerCourt">,
+): ValidationResult {
+  const errors: string[] = [];
+  const rota = session.rotas.find((item) => item.rotaNumber === result.rotaNumber);
+
+  if (!rota) {
+    return fail([`Result for rota ${result.rotaNumber} references an unknown rota.`]);
+  }
+
+  const expectedCourtNumbers = new Set(rota.courts.map((court) => court.courtNumber));
+  const actualCourtNumbers = new Set<number>();
+
+  result.scores.forEach((score) => {
+    if (actualCourtNumbers.has(score.courtNumber)) {
+      errors.push(`Result for rota ${result.rotaNumber} has duplicate score for court ${score.courtNumber}.`);
+    }
+    actualCourtNumbers.add(score.courtNumber);
+
+    if (!expectedCourtNumbers.has(score.courtNumber)) {
+      errors.push(`Result for rota ${result.rotaNumber} references unknown court ${score.courtNumber}.`);
+    }
+
+    errors.push(...validateCourtScore(score, session.pointsPerCourt).errors);
+  });
+
+  rota.courts.forEach((court) => {
+    if (!actualCourtNumbers.has(court.courtNumber)) {
+      errors.push(`Result for rota ${result.rotaNumber} is missing score for court ${court.courtNumber}.`);
+    }
+  });
+
+  return fail(errors);
+}
+
+export function validateSessionResults(
+  session: Pick<Session, "rotas" | "results" | "pointsPerCourt">,
+): ValidationResult {
+  const errors: string[] = [];
+  const seenRotaNumbers = new Set<number>();
+
+  session.results.forEach((result) => {
+    if (seenRotaNumbers.has(result.rotaNumber)) {
+      errors.push(`Session has duplicate result for rota ${result.rotaNumber}.`);
+    }
+    seenRotaNumbers.add(result.rotaNumber);
+    errors.push(...validateRotaResult(result, session).errors);
+  });
+
+  return fail(errors);
+}
+
 export function validateSessionSetup(session: Pick<Session, "name" | "players" | "rotas" | "pointsPerCourt">, courts: number): ValidationResult {
   const errors: string[] = [];
   if (!session.name.trim()) errors.push("Session name is required.");
