@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  base: "/blue-score/",
   server: {
     // Allow localtunnel URLs like https://<subdomain>.trycloudflare.com to reach Vite in dev.
     // Also allow Cloudflare quick tunnel URLs like https://<name>.trycloudflare.com.
