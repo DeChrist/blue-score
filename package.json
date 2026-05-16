@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "mobile-test": "concurrently -k -n app,tunnel -c cyan,magenta \"npm run dev\" \"cloudflared tunnel --url http://localhost:5173\"",
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "preview": "vite preview --host 0.0.0.0"
@@ -20,6 +21,8 @@
   "devDependencies": {
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
+    "cloudflared": "^0.7.1",
+    "concurrently": "^9.2.1",
     "vitest": "^3.2.4"
   }
 }
