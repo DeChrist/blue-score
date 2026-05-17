@@ -392,9 +392,13 @@ export function validateSessionResults(
 
 export function validateSessionSetup(session: Pick<Session, "name" | "players" | "rotas" | "pointsPerCourt">, courts: number): ValidationResult {
   const errors: string[] = [];
+  const minPlayers = courts * 4;
+  const maxPlayers = minPlayers + 4;
   if (!session.name.trim()) errors.push("Session name is required.");
   if (!Number.isInteger(session.pointsPerCourt) || session.pointsPerCourt <= 0) errors.push("Points per court must be a positive integer.");
-  if (session.players.length !== 16) errors.push("Default Americano setup expects exactly 16 players.");
+  if (session.players.length < minPlayers || session.players.length > maxPlayers) {
+    errors.push(`Americano setup expects between ${minPlayers} and ${maxPlayers} players for ${courts} courts.`);
+  }
   return combineValidation([fail(errors), validatePlayers(session.players), validateRotas(session.rotas, session.players, courts)]);
 }
 

@@ -26,7 +26,8 @@ Important boundaries:
 - `App.tsx` owns the current `Session` and persists changes through `storage.ts`.
 - `scoring.ts` contains pure scoring utilities and standings calculation.
 - `validation.ts` contains JSON shape parsing plus domain validation for players, rotas, scores, and submitted results.
-- `rotaProvider.ts` defines the rota provider interface. Rota generation is not implemented in this app.
+- `rotaGenerator.ts` contains pure deterministic Americano rota generation using numeric player indexes internally.
+- `rotaProvider.ts` defines the rota provider interface, maps generated technical rotas back to domain `Player.id` values, and preserves static import support.
 - `appMode.ts` parses `?mode=` into `AppMode` (`standard` | `demo` | `advanced`); `App.tsx` reads it at module level.
 - `styles.css` is guided by `design-system/MASTER.md`; do not add Tailwind or a component framework.
 
@@ -35,5 +36,7 @@ Important boundaries:
 - Keep warnings at zero; lint uses `--max-warnings 0`.
 - When changing scoring behavior, update `src/scoring.test.ts`.
 - When changing import or storage trust boundaries, update `validation.imports.test.ts` or `storage.test.ts`.
+- When changing generated rota behavior, update `src/rotaGenerator.test.ts` and provider coverage in `src/rotaProvider.test.ts`.
 - Prefer small, explicit helpers over broad refactors. `App.tsx` and `validation.ts` are known large files, but splitting them is not required for ordinary changes.
 - Preserve local-first behavior: no backend, no auth, no network persistence.
+- Do not describe generated rotation counts as proven globally optimal. The generator returns the minimum found by bounded deterministic search from the theoretical lower bound.

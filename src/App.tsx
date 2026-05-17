@@ -5,7 +5,7 @@ import { SessionHistory } from "./components/SessionHistory";
 import { StandingsTable } from "./components/StandingsTable";
 import { RotaScoring } from "./components/RotaScoring";
 import { exportResultsCsv, exportStandingsCsv } from "./exporters";
-import { StaticRotaProvider } from "./rotaProvider";
+import { GeneratedRotaProvider, StaticRotaProvider } from "./rotaProvider";
 import { calculateStandings } from "./scoring";
 import { samplePlayers, sampleRotas } from "./sampleData";
 import { clearSession, loadSession, saveSession } from "./storage";
@@ -146,6 +146,38 @@ export default function App() {
       setSetupErrors([]);
     } catch (error) {
       setSetupErrors([error instanceof Error ? error.message : "Could not import rotas."]);
+    }
+  }
+
+  async function setupGeneratedRotas() {
+    if (!session) return;
+
+    const minPlayers = COURTS * 4;
+    const maxPlayers = minPlayers + 4;
+    const errors: string[] = [];
+    if (!session.name.trim()) errors.push("Session name is required.");
+    if (!Number.isInteger(session.pointsPerCourt) || session.pointsPerCourt <= 0) errors.push("Points per court must be a positive integer.");
+    if (session.players.length < minPlayers || session.players.length > maxPlayers) {
+      errors.push(`Americano setup expects between ${minPlayers} and ${maxPlayers} players for ${COURTS} courts.`);
+    }
+    errors.push(...validatePlayers(session.players).errors);
+    if (errors.length > 0) {
+      setSetupErrors(errors);
+      return;
+    }
+
+    try {
+      setNotice("Generating rotas...");
+      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+      const provider = new GeneratedRotaProvider();
+      const rotas = await provider.getRotas({ players: session.players, courts: COURTS, pointsPerCourt: session.pointsPerCourt });
+      commitSession({ ...session, rotas, results: [], currentRotaNumber: rotas[0]?.rotaNumber ?? 1 });
+      setSelectedRotaNumber(rotas[0]?.rotaNumber ?? 1);
+      setSetupErrors([]);
+      setNotice(`Generated ${rotas.length} rotas.`);
+    } catch (error) {
+      setSetupErrors([error instanceof Error ? error.message : "Could not generate rotas."]);
+      setNotice("");
     }
   }
 
@@ -367,7 +399,7 @@ export default function App() {
             )}
 
             {mode.kind === "standard" ? (
-              <button className="primary wide" type="button" onClick={() => setNotice("Rota generation is not yet implemented.")}>
+              <button className="primary wide" type="button" onClick={setupGeneratedRotas}>
                 <Save size={18} /> Setup Rotas
               </button>
             ) : (
