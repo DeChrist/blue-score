@@ -75,3 +75,58 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           artifact_name: github-pages-${{ github.run_attempt }}
+
+  release:
+    needs: deploy
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine next version
+        id: version
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "Latest tag: ${LATEST_TAG:-none}"
+
+          if [ -z "$LATEST_TAG" ]; then
+            MAJOR=0; MINOR=0; PATCH=0
+            COMMITS=$(git log HEAD --pretty=format:"%s %b")
+          else
+            VERSION="${LATEST_TAG#v}"
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3)
+            COMMITS=$(git log "${LATEST_TAG}..HEAD" --pretty=format:"%s %b")
+          fi
+
+          if echo "$COMMITS" | grep -qiE '\+semver: major|BREAKING CHANGE|^[a-z]+(\(.+\))?!:'; then
+            NEXT="$((MAJOR + 1)).0.0"
+          elif echo "$COMMITS" | grep -qiE '\+semver: patch|^fix(\(.+\))?:'; then
+            NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          else
+            NEXT="${MAJOR}.$((MINOR + 1)).0"
+          fi
+
+          echo "Next version: v${NEXT}"
+          echo "tag=v${NEXT}" >> "$GITHUB_OUTPUT"
+
+      - name: Tag and release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if git tag -l "$TAG" | grep -q "$TAG"; then
+            echo "Tag $TAG already exists, skipping release."
+            exit 0
+          fi
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" \
+            --generate-notes \
+            --title "Release $TAG"
