@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "dev:demo": "vite --host 0.0.0.0 --open /?mode=demo",
+    "dev:advanced": "vite --host 0.0.0.0 --open /?mode=advanced",
     "mobile-test": "concurrently -k -n app,tunnel -c cyan,magenta \"npm run dev\" \"cloudflared tunnel --url http://localhost:5173\"",
     "lint": "eslint . --max-warnings 0",
     "build": "tsc -b && vite build",

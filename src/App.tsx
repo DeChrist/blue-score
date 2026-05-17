@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Clipboard, Download, FileDown, Plus, RotateCcw, Save, Trash2, Upload } from "lucide-react";
+import { parseAppMode } from "./appMode";
 import { SessionHistory } from "./components/SessionHistory";
 import { StandingsTable } from "./components/StandingsTable";
 import { RotaScoring } from "./components/RotaScoring";
@@ -17,6 +18,8 @@ import {
   validateSessionResults,
   validateSessionSetup,
 } from "./validation";
+
+const mode = parseAppMode(window.location.search);
 
 const COURTS = 3;
 
@@ -58,7 +61,13 @@ function sessionHasData(session: Session): boolean {
 
 export default function App() {
   const [storedAtLoad] = useState(() => loadSession());
-  const [session, setSession] = useState<Session | null>(storedAtLoad.session ? null : newSession());
+  const [session, setSession] = useState<Session | null>(() => {
+    if (storedAtLoad.session) return null;
+    if (mode.kind === "demo") {
+      return { ...newSession(), players: samplePlayers, rotas: sampleRotas, currentRotaNumber: sampleRotas[0]?.rotaNumber ?? 1 };
+    }
+    return newSession();
+  });
   const [setupErrors, setSetupErrors] = useState<string[]>([]);
   const [playerJson, setPlayerJson] = useState(JSON.stringify(samplePlayers, null, 2));
   const [rotaJson, setRotaJson] = useState(JSON.stringify(sampleRotas, null, 2));
@@ -322,25 +331,35 @@ export default function App() {
             ))}
           </div>
 
-          <details>
-            <summary>Import players JSON</summary>
-            <textarea value={playerJson} onChange={(event) => setPlayerJson(event.target.value)} />
-            <button type="button" onClick={loadPlayers}>
-              <Upload size={16} /> Import players
-            </button>
-          </details>
+          {mode.kind === "advanced" && (
+            <details>
+              <summary>Import players JSON</summary>
+              <textarea value={playerJson} onChange={(event) => setPlayerJson(event.target.value)} />
+              <button type="button" onClick={loadPlayers}>
+                <Upload size={16} /> Import players
+              </button>
+            </details>
+          )}
 
-          <details open>
-            <summary>Import rotas JSON</summary>
-            <textarea value={rotaJson} onChange={(event) => setRotaJson(event.target.value)} />
-            <button type="button" onClick={loadRotas}>
-              <Upload size={16} /> Import rotas
-            </button>
-          </details>
+          {mode.kind === "advanced" && (
+            <details open>
+              <summary>Import rotas JSON</summary>
+              <textarea value={rotaJson} onChange={(event) => setRotaJson(event.target.value)} />
+              <button type="button" onClick={loadRotas}>
+                <Upload size={16} /> Import rotas
+              </button>
+            </details>
+          )}
 
-          <button className="primary wide" type="button" disabled={!setupValidation.valid} onClick={startScoring}>
-            <Save size={18} /> Validate setup
-          </button>
+          {mode.kind === "standard" ? (
+            <button className="primary wide" type="button" onClick={() => setNotice("Rota generation is not yet implemented.")}>
+              <Save size={18} /> Setup Rotas
+            </button>
+          ) : (
+            <button className="primary wide" type="button" disabled={!setupValidation.valid} onClick={startScoring}>
+              <Save size={18} /> Validate setup
+            </button>
+          )}
 
           {[...setupErrors, ...setupValidation.errors].filter(Boolean).slice(0, 8).map((error) => (
             <p className="error" key={error}>
@@ -380,32 +399,34 @@ export default function App() {
           <SessionHistory session={session} onSelectRota={setSelectedRotaNumber} />
         </section>
 
-        <section className="panel export-panel">
-          <div className="section-title">
-            <h2>Import / export</h2>
-          </div>
-          <div className="actions vertical">
-            <button type="button" onClick={() => downloadText("padel-americano-session.json", fullSessionJson, "application/json")}>
-              <FileDown size={18} /> Export session JSON
-            </button>
-            <button type="button" onClick={() => copy(fullSessionJson, "Session JSON")}>
-              <Clipboard size={18} /> Copy session JSON
-            </button>
-            <button type="button" onClick={() => downloadText("standings.csv", standingsCsv, "text/csv")}>
-              <FileDown size={18} /> Export standings CSV
-            </button>
-            <button type="button" onClick={() => downloadText("results-history.csv", resultsCsv, "text/csv")}>
-              <FileDown size={18} /> Export results CSV
-            </button>
-          </div>
-          <details>
-            <summary>Import full session JSON</summary>
-            <textarea value={sessionJson} onChange={(event) => setSessionJson(event.target.value)} />
-            <button type="button" onClick={importFullSession}>
-              <Upload size={16} /> Import session
-            </button>
-          </details>
-        </section>
+        {mode.kind === "advanced" && (
+          <section className="panel export-panel">
+            <div className="section-title">
+              <h2>Import / export</h2>
+            </div>
+            <div className="actions vertical">
+              <button type="button" onClick={() => downloadText("padel-americano-session.json", fullSessionJson, "application/json")}>
+                <FileDown size={18} /> Export session JSON
+              </button>
+              <button type="button" onClick={() => copy(fullSessionJson, "Session JSON")}>
+                <Clipboard size={18} /> Copy session JSON
+              </button>
+              <button type="button" onClick={() => downloadText("standings.csv", standingsCsv, "text/csv")}>
+                <FileDown size={18} /> Export standings CSV
+              </button>
+              <button type="button" onClick={() => downloadText("results-history.csv", resultsCsv, "text/csv")}>
+                <FileDown size={18} /> Export results CSV
+              </button>
+            </div>
+            <details>
+              <summary>Import full session JSON</summary>
+              <textarea value={sessionJson} onChange={(event) => setSessionJson(event.target.value)} />
+              <button type="button" onClick={importFullSession}>
+                <Upload size={16} /> Import session
+              </button>
+            </details>
+          </section>
+        )}
       </section>
     </main>
   );
