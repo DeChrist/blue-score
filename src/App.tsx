@@ -62,10 +62,10 @@ function sessionHasData(session: Session): boolean {
 export default function App() {
   const [storedAtLoad] = useState(() => loadSession());
   const [session, setSession] = useState<Session | null>(() => {
-    if (storedAtLoad.session) return null;
     if (mode.kind === "demo") {
       return { ...newSession(), players: samplePlayers, rotas: sampleRotas, currentRotaNumber: sampleRotas[0]?.rotaNumber ?? 1 };
     }
+    if (storedAtLoad.session) return null;
     return newSession();
   });
   const [setupErrors, setSetupErrors] = useState<string[]>([]);
