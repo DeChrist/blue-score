@@ -63,7 +63,7 @@ describe("validateSessionSetup", () => {
       {
         name: "",
         pointsPerCourt: 0,
-        players: players.slice(0, 15),
+        players: players.slice(0, 11),
         rotas: [validRota],
       },
       3,
