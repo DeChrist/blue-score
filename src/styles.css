@@ -300,6 +300,16 @@ h3 {
   top: 8px;
 }
 
+.player-chip {
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 0.875rem;
+  min-height: 36px;
+  padding: 0.3rem 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
 .pair input {
   font-family: var(--font-num);
   font-size: 2.3rem;
@@ -426,21 +436,59 @@ td:nth-child(6) {
   font-variant-numeric: tabular-nums;
 }
 
-.rota-buttons {
+.score-panel-header {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.score-rota-nav {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
-.rota-buttons button {
+.score-rota-label {
+  font-size: 1.25rem;
+  margin-right: 0.1rem;
+}
+
+.rota-tab {
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
-  min-width: 48px;
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0.3rem 0.5rem;
 }
 
-.rota-buttons .selected {
+.rota-tab.selected {
   background: var(--color-fg);
   color: var(--color-on-primary);
+}
+
+.setup-title-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.setup-body {
+  display: contents;
+}
+
+@media (max-width: 979px) {
+  .setup-body--collapsed {
+    display: none;
+  }
+}
+
+@media (min-width: 980px) {
+  .setup-toggle {
+    display: none;
+  }
 }
 
 .actions {

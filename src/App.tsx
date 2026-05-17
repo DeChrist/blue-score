@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Clipboard, Download, FileDown, Plus, RotateCcw, Save, Trash2, Upload } from "lucide-react";
+import { ChevronDown, ChevronUp, Clipboard, Download, FileDown, Plus, RotateCcw, Save, Trash2, Upload } from "lucide-react";
 import { parseAppMode } from "./appMode";
 import { SessionHistory } from "./components/SessionHistory";
 import { StandingsTable } from "./components/StandingsTable";
@@ -73,6 +73,7 @@ export default function App() {
   const [rotaJson, setRotaJson] = useState(JSON.stringify(sampleRotas, null, 2));
   const [sessionJson, setSessionJson] = useState("");
   const [selectedRotaNumber, setSelectedRotaNumber] = useState(1);
+  const [setupOpen, setSetupOpen] = useState(() => !session || session.rotas.length === 0);
   const [notice, setNotice] = useState(storedAtLoad.warning ?? "");
 
   const standings = useMemo(() => (session ? calculateStandings(session) : []), [session]);
@@ -288,84 +289,99 @@ export default function App() {
         <section className="panel setup-panel">
           <div className="section-title">
             <h2>Session setup</h2>
-            <span>{setupValidation.valid ? "Ready" : "Needs setup"}</span>
-          </div>
-          <label>
-            Session name
-            <input value={session.name} onChange={(event) => commitSession({ ...session, name: event.target.value })} />
-          </label>
-          <label>
-            Points per court
-            <input
-              type="number"
-              min="1"
-              value={session.pointsPerCourt}
-              onChange={(event) => commitSession({ ...session, pointsPerCourt: Number(event.target.value), results: [] })}
-            />
-          </label>
-
-          <div className="section-title compact-title">
-            <h3>Players</h3>
-            <button type="button" onClick={addPlayer}>
-              <Plus size={16} /> Add
-            </button>
-          </div>
-          <div className="player-editor">
-            {session.players.map((player, index) => (
-              <div className="player-row" key={`${player.id}-${index}`}>
-                <input aria-label="Player id" value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
-                <input
-                  aria-label="Display name"
-                  value={player.displayName}
-                  onChange={(event) => updatePlayer(index, { displayName: event.target.value })}
-                />
+            <div className="setup-title-actions">
+              <span>{setupValidation.valid ? "Ready" : "Needs setup"}</span>
+              {session.rotas.length > 0 && (
                 <button
-                  aria-label={`Remove player ${player.displayName || index + 1}`}
-                  className="icon danger"
                   type="button"
-                  onClick={() => removePlayer(index)}
+                  className="ghost icon setup-toggle"
+                  aria-label={setupOpen ? "Collapse setup" : "Expand setup"}
+                  aria-expanded={setupOpen}
+                  onClick={() => setSetupOpen((v) => !v)}
                 >
-                  <Trash2 size={16} />
+                  {setupOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
-              </div>
+              )}
+            </div>
+          </div>
+          <div className={setupOpen ? "setup-body" : "setup-body setup-body--collapsed"}>
+            <label>
+              Session name
+              <input value={session.name} onChange={(event) => commitSession({ ...session, name: event.target.value })} />
+            </label>
+            <label>
+              Points per court
+              <input
+                type="number"
+                min="1"
+                value={session.pointsPerCourt}
+                onChange={(event) => commitSession({ ...session, pointsPerCourt: Number(event.target.value), results: [] })}
+              />
+            </label>
+
+            <div className="section-title compact-title">
+              <h3>Players</h3>
+              <button type="button" onClick={addPlayer}>
+                <Plus size={16} /> Add
+              </button>
+            </div>
+            <div className="player-editor">
+              {session.players.map((player, index) => (
+                <div className="player-row" key={`${player.id}-${index}`}>
+                  <input aria-label="Player id" value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
+                  <input
+                    aria-label="Display name"
+                    value={player.displayName}
+                    onChange={(event) => updatePlayer(index, { displayName: event.target.value })}
+                  />
+                  <button
+                    aria-label={`Remove player ${player.displayName || index + 1}`}
+                    className="icon danger"
+                    type="button"
+                    onClick={() => removePlayer(index)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {mode.kind === "advanced" && (
+              <details>
+                <summary>Import players JSON</summary>
+                <textarea value={playerJson} onChange={(event) => setPlayerJson(event.target.value)} />
+                <button type="button" onClick={loadPlayers}>
+                  <Upload size={16} /> Import players
+                </button>
+              </details>
+            )}
+
+            {mode.kind === "advanced" && (
+              <details open>
+                <summary>Import rotas JSON</summary>
+                <textarea value={rotaJson} onChange={(event) => setRotaJson(event.target.value)} />
+                <button type="button" onClick={loadRotas}>
+                  <Upload size={16} /> Import rotas
+                </button>
+              </details>
+            )}
+
+            {mode.kind === "standard" ? (
+              <button className="primary wide" type="button" onClick={() => setNotice("Rota generation is not yet implemented.")}>
+                <Save size={18} /> Setup Rotas
+              </button>
+            ) : (
+              <button className="primary wide" type="button" disabled={!setupValidation.valid} onClick={startScoring}>
+                <Save size={18} /> Validate setup
+              </button>
+            )}
+
+            {[...setupErrors, ...setupValidation.errors].filter(Boolean).slice(0, 8).map((error) => (
+              <p className="error" key={error}>
+                {error}
+              </p>
             ))}
           </div>
-
-          {mode.kind === "advanced" && (
-            <details>
-              <summary>Import players JSON</summary>
-              <textarea value={playerJson} onChange={(event) => setPlayerJson(event.target.value)} />
-              <button type="button" onClick={loadPlayers}>
-                <Upload size={16} /> Import players
-              </button>
-            </details>
-          )}
-
-          {mode.kind === "advanced" && (
-            <details open>
-              <summary>Import rotas JSON</summary>
-              <textarea value={rotaJson} onChange={(event) => setRotaJson(event.target.value)} />
-              <button type="button" onClick={loadRotas}>
-                <Upload size={16} /> Import rotas
-              </button>
-            </details>
-          )}
-
-          {mode.kind === "standard" ? (
-            <button className="primary wide" type="button" onClick={() => setNotice("Rota generation is not yet implemented.")}>
-              <Save size={18} /> Setup Rotas
-            </button>
-          ) : (
-            <button className="primary wide" type="button" disabled={!setupValidation.valid} onClick={startScoring}>
-              <Save size={18} /> Validate setup
-            </button>
-          )}
-
-          {[...setupErrors, ...setupValidation.errors].filter(Boolean).slice(0, 8).map((error) => (
-            <p className="error" key={error}>
-              {error}
-            </p>
-          ))}
         </section>
 
         <section className="main-stack">
@@ -374,26 +390,8 @@ export default function App() {
             session={session}
             selectedRotaNumber={selectedRotaNumber}
             onSessionChange={updateSession}
+            onRotaChange={setSelectedRotaNumber}
           />
-
-          <section className="panel rota-jump">
-            <div className="section-title">
-              <h2>Rotas</h2>
-              <span>Review or edit</span>
-            </div>
-            <div className="rota-buttons">
-              {session.rotas.map((rota) => (
-                <button
-                  className={selectedRotaNumber === rota.rotaNumber ? "selected" : ""}
-                  key={rota.rotaNumber}
-                  type="button"
-                  onClick={() => setSelectedRotaNumber(rota.rotaNumber)}
-                >
-                  {rota.rotaNumber}
-                </button>
-              ))}
-            </div>
-          </section>
 
           <StandingsTable standings={standings} />
           <SessionHistory session={session} onSelectRota={setSelectedRotaNumber} />
