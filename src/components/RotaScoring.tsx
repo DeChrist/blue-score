@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronUp, Edit3 } from "lucide-react";
+import { Check, Edit3 } from "lucide-react";
 import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
 import type { CourtScore, RotaResult, Session } from "../types";
 import { combineValidation, validateCourtScore } from "../validation";
@@ -8,9 +8,10 @@ interface Props {
   session: Session;
   selectedRotaNumber: number;
   onSessionChange: (session: Session) => void;
+  onRotaChange: (rotaNumber: number) => void;
 }
 
-export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Props) {
+export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRotaChange }: Props) {
   const rota = session.rotas.find((item) => item.rotaNumber === selectedRotaNumber) ?? session.rotas[0];
   const existingResult = session.results.find((result) => result.rotaNumber === rota?.rotaNumber);
   const playerName = (id: string) => session.players.find((player) => player.id === id)?.displayName ?? id;
@@ -46,13 +47,24 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
 
   return (
     <section className="panel score-panel">
-      <div className="section-title">
-        <div>
-          <h2>Rota {rota.rotaNumber}</h2>
-          <p className="muted">{isSubmitted ? "Editing submitted rota" : "Enter each court result"}</p>
+      <div className="score-panel-header">
+        <div className="score-rota-nav">
+          <h2 className="score-rota-label">Rota</h2>
+          {session.rotas.map((r) => (
+            <button
+              key={r.rotaNumber}
+              type="button"
+              className={r.rotaNumber === rota.rotaNumber ? "rota-tab selected" : "rota-tab"}
+              aria-current={r.rotaNumber === rota.rotaNumber ? "true" : undefined}
+              onClick={() => onRotaChange(r.rotaNumber)}
+            >
+              {r.rotaNumber}
+            </button>
+          ))}
         </div>
         <span className={isSubmitted ? "status edited" : "status"}>{isSubmitted ? "Submitted" : "Open"}</span>
       </div>
+      <p className="muted">{isSubmitted ? "Editing submitted rota" : "Enter each court result"}</p>
 
       <div className="courts">
         {rota.courts.map((court) => {
@@ -68,16 +80,14 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
             <article className="court-card" key={court.courtNumber}>
               <div className="court-head">
                 <strong>Court {court.courtNumber}</strong>
-                <span>{session.pointsPerCourt} total</span>
               </div>
               <div className="score-row">
                 <div
                   className={`pair left-pair${leading === "left" ? " leading" : ""}`}
                   aria-label={leading === "left" ? "Leading pair" : undefined}
                 >
-                  {leading === "left" && <ChevronUp size={14} className="leading-glyph" aria-hidden="true" />}
-                  <span>{playerName(court.leftPair.player1Id)}</span>
-                  <span>{playerName(court.leftPair.player2Id)}</span>
+                  <div className="player-chip">{playerName(court.leftPair.player1Id)}</div>
+                  <div className="player-chip">{playerName(court.leftPair.player2Id)}</div>
                   <ScoreSpinner
                     label={`Court ${court.courtNumber} left score`}
                     value={score.leftScore}
@@ -90,9 +100,8 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange }: Pr
                   className={`pair right-pair${leading === "right" ? " leading" : ""}`}
                   aria-label={leading === "right" ? "Leading pair" : undefined}
                 >
-                  {leading === "right" && <ChevronUp size={14} className="leading-glyph" aria-hidden="true" />}
-                  <span>{playerName(court.rightPair.player1Id)}</span>
-                  <span>{playerName(court.rightPair.player2Id)}</span>
+                  <div className="player-chip">{playerName(court.rightPair.player1Id)}</div>
+                  <div className="player-chip">{playerName(court.rightPair.player2Id)}</div>
                   <ScoreSpinner
                     label={`Court ${court.courtNumber} right score`}
                     value={score.rightScore}
