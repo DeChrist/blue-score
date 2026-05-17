@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronUp, Edit3 } from "lucide-react";
+import { Check, Edit3 } from "lucide-react";
 import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
 import type { CourtScore, RotaResult, Session } from "../types";
 import { combineValidation, validateCourtScore } from "../validation";
@@ -86,7 +86,6 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
                   className={`pair left-pair${leading === "left" ? " leading" : ""}`}
                   aria-label={leading === "left" ? "Leading pair" : undefined}
                 >
-                  {leading === "left" && <ChevronUp size={14} className="leading-glyph" aria-hidden="true" />}
                   <div className="player-chip">{playerName(court.leftPair.player1Id)}</div>
                   <div className="player-chip">{playerName(court.leftPair.player2Id)}</div>
                   <ScoreSpinner
@@ -101,7 +100,6 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
                   className={`pair right-pair${leading === "right" ? " leading" : ""}`}
                   aria-label={leading === "right" ? "Leading pair" : undefined}
                 >
-                  {leading === "right" && <ChevronUp size={14} className="leading-glyph" aria-hidden="true" />}
                   <div className="player-chip">{playerName(court.rightPair.player1Id)}</div>
                   <div className="player-chip">{playerName(court.rightPair.player2Id)}</div>
                   <ScoreSpinner

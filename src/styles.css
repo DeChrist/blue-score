@@ -275,7 +275,6 @@ h3 {
   display: grid;
   gap: 0.35rem;
   padding: 0.75rem;
-  position: relative;
 }
 
 .left-pair {
@@ -293,12 +292,16 @@ h3 {
   padding: calc(0.75rem - 1px);
 }
 
-.leading-glyph {
-  color: var(--color-primary);
-  position: absolute;
-  right: 8px;
-  top: 8px;
+.left-pair.leading .player-chip {
+  border-color: var(--color-left-border);
+  border-width: 2px;
 }
+
+.right-pair.leading .player-chip {
+  border-color: var(--color-right-border);
+  border-width: 2px;
+}
+
 
 .player-chip {
   border: 1px solid var(--color-border);
