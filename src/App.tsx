@@ -9,7 +9,14 @@ import { calculateStandings } from "./scoring";
 import { samplePlayers, sampleRotas } from "./sampleData";
 import { clearSession, loadSession, saveSession } from "./storage";
 import type { Player, Session } from "./types";
-import { parseImportedPlayers, parseImportedRotas, parseImportedSession, validatePlayers, validateSessionSetup } from "./validation";
+import {
+  parseImportedPlayers,
+  parseImportedRotas,
+  parseImportedSession,
+  validatePlayers,
+  validateSessionResults,
+  validateSessionSetup,
+} from "./validation";
 
 const COURTS = 3;
 
@@ -43,6 +50,10 @@ function parseJsonInput(text: string, label: string): { value: unknown | null; e
     const detail = error instanceof Error ? error.message : "Unknown JSON parsing error.";
     return { value: null, error: `Could not parse ${label} JSON: ${detail}` };
   }
+}
+
+function sessionHasData(session: Session): boolean {
+  return session.players.length > 0 || session.rotas.length > 0 || session.results.length > 0;
 }
 
 export default function App() {
@@ -152,8 +163,10 @@ export default function App() {
     }
 
     const validation = validateSessionSetup(importedSession.value, COURTS);
-    if (!validation.valid) {
-      setSetupErrors(validation.errors);
+    const resultsValidation = validateSessionResults(importedSession.value);
+    const errors = [...validation.errors, ...resultsValidation.errors];
+    if (errors.length > 0) {
+      setSetupErrors(errors);
       return;
     }
 
@@ -212,6 +225,7 @@ export default function App() {
               className="danger"
               type="button"
               onClick={() => {
+                if (sessionHasData(restoredSession) && !window.confirm("Start a new session and replace the saved one?")) return;
                 setStorageWarning(clearSession().warning);
                 commitSession(newSession());
                 setSelectedRotaNumber(1);
@@ -245,6 +259,7 @@ export default function App() {
           className="danger"
           type="button"
           onClick={() => {
+            if (sessionHasData(session) && !window.confirm("Start a new session and replace the current one?")) return;
             const clearResult = clearSession();
             setStorageWarning(clearResult.warning);
             const saveResult = commitSession(newSession());
@@ -295,7 +310,12 @@ export default function App() {
                   value={player.displayName}
                   onChange={(event) => updatePlayer(index, { displayName: event.target.value })}
                 />
-                <button className="icon danger" type="button" title="Remove player" onClick={() => removePlayer(index)}>
+                <button
+                  aria-label={`Remove player ${player.displayName || index + 1}`}
+                  className="icon danger"
+                  type="button"
+                  onClick={() => removePlayer(index)}
+                >
                   <Trash2 size={16} />
                 </button>
               </div>

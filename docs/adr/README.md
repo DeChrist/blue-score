@@ -1,0 +1,12 @@
+# Architecture Decisions
+
+Compact ADRs for decisions that should guide future changes.
+
+| ADR | Decision |
+| --- | --- |
+| [ADR-001](001-spa-local-first.md) | React + Vite SPA, local-first browser storage |
+| [ADR-002](002-domain-and-rota-boundaries.md) | Keep scoring/validation/provider boundaries explicit |
+| [ADR-003](003-import-and-result-validation.md) | Treat imported sessions and results as trust boundaries |
+| [ADR-004](004-quality-gates-and-deploy.md) | Enforce CI quality gates and deploy GitHub Pages from CI/CD |
+| [ADR-005](005-design-system-css.md) | Use a small CSS design system, not a UI framework |
+| [ADR-006](006-test-strategy.md) | Prefer focused pure-function tests until UI regressions justify DOM tests |

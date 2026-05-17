@@ -1,5 +1,5 @@
 import type { Session } from "./types";
-import { parseImportedSession } from "./validation";
+import { parseImportedSession, validateSessionResults } from "./validation";
 
 export const STORAGE_KEY = "padel-americano-session-v1";
 
@@ -63,6 +63,11 @@ export function loadSession(options?: StorageOptions): LoadSessionResult {
 
   const importResult = parseImportedSession(parsed);
   if (!importResult.value) {
+    return { session: null, warning: clearCorrupted(storage) };
+  }
+
+  const resultsValidation = validateSessionResults(importResult.value);
+  if (!resultsValidation.valid) {
     return { session: null, warning: clearCorrupted(storage) };
   }
 
