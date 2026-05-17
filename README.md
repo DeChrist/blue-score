@@ -7,10 +7,10 @@ Single-page, browser-only React + TypeScript app for running a padel Americano s
 - Version: `0.2.0`
 - Runtime: browser only, no backend, no authentication
 - Persistence: full session in `localStorage` under `padel-americano-session-v1`
-- Rota source: imported precomputed JSON through `StaticRotaProvider`
+- Rota source: in-browser deterministic generation in standard mode; imported JSON through `StaticRotaProvider` in advanced mode
 - Deployment: GitHub Pages via `.github/workflows/ci-cd.yml`
 
-Rota generation is intentionally not implemented. `PlaceholderGeneratedRotaProvider` is the extension point for a future generated-rota module.
+Rota generation runs fully in the browser with no backend, randomness, precomputed files, or network calls. `GeneratedRotaProvider` maps numeric technical schedules back to the existing domain `Player.id` values. `PlaceholderGeneratedRotaProvider` remains as a compatibility subclass.
 
 ## App Modes
 
@@ -18,7 +18,7 @@ Controlled by the `?mode=` query parameter:
 
 | Mode | Description |
 |------|-------------|
-| `standard` (default) | Simplified UI; rota generation placeholder |
+| `standard` (default) | Simplified UI; generates deterministic rotas in the browser |
 | `demo` | Pre-loaded sample data for demonstrations |
 | `advanced` | Full JSON import/export for power users |
 
@@ -49,7 +49,10 @@ Key source boundaries:
 - `src/scoring.ts`: deterministic scoring and standings helpers
 - `src/validation.ts`: JSON import parsing and domain validation
 - `src/storage.ts`: guarded browser storage reads/writes
-- `src/rotaProvider.ts`: rota provider interface and static import provider
+- `src/rotaGenerator.ts`: deterministic bounded Americano rota generation using numeric player indexes
+- `src/rotaProvider.ts`: rota provider interface, generated provider, and static import provider
+
+The generator starts iterative deepening from the theoretical lower bound and returns the first fully covered rota found by bounded deterministic beam search. The rotation count is the minimum found by that search, not a proof of global optimality.
 
 ## Mobile Testing
 
