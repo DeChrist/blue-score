@@ -5,7 +5,9 @@ Guidance for AI coding agents working in this repository.
 ## Commands
 
 ```bash
-npm run dev
+npm run dev           
+npm run dev:demo      
+npm run dev:advanced  
 npm run mobile-test
 npm run lint
 npm test
@@ -25,6 +27,7 @@ Important boundaries:
 - `scoring.ts` contains pure scoring utilities and standings calculation.
 - `validation.ts` contains JSON shape parsing plus domain validation for players, rotas, scores, and submitted results.
 - `rotaProvider.ts` defines the rota provider interface. Rota generation is not implemented in this app.
+- `appMode.ts` parses `?mode=` into `AppMode` (`standard` | `demo` | `advanced`); `App.tsx` reads it at module level.
 - `styles.css` is guided by `design-system/MASTER.md`; do not add Tailwind or a component framework.
 
 ## Change Rules
