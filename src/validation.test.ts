@@ -63,7 +63,7 @@ describe("validateSessionSetup", () => {
       {
         name: "",
         pointsPerCourt: 0,
-        players: players.slice(0, 15),
+        players: players.slice(0, 11),
         rotas: [validRota],
       },
       3,
@@ -72,7 +72,7 @@ describe("validateSessionSetup", () => {
     expect(result.valid).toBe(false);
     expect(result.errors).toContain("Session name is required.");
     expect(result.errors).toContain("Points per court must be a positive integer.");
-    expect(result.errors).toContain("Default Americano setup expects exactly 16 players.");
+    expect(result.errors).toContain("Americano setup expects between 12 and 16 players for 3 courts.");
   });
 
   it("accepts a valid americano setup", () => {

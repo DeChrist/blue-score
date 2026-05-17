@@ -10,3 +10,4 @@ Compact ADRs for decisions that should guide future changes.
 | [ADR-004](004-quality-gates-and-deploy.md) | Enforce CI quality gates and deploy GitHub Pages from CI/CD |
 | [ADR-005](005-design-system-css.md) | Use a small CSS design system, not a UI framework |
 | [ADR-006](006-test-strategy.md) | Prefer focused pure-function tests until UI regressions justify DOM tests |
+| [ADR-007](007-deterministic-rota-generation.md) | Generate Americano rotas in-browser with bounded deterministic search |
