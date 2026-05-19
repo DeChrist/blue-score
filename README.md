@@ -4,7 +4,7 @@ Single-page, browser-only React + TypeScript app for running a padel Americano s
 
 ## Current MVP
 
-- Version: `0.2.0`
+- Versioning: Git tags and GitHub Releases are created by CI on `main`
 - Runtime: browser only, no backend, no authentication
 - Persistence: full session in `localStorage` under `padel-americano-session-v1`
 - Rota source: in-browser deterministic generation in standard mode; imported JSON through `StaticRotaProvider` in advanced mode
@@ -38,6 +38,14 @@ npm run build
 ```
 
 CI uses Node 24 and runs lint, tests, and build before deployment.
+
+On pushes to `main`, the workflow then runs a `release` job after deploy:
+
+- major bump: commits matching `+semver: major`, `BREAKING CHANGE`, or Conventional Commit bang form (for example `feat!:`)
+- patch bump: commits matching `+semver: patch` or `fix:` / `fix(scope):`
+- minor bump: default when neither major nor patch rules match
+
+The job creates and pushes a `vX.Y.Z` tag and publishes a GitHub Release with generated notes.
 
 ## Architecture
 
