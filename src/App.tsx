@@ -224,7 +224,7 @@ export default function App() {
     if (!session) return;
     commitSession({
       ...session,
-      players: [...session.players, { id: `player-${session.players.length + 1}`, displayName: "" }],
+      players: [...session.players, { id: crypto.randomUUID(), displayName: "" }],
     });
   }
 
@@ -408,7 +408,7 @@ export default function App() {
               </button>
             )}
 
-            {[...setupErrors, ...setupValidation.errors].filter(Boolean).slice(0, 8).map((error) => (
+            {Array.from(new Set([...setupErrors, ...setupValidation.errors])).filter(Boolean).slice(0, 8).map((error) => (
               <p className="error" key={error}>
                 {error}
               </p>

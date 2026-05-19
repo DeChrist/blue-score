@@ -259,7 +259,9 @@ export function validatePlayers(players: Player[]): ValidationResult {
 
   players.forEach((player, index) => {
     if (!player.id.trim()) errors.push(`Player ${index + 1} needs an id.`);
-    if (!player.displayName.trim()) errors.push(`Player ${player.id || index + 1} needs a display name.`);
+    // Use row index, not player.id, so each empty row gets a distinct error
+    // even when several rows share the same id (legacy data or imports).
+    if (!player.displayName.trim()) errors.push(`Player ${index + 1} needs a display name.`);
     if (seen.has(player.id)) errors.push(`Duplicate player id: ${player.id}.`);
     seen.add(player.id);
   });

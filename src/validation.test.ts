@@ -30,10 +30,35 @@ describe("validatePlayers", () => {
     expect(result.errors).toContain("Duplicate player id: p1.");
   });
 
-  it("rejects missing display names", () => {
-    const result = validatePlayers([{ id: "p1", displayName: "" }]);
+  it("rejects missing display names with a row-index label", () => {
+    const result = validatePlayers([
+      { id: "p1", displayName: "" },
+      { id: "p2", displayName: "Bea" },
+      { id: "p3", displayName: "" },
+    ]);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain("Player p1 needs a display name.");
+    // Row index, not player.id — so multiple rows with the same id still produce
+    // distinct, scannable error messages.
+    expect(result.errors).toContain("Player 1 needs a display name.");
+    expect(result.errors).toContain("Player 3 needs a display name.");
+  });
+
+  it("flags every duplicate-id row's missing name distinctly", () => {
+    const result = validatePlayers([
+      { id: "dup", displayName: "" },
+      { id: "dup", displayName: "" },
+      { id: "dup", displayName: "" },
+    ]);
+    // Three rows share an id (regression: addPlayer used to recycle suffixes).
+    // Each row must get its own distinct missing-name error, plus duplicate-id
+    // errors for the second and third occurrences.
+    expect(result.errors).toEqual([
+      "Player 1 needs a display name.",
+      "Player 2 needs a display name.",
+      "Duplicate player id: dup.",
+      "Player 3 needs a display name.",
+      "Duplicate player id: dup.",
+    ]);
   });
 });
 
