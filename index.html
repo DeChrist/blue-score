@@ -3,8 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Content-Security-Policy: locks down script, style, font, and network sources to
+      same-origin only. connect-src includes ws:/wss: so Vite HMR works in development
+      (in dev, React Fast Refresh may log a CSP warning for its preamble script, but the
+      app still loads; full page reloads work normally). 'unsafe-inline' is intentionally
+      omitted: adding it would neuter the XSS protection that CSP provides.
+      Note: frame-ancestors cannot be set via <meta> (browser-ignored); a server header
+      would be needed to prevent framing, which GitHub Pages does not support without a proxy.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' ws: wss:; base-uri 'self'; form-action 'self';" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>Padel Americano</title>
   </head>
   <body>
