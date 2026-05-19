@@ -1,3 +1,16 @@
+// Deterministic Americano rota generator. Pipeline:
+//   1. calculateRotationLowerBound — theoretical minimum rotations from pair-coverage and play-share constraints.
+//   2. generateSitOutPlans — modular-arithmetic seeds, filtered for fairness (max-min sit-out count delta ≤ 1) and pair-coactivity.
+//   3. buildGroupPartitions — for each rotation, anchor-by-lowest enumerate 4-player groups per court; memoized.
+//   4. chooseBestSplit — for each group, pick the 1-of-3 partner split that minimizes repeated partners then opponents.
+//   5. searchForScheduleWithSitOutPlan — beam search across rotations; state ranked by
+//      (uncovered pairs, repeated partners, sit-out fairness, repeated opponents, repeated court composition).
+//   6. generateTechnicalRotas — iterative deepening on rotationCount from the lower bound, with
+//      expanding beam widths and sit-out plan counts until the first fully covered schedule is found.
+//
+// shouldPruneState drops states whose remaining capacity can no longer cover the still-uncovered pairs.
+// The courtCount >= 5 branches halve every search budget to keep mobile generation under a second.
+
 import type { Player, Rota } from "./types";
 
 export type TechnicalPair = readonly [number, number];
@@ -75,10 +88,17 @@ type SearchPrecompute = {
   futurePairCoactive: Uint8Array[];
 };
 
+// Search budgets. Higher = better coverage but slower; tuned for 12–28 players on phone-class CPUs.
+// Raise BEAM_WIDTHS / ROTATION_EXPANSION_LIMIT if generation throws "could not generate" or returns
+// rotation counts noticeably above the lower bound. Raise PARTITION_LIMIT / GROUP_CANDIDATE_LIMIT if
+// rotas show many repeated court compositions. SITOUT_PLAN_LIMIT rarely needs raising because plans
+// are already filtered for fairness and pair-coactivity.
 const BEAM_WIDTHS = [100, 300, 1000] as const;
 const SITOUT_PLAN_LIMIT = 16;
 const GROUP_CANDIDATE_LIMIT = 12;
 const PARTITION_LIMIT = 8;
+// Per-state candidate fan-out inside the beam. Two is enough to escape local minima without
+// exploding the beam; raise only if beam diversity is collapsing on hard inputs.
 const ROTATION_EXPANSION_LIMIT = 2;
 
 function groupCandidateLimit(context: GeneratorContext): number {
@@ -473,6 +493,8 @@ export function buildRotationCandidates({
   return buildRotationCandidatesWithContext({ activePlayers, state, context, limit });
 }
 
+// Invert n(n-1)/2 = totalPairs to recover playerCount; only needed because the
+// public buildRotationCandidates entry point doesn't take playerCount directly.
 function statePartnerPlayerCount(state: ScheduleState): number {
   const totalPairs = state.partnerCounts.length;
   return Math.ceil((1 + Math.sqrt(1 + 8 * totalPairs)) / 2);
@@ -648,6 +670,11 @@ function precomputeSearch(sitOutPlan: SitOutPlan, context: GeneratorContext): Se
   return { futurePlayCounts, futurePairCoactive };
 }
 
+// Drops states that provably cannot finish. A state is dead if any of:
+//   - remaining rotations cannot fit the uncovered pair budget (courtCount * 6 new pairs per rotation), or
+//   - some uncovered pair has no future rotation where both players are active, or
+//   - some player still needs more partners than their remaining play slots can supply
+//     (each played rotation contributes 3 distinct partners on that player's court).
 function shouldPruneState(state: ScheduleState, rotationIndex: number, context: GeneratorContext, precompute: SearchPrecompute): boolean {
   const remainingRotations = precompute.futurePlayCounts.length - 1 - rotationIndex;
   if (state.uncoveredSharedPairsRemaining > remainingRotations * context.courtCount * 6) return true;
