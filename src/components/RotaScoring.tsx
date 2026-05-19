@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Edit3 } from "lucide-react";
+import { makePlayerNameLookup } from "../playerLookup";
 import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
 import type { CourtScore, RotaResult, Session } from "../types";
 import { combineValidation, validateCourtScore } from "../validation";
@@ -14,7 +15,7 @@ interface Props {
 export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRotaChange }: Props) {
   const rota = session.rotas.find((item) => item.rotaNumber === selectedRotaNumber) ?? session.rotas[0];
   const existingResult = session.results.find((result) => result.rotaNumber === rota?.rotaNumber);
-  const playerName = (id: string) => session.players.find((player) => player.id === id)?.displayName ?? id;
+  const playerName = makePlayerNameLookup(session.players);
   const [scores, setScores] = useState<CourtScore[]>(() =>
     existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []),
   );
