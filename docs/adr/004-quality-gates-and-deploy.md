@@ -18,3 +18,4 @@ Pushes to `main` deploy the Vite build to GitHub Pages.
 - Local checks should mirror CI before finalizing changes.
 - GitHub Actions permissions stay minimal and explicit.
 - Deployment configuration belongs in CI, not in manual release notes.
+- The production build step is also where browser security hardening is applied: `vite.config.ts` injects a strict Content-Security-Policy `<meta>` tag via `transformIndexHtml` only during `build`, so the CSP does not interfere with Vite dev tooling.

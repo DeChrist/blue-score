@@ -8,7 +8,10 @@ The app uses a small CSS design system in `src/styles.css`, guided by `design-sy
 
 No Tailwind, component library, CSS modules, or theme framework is introduced for v0.1.x.
 
+Fonts are bundled locally using `@fontsource/fira-sans` and `@fontsource/fira-code` rather than loaded from an external CDN. This eliminates all third-party network requests at runtime, prevents `Referer` header leakage to font services, and keeps the Content-Security-Policy free of external allowlist entries.
+
 ## Consequences
 - UI changes should reuse existing tokens, spacing, and panel patterns.
 - The design system should describe durable constraints, not every possible future enhancement.
 - Outdoor readability and courtside touch ergonomics take priority over decorative UI.
+- Introducing a new external asset source (font, icon CDN, etc.) is not a drop-in change — it requires a deliberate policy update and a note in ADR-008.

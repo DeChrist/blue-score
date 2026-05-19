@@ -40,4 +40,5 @@ Important boundaries:
 - When changing generated rota behavior, update `src/rotaGenerator.test.ts` and provider coverage in `src/rotaProvider.test.ts`.
 - Prefer small, explicit helpers over broad refactors. `App.tsx` and `validation.ts` are known large files, but splitting them is not required for ordinary changes.
 - Preserve local-first behavior: no backend, no auth, no network persistence.
+- Do not introduce external CDN, font service, or analytics dependencies; all assets must be bundled. Adding any external origin requires a deliberate update to the CSP policy in `vite.config.ts` (see ADR-005, ADR-008).
 - Do not describe generated rotation counts as proven globally optimal. The generator returns the minimum found by bounded deterministic search from the theoretical lower bound.
