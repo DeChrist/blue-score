@@ -234,6 +234,10 @@ h3 {
   grid-template-columns: minmax(86px, 0.8fr) minmax(130px, 1.5fr) 42px;
 }
 
+.player-row--no-id {
+  grid-template-columns: 1fr 42px;
+}
+
 .icon {
   min-height: 42px;
   padding: 0;
@@ -535,6 +539,10 @@ td:nth-child(6) {
 
   .player-row {
     grid-template-columns: 1fr 1fr 42px;
+  }
+
+  .player-row--no-id {
+    grid-template-columns: 1fr 42px;
   }
 
   table,

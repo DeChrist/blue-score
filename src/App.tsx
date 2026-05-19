@@ -359,10 +359,16 @@ export default function App() {
             </div>
             <div className="player-editor">
               {session.players.map((player, index) => (
-                <div className="player-row" key={`${player.id}-${index}`}>
-                  <input aria-label="Player id" value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
+                <div
+                  className={mode.kind === "advanced" ? "player-row" : "player-row player-row--no-id"}
+                  key={`${player.id}-${index}`}
+                >
+                  {mode.kind === "advanced" && (
+                    <input aria-label="Player id" value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
+                  )}
                   <input
-                    aria-label="Display name"
+                    aria-label={`Player ${index + 1} display name`}
+                    placeholder={`Player ${index + 1}`}
                     value={player.displayName}
                     onChange={(event) => updatePlayer(index, { displayName: event.target.value })}
                   />
