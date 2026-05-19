@@ -15,7 +15,7 @@ npm run build
 npx vitest run src/scoring.test.ts
 ```
 
-CI/CD runs in `.github/workflows/ci-cd.yml` on Node 24. It enforces lint, tests, and build before GitHub Pages deployment.
+CI/CD runs in `.github/workflows/ci-cd.yml` on Node 24. It enforces lint, tests, and build before GitHub Pages deployment, then runs an automated `release` job on pushes to `main`.
 
 ## Architecture
 
@@ -34,6 +34,7 @@ Important boundaries:
 ## Change Rules
 
 - Keep warnings at zero; lint uses `--max-warnings 0`.
+- Commit messages should follow conventional commit format to influence release versioning in CI: major for `+semver: major` / `BREAKING CHANGE` / `type!`, patch for `+semver: patch` or `fix:`, otherwise minor.
 - When changing scoring behavior, update `src/scoring.test.ts`.
 - When changing import or storage trust boundaries, update `validation.imports.test.ts` or `storage.test.ts`.
 - When changing generated rota behavior, update `src/rotaGenerator.test.ts` and provider coverage in `src/rotaProvider.test.ts`.
