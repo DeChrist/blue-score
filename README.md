@@ -11,7 +11,7 @@ Single-page, browser-only React + TypeScript app for running a padel Americano s
 - Deployment: GitHub Pages via `.github/workflows/ci-cd.yml`
 - Security: all assets self-contained; production build applies a strict Content-Security-Policy via Vite transform (see [ADR-008](docs/adr/008-browser-security-hardening.md))
 
-Rota generation runs fully in the browser with no backend, randomness, precomputed files, or network calls. `GeneratedRotaProvider` maps numeric technical schedules back to the existing domain `Player.id` values. `PlaceholderGeneratedRotaProvider` remains as a compatibility subclass.
+Rota generation runs fully in the browser with no backend, randomness, precomputed files, or network calls. `GeneratedRotaProvider` maps numeric technical schedules back to the existing domain `Player.id` values.
 
 ## App Modes
 

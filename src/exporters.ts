@@ -1,3 +1,4 @@
+import { formatPair, makePlayerNameLookup } from "./playerLookup";
 import { calculateStandings } from "./scoring";
 import type { Session, StandingRow } from "./types";
 
@@ -27,7 +28,7 @@ export function exportStandingsCsv(standings: StandingRow[]): string {
 }
 
 export function exportResultsCsv(session: Session): string {
-  const playerName = (id: string) => session.players.find((player) => player.id === id)?.displayName ?? id;
+  const playerName = makePlayerNameLookup(session.players);
   const rows = [line(["Rota", "Court", "Left pair", "Left score", "Right pair", "Right score"])];
 
   session.results.forEach((result) => {
@@ -41,9 +42,9 @@ export function exportResultsCsv(session: Session): string {
         line([
           result.rotaNumber,
           score.courtNumber,
-          `${playerName(court.leftPair.player1Id)} / ${playerName(court.leftPair.player2Id)}`,
+          formatPair(playerName, court.leftPair),
           score.leftScore,
-          `${playerName(court.rightPair.player1Id)} / ${playerName(court.rightPair.player2Id)}`,
+          formatPair(playerName, court.rightPair),
           score.rightScore,
         ]),
       );

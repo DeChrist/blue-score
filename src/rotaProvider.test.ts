@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GeneratedRotaProvider, PlaceholderGeneratedRotaProvider, StaticRotaProvider } from "./rotaProvider";
+import { GeneratedRotaProvider, StaticRotaProvider } from "./rotaProvider";
 import type { GetRotasInput, Player, Rota } from "./types";
 import { validateRotas } from "./validation";
 
@@ -51,13 +51,6 @@ describe("GeneratedRotaProvider", () => {
     });
   });
 
-  it("keeps the placeholder provider compatible without throwing the old placeholder error", async () => {
-    const input = makeInput();
-    const rotas = await new PlaceholderGeneratedRotaProvider().getRotas(input);
-
-    expect(rotas.length).toBeGreaterThan(0);
-    expect(validateRotas(rotas, input.players, input.courts).valid).toBe(true);
-  });
 });
 
 describe("StaticRotaProvider", () => {
