@@ -59,5 +59,6 @@ describe("CSV escaping", () => {
     expect(csv).toContain('"Smith, Bob / Alice"');
     // The clean pair stays unquoted.
     expect(csv).toContain("Carol / Dan");
+    expect(csv).not.toContain('"Carol / Dan"');
   });
 });
