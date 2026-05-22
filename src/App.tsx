@@ -364,7 +364,7 @@ export default function App() {
                   key={`${player.id}-${index}`}
                 >
                   {mode.kind === "advanced" && (
-                    <input aria-label="Player id" value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
+                    <input aria-label={`Player ${index + 1} id`} value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
                   )}
                   <input
                     aria-label={`Player ${index + 1} display name`}
