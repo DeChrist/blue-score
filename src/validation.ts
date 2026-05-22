@@ -255,16 +255,24 @@ export function combineValidation(results: ValidationResult[]): ValidationResult
 
 export function validatePlayers(players: Player[]): ValidationResult {
   const errors: string[] = [];
-  const seen = new Set<string>();
+  const seenIds = new Set<string>();
+  const seenNames = new Set<string>();
 
   players.forEach((player, index) => {
     const id = player.id.trim();
+    const name = player.displayName.trim();
     if (!id) errors.push(`Player ${index + 1} needs an id.`);
     // Use row index, not id, so each empty row gets a distinct error.
-    if (!player.displayName.trim()) errors.push(`Player ${index + 1} needs a display name.`);
+    if (!name) {
+      errors.push(`Player ${index + 1} needs a display name.`);
+    } else {
+      const nameKey = name.toLowerCase();
+      if (seenNames.has(nameKey)) errors.push(`Duplicate player name: ${name}.`);
+      seenNames.add(nameKey);
+    }
     if (id) {
-      if (seen.has(id)) errors.push(`Duplicate player id: ${id}.`);
-      seen.add(id);
+      if (seenIds.has(id)) errors.push(`Duplicate player id: ${id}.`);
+      seenIds.add(id);
     }
   });
 
