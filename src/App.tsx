@@ -237,7 +237,7 @@ export default function App() {
     if (!session) return;
     commitSession({
       ...session,
-      players: [...session.players, { id: `player-${session.players.length + 1}`, displayName: "" }],
+      players: [...session.players, { id: crypto.randomUUID(), displayName: "" }],
     });
   }
 
@@ -372,10 +372,16 @@ export default function App() {
             </div>
             <div className="player-editor">
               {session.players.map((player, index) => (
-                <div className="player-row" key={`${player.id}-${index}`}>
-                  <input aria-label="Player id" value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
+                <div
+                  className={mode.kind === "advanced" ? "player-row" : "player-row player-row--no-id"}
+                  key={`${player.id}-${index}`}
+                >
+                  {mode.kind === "advanced" && (
+                    <input aria-label={`Player ${index + 1} id`} value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
+                  )}
                   <input
-                    aria-label="Display name"
+                    aria-label={`Player ${index + 1} display name`}
+                    placeholder={`Player ${index + 1}`}
                     value={player.displayName}
                     onChange={(event) => updatePlayer(index, { displayName: event.target.value })}
                   />
@@ -427,7 +433,7 @@ export default function App() {
               </button>
             )}
 
-            {[...setupErrors, ...setupValidation.errors].filter(Boolean).slice(0, 8).map((error) => (
+            {Array.from(new Set([...setupErrors, ...setupValidation.errors])).filter(Boolean).slice(0, 8).map((error) => (
               <p className="error" key={error}>
                 {error}
               </p>
