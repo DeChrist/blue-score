@@ -258,12 +258,14 @@ export function validatePlayers(players: Player[]): ValidationResult {
   const seen = new Set<string>();
 
   players.forEach((player, index) => {
-    if (!player.id.trim()) errors.push(`Player ${index + 1} needs an id.`);
-    // Use row index, not player.id, so each empty row gets a distinct error
-    // even when several rows share the same id (legacy data or imports).
+    const id = player.id.trim();
+    if (!id) errors.push(`Player ${index + 1} needs an id.`);
+    // Use row index, not id, so each empty row gets a distinct error.
     if (!player.displayName.trim()) errors.push(`Player ${index + 1} needs a display name.`);
-    if (seen.has(player.id)) errors.push(`Duplicate player id: ${player.id}.`);
-    seen.add(player.id);
+    if (id) {
+      if (seen.has(id)) errors.push(`Duplicate player id: ${id}.`);
+      seen.add(id);
+    }
   });
 
   return fail(errors);

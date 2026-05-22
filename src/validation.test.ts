@@ -18,6 +18,13 @@ const validRota: Rota = {
 };
 
 describe("validatePlayers", () => {
+  it("accepts a clean player list", () => {
+    const result = validatePlayers(players);
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
   it("rejects missing and duplicate ids", () => {
     const result = validatePlayers([
       { id: "", displayName: "Alpha" },
@@ -59,6 +66,25 @@ describe("validatePlayers", () => {
       "Player 3 needs a display name.",
       "Duplicate player id: dup.",
     ]);
+  });
+
+  it("does not produce duplicate-id error for multiple blank ids", () => {
+    const result = validatePlayers([
+      { id: "  ", displayName: "Alpha" },
+      { id: "  ", displayName: "Bravo" },
+    ]);
+    expect(result.errors).toEqual([
+      "Player 1 needs an id.",
+      "Player 2 needs an id.",
+    ]);
+  });
+
+  it("treats ids that differ only by whitespace as duplicates", () => {
+    const result = validatePlayers([
+      { id: "foo ", displayName: "Alpha" },
+      { id: "foo", displayName: "Bravo" },
+    ]);
+    expect(result.errors).toContain("Duplicate player id: foo.");
   });
 });
 
