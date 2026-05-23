@@ -86,6 +86,32 @@ describe("validatePlayers", () => {
     ]);
     expect(result.errors).toContain("Duplicate player id: foo.");
   });
+
+  it("rejects duplicate display names", () => {
+    const result = validatePlayers([
+      { id: "p1", displayName: "Thomas Bennett" },
+      { id: "p2", displayName: "Thomas Bennett" },
+    ]);
+    expect(result.errors).toContain("Duplicate player name: Thomas Bennett.");
+  });
+
+  it("treats display names that differ only by case as duplicates", () => {
+    const result = validatePlayers([
+      { id: "p1", displayName: "Tom" },
+      { id: "p2", displayName: "tom" },
+    ]);
+    expect(result.errors).toContain("Duplicate player name: tom.");
+  });
+
+  it("does not produce duplicate-name error for multiple blank names", () => {
+    const result = validatePlayers([
+      { id: "p1", displayName: "" },
+      { id: "p2", displayName: "" },
+    ]);
+    expect(result.errors).toEqual(
+      expect.not.arrayContaining([expect.stringContaining("Duplicate player name")]),
+    );
+  });
 });
 
 describe("validateRotas and validateRota", () => {
