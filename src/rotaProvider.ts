@@ -34,5 +34,3 @@ export class GeneratedRotaProvider implements RotaProvider {
     return rotas;
   }
 }
-
-export class PlaceholderGeneratedRotaProvider extends GeneratedRotaProvider {}

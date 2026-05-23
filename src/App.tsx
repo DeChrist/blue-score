@@ -75,6 +75,7 @@ export default function App() {
   const [selectedRotaNumber, setSelectedRotaNumber] = useState(1);
   const [setupOpen, setSetupOpen] = useState(() => !session || session.rotas.length === 0);
   const [notice, setNotice] = useState(storedAtLoad.warning ?? "");
+  const [generating, setGenerating] = useState(false);
 
   const standings = useMemo(() => (session ? calculateStandings(session) : []), [session]);
 
@@ -95,9 +96,17 @@ export default function App() {
     setSelectedRotaNumber(next.currentRotaNumber);
   }
 
-  function copy(text: string, label: string) {
-    navigator.clipboard.writeText(text);
-    setNotice(`${label} copied.`);
+  async function copy(text: string, label: string) {
+    if (!navigator.clipboard?.writeText) {
+      setNotice(`Clipboard is unavailable in this browser. Use Export to download ${label.toLowerCase()} instead.`);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setNotice(`${label} copied.`);
+    } catch {
+      setNotice(`Could not copy ${label.toLowerCase()}. Browser denied clipboard access; try Export instead.`);
+    }
   }
 
   function loadPlayers() {
@@ -150,7 +159,7 @@ export default function App() {
   }
 
   async function setupGeneratedRotas() {
-    if (!session) return;
+    if (!session || generating) return;
 
     const minPlayers = COURTS * 4;
     const maxPlayers = minPlayers + 4;
@@ -166,8 +175,10 @@ export default function App() {
       return;
     }
 
+    setGenerating(true);
     try {
       setNotice("Generating rotas...");
+      // Yield so the busy state paints before the synchronous generator runs.
       await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
       const provider = new GeneratedRotaProvider();
       const rotas = await provider.getRotas({ players: session.players, courts: COURTS, pointsPerCourt: session.pointsPerCourt });
@@ -178,6 +189,8 @@ export default function App() {
     } catch (error) {
       setSetupErrors([error instanceof Error ? error.message : "Could not generate rotas."]);
       setNotice("");
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -405,8 +418,14 @@ export default function App() {
             )}
 
             {mode.kind === "standard" ? (
-              <button className="primary wide" type="button" onClick={setupGeneratedRotas}>
-                <Save size={18} /> Setup Rotas
+              <button
+                className="primary wide"
+                type="button"
+                onClick={setupGeneratedRotas}
+                disabled={generating}
+                aria-busy={generating}
+              >
+                <Save size={18} /> {generating ? "Generating rotas..." : "Setup Rotas"}
               </button>
             ) : (
               <button className="primary wide" type="button" disabled={!setupValidation.valid} onClick={startScoring}>

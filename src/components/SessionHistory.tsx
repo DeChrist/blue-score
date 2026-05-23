@@ -1,3 +1,4 @@
+import { formatPair, makePlayerNameLookup } from "../playerLookup";
 import type { Session } from "../types";
 
 interface Props {
@@ -6,7 +7,7 @@ interface Props {
 }
 
 export function SessionHistory({ session, onSelectRota }: Props) {
-  const playerName = (id: string) => session.players.find((player) => player.id === id)?.displayName ?? id;
+  const playerName = makePlayerNameLookup(session.players);
 
   return (
     <section className="panel">
@@ -34,15 +35,11 @@ export function SessionHistory({ session, onSelectRota }: Props) {
                     <div className="history-score" key={score.courtNumber}>
                       <span>Court {score.courtNumber}</span>
                       <span>
-                        {court
-                          ? `${playerName(court.leftPair.player1Id)} / ${playerName(court.leftPair.player2Id)}`
-                          : "Left pair"}{" "}
+                        {court ? formatPair(playerName, court.leftPair) : "Left pair"}{" "}
                         <strong>{score.leftScore}</strong>
                       </span>
                       <span>
-                        {court
-                          ? `${playerName(court.rightPair.player1Id)} / ${playerName(court.rightPair.player2Id)}`
-                          : "Right pair"}{" "}
+                        {court ? formatPair(playerName, court.rightPair) : "Right pair"}{" "}
                         <strong>{score.rightScore}</strong>
                       </span>
                     </div>
