@@ -108,7 +108,9 @@ describe("validatePlayers", () => {
       { id: "p1", displayName: "" },
       { id: "p2", displayName: "" },
     ]);
-    expect(result.errors).not.toContain(expect.stringContaining("Duplicate player name"));
+    expect(result.errors).toEqual(
+      expect.not.arrayContaining([expect.stringContaining("Duplicate player name")]),
+    );
   });
 });
 
