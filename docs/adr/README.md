@@ -2,6 +2,8 @@
 
 Compact ADRs for decisions that should guide future changes.
 
+Quality follow-up items are tracked separately in the [Technical Debt (TD) Backlog](../technical-debt-backlog.md).
+
 | ADR | Decision |
 | --- | --- |
 | [ADR-001](001-spa-local-first.md) | React + Vite SPA, local-first browser storage |
