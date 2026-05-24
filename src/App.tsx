@@ -46,7 +46,7 @@ function downloadText(filename: string, text: string, type = "text/plain") {
   URL.revokeObjectURL(url);
 }
 
-function parseJsonInput(text: string, label: string): { value: unknown | null; error: string | null } {
+function parseJsonInput(text: string, label: string): { value: unknown; error: string | null } {
   try {
     return { value: JSON.parse(text), error: null };
   } catch (error) {

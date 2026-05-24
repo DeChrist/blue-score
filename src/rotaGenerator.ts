@@ -289,8 +289,7 @@ function validateSitOutPlan(plan: SitOutPlan, playerCount: number, courtCount: n
   const previous = Array<boolean>(playerCount).fill(false);
   const sitOutSets = plan.map((sitOuts) => new Set(sitOuts));
 
-  for (let rotationIndex = 0; rotationIndex < plan.length; rotationIndex += 1) {
-    const sitOuts = plan[rotationIndex];
+  for (const sitOuts of plan) {
     if (sitOuts.length !== sitOutsPerRotation) return false;
 
     const sorted = [...sitOuts].sort((a, b) => a - b);

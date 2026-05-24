@@ -75,8 +75,9 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
             rightScore: 0,
           };
           const courtValidation = validateCourtScore(score, session.pointsPerCourt);
-          const leading: "left" | "right" | null =
-            score.leftScore === score.rightScore ? null : score.leftScore > score.rightScore ? "left" : "right";
+          let leading: "left" | "right" | null = null;
+          if (score.leftScore > score.rightScore) leading = "left";
+          else if (score.rightScore > score.leftScore) leading = "right";
           return (
             <article className="court-card" key={court.courtNumber}>
               <div className="court-head">
