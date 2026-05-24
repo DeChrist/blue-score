@@ -37,8 +37,7 @@ Important boundaries:
 
 On any plan or significant change request, consult the backlog. If the planned work touches a P1 area — imports, session setup, scoring state — surface the relevant item and invite the user to address it before or alongside the change. The backlog is a living document: update it when a finding is dispositioned, a fix is landed, or the user declines a suggestion worth recording.
 
-The project is monitored by [SonarCloud](https://sonarcloud.io/project/overview?id=DeChrist_blue-score) (public, no auth — OSS project). 
-When a static analyser flags a pattern that is functionally correct, a brief inline disposition comment is lower-risk than auto-refactoring; the backlog's Agent Notes section explains this.
+The project is monitored by [SonarCloud](https://sonarcloud.io/project/overview?id=DeChrist_blue-score) (public, no auth — OSS project). A subset of Sonar findings are also enforced by ESLint; see [`docs/sonar-eslint-mapping.md`](../docs/sonar-eslint-mapping.md) for the full mapping. When a static analyser flags a pattern that is functionally correct, a brief inline disposition comment is lower-risk than auto-refactoring; the backlog's Agent Notes section explains this.
 
 ## Change Rules
 

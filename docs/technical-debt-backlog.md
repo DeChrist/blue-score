@@ -21,7 +21,7 @@ Living list of quality work, not an architecture decision. Priorities are an ini
 | Medium | 3 readability/rendering findings in React code ([first finding](https://sonarcloud.io/project/issues?open=AZ5U58IeqJQ-O8gW3-03&id=DeChrist_blue-score)) | Small cleanup batch, not urgent. |
 | Low | 26 convention/readability findings across app, components, export, generator, provider, and validation code ([first finding](https://sonarcloud.io/project/issues?open=AZ5U58IeqJQ-O8gW3-0y&id=DeChrist_blue-score)) | Batch opportunistically; do not drive design changes. |
 
-Issue links identify the current SonarCloud findings; resolved or removed issues may no longer appear at these open-issue URLs.
+Issue links identify the current SonarCloud findings; resolved or removed issues may no longer appear at these open-issue URLs. For the ESLint rule mapping see [sonar-eslint-mapping.md](sonar-eslint-mapping.md).
 
 ## Prioritized Backlog
 

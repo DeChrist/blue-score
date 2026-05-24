@@ -13,6 +13,10 @@ export default tseslint.config(
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.browser,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     plugins: {
       "react-hooks": reactHooks,
@@ -26,6 +30,11 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      "no-negated-condition": "error",
+      "no-nested-ternary": "error",
+      "@typescript-eslint/prefer-for-of": "error",
+      "@typescript-eslint/require-array-sort-compare": "error",
+      "@typescript-eslint/no-redundant-type-constituents": "error",
     },
   },
 );
