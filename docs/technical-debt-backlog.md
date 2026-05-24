@@ -16,7 +16,7 @@ Living list of quality work, not an architecture decision. Priorities are an ini
 | Impact | Aggregated finding | Take |
 | --- | --- | --- |
 | High | 1 [security finding](https://sonarcloud.io/project/issues?open=AZ5U58IpqJQ-O8gW3-05&id=DeChrist_blue-score) in `storage.ts` | Triage first; initial review suggests this may need documented disposition rather than a behavior change. |
-| High | 2 reliability findings in `validation.ts` ([first finding](https://sonarcloud.io/project/issues?open=AZ5U58H4qJQ-O8gW3-0r&id=DeChrist_blue-score)) | Triage first; initial review suggests these may need documented disposition rather than behavior changes. |
+| High | 2 reliability findings in `validation.ts` ([first finding](https://sonarcloud.io/project/issues?open=AZ5U58H4qJQ-O8gW3-0r&id=DeChrist_blue-score)) | Fixed in #23; pending SonarCloud refresh. |
 | High | 2 cognitive-complexity findings in `rotaGenerator.ts` ([first finding](https://sonarcloud.io/project/issues?open=AZ5U58I1qJQ-O8gW3-07&id=DeChrist_blue-score)) | Address carefully alongside generator runtime work. |
 | Medium | 3 readability/rendering findings in React code ([first finding](https://sonarcloud.io/project/issues?open=AZ5U58IeqJQ-O8gW3-03&id=DeChrist_blue-score)) | Small cleanup batch, not urgent. |
 | Low | 26 convention/readability findings across app, components, export, generator, provider, and validation code ([first finding](https://sonarcloud.io/project/issues?open=AZ5U58IeqJQ-O8gW3-0y&id=DeChrist_blue-score)) | Batch opportunistically; do not drive design changes. |
