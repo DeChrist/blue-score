@@ -50,6 +50,7 @@ The job creates and pushes a `vX.Y.Z` tag and publishes a GitHub Release with ge
 ## Architecture
 
 - ADR index: [docs/adr/README.md](docs/adr/README.md)
+- Technical debt backlog: [docs/technical-debt-backlog.md](docs/technical-debt-backlog.md)
 - Agent instructions: [.github/copilot-instructions.md](.github/copilot-instructions.md)
 - Design system: [design-system/MASTER.md](design-system/MASTER.md)
 
