@@ -25,16 +25,22 @@ Issue links identify the current SonarCloud findings; resolved or removed issues
 
 ## Prioritized Backlog
 
-| Priority | TD | Why it matters | Likely action |
-| --- | --- | --- | --- |
-| P1 | Disposition SonarCloud high security/reliability findings | SonarCloud reports a browser-storage vulnerability and two reliability bugs; current code stores JSON with guarded restore and sorts only for membership comparison. | Confirm no injection sink exists, then fix or mark the three findings appropriately in SonarCloud. |
-| P1 | Reject ambiguous imported rota identifiers | Duplicate rota or court numbers can make result entry and lookup ambiguous. | Validate unique rota numbers and unique valid court numbers; add negative import tests. |
-| P1 | Prevent scoring against stale setup data | Changing players or player ids can leave existing rotas/results visible even when the setup is no longer valid. | Invalidate dependent data or block scoring until setup is valid; add regression coverage. |
-| P2 | Add thin UI workflow coverage | Restore/new session, editing submitted scores, import, and setup invalidation rely on untested React state transitions. | Add focused component/browser tests for critical flows only. |
-| P2 | Reduce rota-generator risk and runtime | Generation is synchronous; the 16-player/3-court CI case took about 4.7 seconds, and SonarCloud flags two complex functions. | Set a phone runtime target; simplify hotspots without weakening invariant tests. |
-| P3 | Verify production security output in CI | CSP injection is a build-time control but is not asserted by a dedicated test. | Check built `index.html` for the expected CSP and referrer policy. |
-| P3 | Review bundled font payload | The mobile-first app ships multiple font files and weights. | Keep only required fonts, weights, and subsets if load size is material. |
-| P3 | Batch low-value SonarCloud cleanup | Most remaining findings are convention or readability items. | Handle only in scoped cleanup work or when touching nearby code. |
+| Priority | TD | Why it matters | Likely action | Agent |
+| --- | --- | --- | --- | --- |
+| P1 | Disposition SonarCloud high security/reliability findings | SonarCloud reports a browser-storage vulnerability and two reliability bugs; current code stores JSON with guarded restore and sorts only for membership comparison. | Confirm no injection sink exists, then fix or mark the three findings appropriately in SonarCloud. | OK |
+| P1 | Reject ambiguous imported rota identifiers | `parseImportedRotas` does not check for duplicate `rotaNumber` values; `parseRota` does not check for duplicate `courtNumber` within a rota. Ambiguous identifiers make result lookup silently wrong. | Add uniqueness checks to both parsers; add negative import tests. | OK |
+| P1 | Prevent scoring against stale setup data | `addPlayer` (all modes) and player id edits (advanced mode) do not reset rotas or results. `RotaScoring` gates submission only on score totals — not setup validity — so scores can be submitted against stale rotas. | Clear rotas and results when players are added or removed after rotas exist, or gate submission on setup validity; add regression coverage. | Design↑ |
+| P2 | Add thin UI workflow coverage | Restore/new session, editing submitted scores, import, and setup invalidation rely on untested React state transitions. | Add focused component/browser tests for critical flows only. | OK |
+| P2 | Reduce rota-generator risk and runtime | Generation is synchronous; the 16-player/3-court CI case took about 4.7 seconds, and SonarCloud flags two complex functions. | Set a phone runtime target; simplify hotspots without weakening invariant tests. | Design↑ |
+| P3 | Verify production security output in CI | CSP injection is a build-time control but is not asserted by a dedicated test. | Check built `index.html` for the expected CSP and referrer policy. | OK |
+| P3 | Review bundled font payload | The mobile-first app ships multiple font files and weights. | Keep only required fonts, weights, and subsets if load size is material. | Design↑ |
+| P3 | Batch low-value SonarCloud cleanup | Most remaining findings are convention or readability items. | Handle only in scoped cleanup work or when touching nearby code. | OK |
+
+## Agent Notes
+
+**Fix vs. disposition:** AI-generated code often produces patterns that are functionally correct but flagged by static analysers on naming or convention grounds. Before refactoring, check whether the finding is a real correctness issue or just a mismatch (e.g., a function named `fail` that can return `valid: true` when called with an empty array — correct at every callsite, but confusing by name). For the latter, a brief inline comment explaining the intent is lower-risk than a broad refactor.
+
+**Agent column key:** `OK` — self-contained and testable, safe to action autonomously. `Design↑` — requires a human decision on scope or behaviour before writing code.
 
 ## Working Rule
 

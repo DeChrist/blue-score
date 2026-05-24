@@ -31,6 +31,15 @@ Important boundaries:
 - `appMode.ts` parses `?mode=` into `AppMode` (`standard` | `demo` | `advanced`); `App.tsx` reads it at module level.
 - `styles.css` is guided by `design-system/MASTER.md`; do not add Tailwind or a component framework.
 
+## Quality Guide
+
+`docs/technical-debt-backlog.md` tracks known quality work with priority, required action, and an `Agent` column marking items `OK` (safe to action autonomously) or `Design↑` (needs a human decision before writing code).
+
+On any plan or significant change request, consult the backlog. If the planned work touches a P1 area — imports, session setup, scoring state — surface the relevant item and invite the user to address it before or alongside the change. The backlog is a living document: update it when a finding is dispositioned, a fix is landed, or the user declines a suggestion worth recording.
+
+The project is monitored by [SonarCloud](https://sonarcloud.io/project/overview?id=DeChrist_blue-score) (public, no auth — OSS project). 
+When a static analyser flags a pattern that is functionally correct, a brief inline disposition comment is lower-risk than auto-refactoring; the backlog's Agent Notes section explains this.
+
 ## Change Rules
 
 - Keep warnings at zero; lint uses `--max-warnings 0`.
