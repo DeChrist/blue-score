@@ -263,12 +263,12 @@ export function validatePlayers(players: Player[]): ValidationResult {
     const name = player.displayName.trim();
     if (!id) errors.push(`Player ${index + 1} needs an id.`);
     // Use row index, not id, so each empty row gets a distinct error.
-    if (!name) {
-      errors.push(`Player ${index + 1} needs a display name.`);
-    } else {
+    if (name) {
       const nameKey = name.toLowerCase();
       if (seenNames.has(nameKey)) errors.push(`Duplicate player name: ${name}.`);
       seenNames.add(nameKey);
+    } else {
+      errors.push(`Player ${index + 1} needs a display name.`);
     }
     if (id) {
       if (seenIds.has(id)) errors.push(`Duplicate player id: ${id}.`);
@@ -335,8 +335,8 @@ export function validateRota(rota: Rota, players: Player[], courts: number): Val
     if (!knownPlayerIds.has(id)) errors.push(`Rota ${rota.rotaNumber} references unknown sit-out player id: ${id}.`);
   });
 
-  const expectedSitOuts = players.map((player) => player.id).filter((id) => !activeSet.has(id)).sort();
-  const actualSitOuts = [...rota.sitOutPlayerIds].sort();
+  const expectedSitOuts = players.map((player) => player.id).filter((id) => !activeSet.has(id)).sort((a, b) => a.localeCompare(b));
+  const actualSitOuts = [...rota.sitOutPlayerIds].sort((a, b) => a.localeCompare(b));
   if (expectedSitOuts.join("|") !== actualSitOuts.join("|")) {
     errors.push(`Rota ${rota.rotaNumber} sit-outs must exactly match players not active in that rota.`);
   }
