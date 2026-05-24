@@ -100,13 +100,13 @@ function parseRota(value: unknown, path: string): ParseImportResult<Rota> {
 
   const rawCourts = value.courts;
   const courts: CourtMatch[] = [];
-  if (!Array.isArray(rawCourts)) {
-    errors.push(`${path}.courts must be an array.`);
-  } else {
+  if (Array.isArray(rawCourts)) {
     rawCourts.forEach((court, index) => {
       const parsedCourt = parseCourtMatch(court, `${path}.courts[${index}]`, errors);
       if (parsedCourt) courts.push(parsedCourt);
     });
+  } else {
+    errors.push(`${path}.courts must be an array.`);
   }
 
   const rota: Rota = {
@@ -141,13 +141,13 @@ function parseRotaResult(value: unknown, path: string): ParseImportResult<RotaRe
 
   const rawScores = value.scores;
   const scores: CourtScore[] = [];
-  if (!Array.isArray(rawScores)) {
-    errors.push(`${path}.scores must be an array.`);
-  } else {
+  if (Array.isArray(rawScores)) {
     rawScores.forEach((score, index) => {
       const parsedScore = parseCourtScore(score, `${path}.scores[${index}]`, errors);
       if (parsedScore) scores.push(parsedScore);
     });
+  } else {
+    errors.push(`${path}.scores must be an array.`);
   }
 
   const result: RotaResult = {
