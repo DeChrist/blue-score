@@ -98,8 +98,13 @@ export default function App() {
   }
 
   function updateSession(next: Session) {
+    const previousPhase = session ? deriveSessionPhase(session) : "setup";
+    const nextPhase = deriveSessionPhase(next);
     commitSession(next);
     setSelectedRotaNumber(next.currentRotaNumber);
+    if (previousPhase !== "complete" && nextPhase === "complete") {
+      setNotice("Session complete.");
+    }
   }
 
   async function copy(text: string, label: string) {
@@ -158,9 +163,13 @@ export default function App() {
     try {
       const provider = new StaticRotaProvider(importedRotas.value);
       const rotas = await provider.getRotas({ players: session.players, courts: session.courtCount, pointsPerCourt: session.pointsPerCourt });
-      commitSession({ ...session, rotas, results: [], currentRotaNumber: rotas[0]?.rotaNumber ?? 1 });
+      const saveResult = commitSession({ ...session, rotas, results: [], currentRotaNumber: rotas[0]?.rotaNumber ?? 1 });
       setSelectedRotaNumber(rotas[0]?.rotaNumber ?? 1);
       setSetupErrors([]);
+      setSetupOpen(false);
+      if (saveResult.ok) {
+        setNotice("Rotas imported. Session started.");
+      }
     } catch (error) {
       setSetupErrors([error instanceof Error ? error.message : "Could not import rotas."]);
     }
@@ -283,6 +292,7 @@ export default function App() {
               onClick={() => {
                 commitSession(restoredSession);
                 setSelectedRotaNumber(restoredSession.currentRotaNumber);
+                setSetupOpen(false);
               }}
             >
               Continue existing session
