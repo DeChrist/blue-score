@@ -36,6 +36,16 @@ function readOptionalString(record: UnknownRecord, key: string, path: string, er
   return value;
 }
 
+function readOptionalInteger(record: UnknownRecord, key: string, path: string, errors: string[]): number | undefined {
+  const value = record[key];
+  if (value === undefined) return undefined;
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    errors.push(`${path}.${key} must be an integer when provided.`);
+    return undefined;
+  }
+  return value;
+}
+
 function readRequiredInteger(record: UnknownRecord, key: string, path: string, errors: string[]): number {
   const value = record[key];
   if (typeof value !== "number" || !Number.isInteger(value)) {
@@ -239,6 +249,7 @@ export function parseImportedSession(input: unknown): ParseImportResult<Session>
     name: readRequiredString(input, "name", "session", errors),
     createdAt: readRequiredString(input, "createdAt", "session", errors),
     pointsPerCourt: readRequiredInteger(input, "pointsPerCourt", "session", errors),
+    courtCount: readOptionalInteger(input, "courtCount", "session", errors) ?? 3,
     players: playersResult.value ?? [],
     rotas: rotasResult.value ?? [],
     results: resultsResult.value ?? [],
@@ -300,6 +311,14 @@ export function validateRota(rota: Rota, players: Player[], courts: number): Val
     errors.push(`Rota ${rota.rotaNumber} must contain exactly ${courts} courts.`);
   }
 
+  const seenCourtNumbers = new Set<number>();
+  rota.courts.forEach((court) => {
+    if (seenCourtNumbers.has(court.courtNumber)) {
+      errors.push(`Rota ${rota.rotaNumber} has duplicate court number: ${court.courtNumber}.`);
+    }
+    seenCourtNumbers.add(court.courtNumber);
+  });
+
   rota.courts.forEach((court) => {
     const ids = [
       court.leftPair?.player1Id,
@@ -346,7 +365,15 @@ export function validateRota(rota: Rota, players: Player[], courts: number): Val
 
 export function validateRotas(rotas: Rota[], players: Player[], courts: number): ValidationResult {
   if (rotas.length === 0) return fail(["Import at least one rota before scoring."]);
-  return combineValidation(rotas.map((rota) => validateRota(rota, players, courts)));
+  const errors: string[] = [];
+  const seenRotaNumbers = new Set<number>();
+  rotas.forEach((rota) => {
+    if (seenRotaNumbers.has(rota.rotaNumber)) {
+      errors.push(`Duplicate rota number: ${rota.rotaNumber}.`);
+    }
+    seenRotaNumbers.add(rota.rotaNumber);
+  });
+  return combineValidation([fail(errors), ...rotas.map((rota) => validateRota(rota, players, courts))]);
 }
 
 export function validateRotaResult(
@@ -402,8 +429,12 @@ export function validateSessionResults(
   return fail(errors);
 }
 
-export function validateSessionSetup(session: Pick<Session, "name" | "players" | "rotas" | "pointsPerCourt">, courts: number): ValidationResult {
+export function validateSessionSetup(session: Pick<Session, "name" | "players" | "rotas" | "pointsPerCourt" | "courtCount">): ValidationResult {
   const errors: string[] = [];
+  const courts = session.courtCount;
+  if (!Number.isInteger(courts) || courts < 2 || courts > 6) {
+    errors.push("Court count must be an integer from 2 through 6.");
+  }
   const minPlayers = courts * 4;
   const maxPlayers = minPlayers + 4;
   if (!session.name.trim()) errors.push("Session name is required.");

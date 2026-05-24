@@ -40,6 +40,7 @@ export interface Session {
   name: string;
   createdAt: string;
   pointsPerCourt: number;
+  courtCount: number;
   players: Player[];
   rotas: Rota[];
   results: RotaResult[];

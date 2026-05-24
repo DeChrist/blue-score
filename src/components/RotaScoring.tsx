@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Edit3 } from "lucide-react";
 import { makePlayerNameLookup } from "../playerLookup";
 import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
+import { isRotaAccessible } from "../sessionPhase";
 import type { CourtScore, RotaResult, Session } from "../types";
 import { combineValidation, validateCourtScore } from "../validation";
 
@@ -57,6 +58,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
               type="button"
               className={r.rotaNumber === rota.rotaNumber ? "rota-tab selected" : "rota-tab"}
               aria-current={r.rotaNumber === rota.rotaNumber ? "true" : undefined}
+              disabled={!isRotaAccessible(r, session.rotas, session.results)}
               onClick={() => onRotaChange(r.rotaNumber)}
             >
               {r.rotaNumber}
