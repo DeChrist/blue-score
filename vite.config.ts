@@ -34,4 +34,12 @@ export default defineConfig(({ command }) => ({
       "bypass-tunnel-reminder": "true",
     },
   },
+  test: {
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
+      include: ["src/**/*.ts", "src/**/*.tsx"],
+      exclude: ["src/main.tsx", "src/sampleData.ts"],
+    },
+  },
 }));
