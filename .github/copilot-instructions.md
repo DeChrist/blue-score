@@ -11,11 +11,12 @@ npm run dev:advanced
 npm run mobile-test
 npm run lint
 npm test
+npm run test:coverage
 npm run build
 npx vitest run src/scoring.test.ts
 ```
 
-CI/CD runs in `.github/workflows/ci-cd.yml` on Node 24. It enforces lint, tests, and build before GitHub Pages deployment, then runs an automated `release` job on pushes to `main`.
+CI/CD runs in `.github/workflows/ci-cd.yml` on Node 24. It enforces lint, `test:coverage` (uploads a coverage artifact), and build before GitHub Pages deployment, then runs an automated `release` job on pushes to `main`.
 
 ## Architecture
 
