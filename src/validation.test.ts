@@ -140,10 +140,10 @@ describe("validateSessionSetup", () => {
       {
         name: "",
         pointsPerCourt: 0,
+        courtCount: 3,
         players: players.slice(0, 11),
         rotas: [validRota],
       },
-      3,
     );
 
     expect(result.valid).toBe(false);
@@ -157,10 +157,10 @@ describe("validateSessionSetup", () => {
       {
         name: "League Night",
         pointsPerCourt: 24,
+        courtCount: 3,
         players,
         rotas: [validRota],
       },
-      3,
     );
 
     expect(result.valid).toBe(true);

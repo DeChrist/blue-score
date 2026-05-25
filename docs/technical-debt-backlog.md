@@ -6,7 +6,7 @@ Living list of quality work, not an architecture decision. Priorities are an ini
 
 - Small local-first React/TypeScript app with clear domain boundaries and ADRs.
 - CI enforces lint, `test:coverage`, and build on Node 24; a `coverage-report` artifact is uploaded on every run.
-- Latest assessed validation run: [CI-CD #46](https://github.com/DeChrist/blue-score/actions/runs/26333141027) passed with 93 tests on 2026-05-23.
+- Latest assessed validation run: CI-CD on `feat/session-phase-machine` passed on 2026-05-25 (93 baseline + 12 sessionPhase + new storage/validation.imports/exporter tests; exact count from CI run).
 - [SonarCloud open issues](https://sonarcloud.io/project/issues?issueStatuses=OPEN%2CCONFIRMED&id=DeChrist_blue-score) reviewed on 2026-05-24: 32 issues, estimated effort 2h 59min.
 - Pure-logic modules are well covered: `appMode`, `playerLookup`, `exporters`, `scoring` at 100% statements; `validation` 88%, `storage` 80%, `rotaProvider` 81%, `rotaGenerator` 97%. Overall statements sit at ~60% because `App.tsx` and React components are at 0% — no UI tests yet.
 - Main risk areas are imported-data ambiguity, setup/scoring state transitions, and browser responsiveness.
@@ -29,13 +29,14 @@ Issue links identify the current SonarCloud findings; resolved or removed issues
 | --- | --- | --- | --- | --- |
 | P1 | Disposition SonarCloud security finding in `storage.ts` | SonarCloud flags the `localStorage` read; current code passes all values through explicit `readRequired*` helpers — no untrusted keys are spread onto domain objects. | Confirm no injection sink exists, then mark the finding appropriately in SonarCloud. | OK |
 | — | ~~SonarCloud reliability findings in `validation.ts`~~ | ~~Two bare `.sort()` calls without a comparator (S2871).~~ | Fixed in #23; pending SonarCloud refresh. | — |
-| P1 | Reject ambiguous rota identifiers | Duplicate `rotaNumber` values across rotas, or duplicate `courtNumber` within a rota, make result lookup silently wrong. | Add uniqueness checks to `validateRota` and `validateRotas` — not the parsers; both `StaticRotaProvider` and `GeneratedRotaProvider` pass through `validateRotas`, so the invariant covers all import paths. Add negative tests. | OK |
-| P1 | Prevent scoring against stale setup data | Three roster-change paths leave stale rotas in place: `addPlayer`/`removePlayer` (all modes), `loadPlayers` (imports new player list, clears results but not rotas), and `updatePlayer` id edits (advanced mode, clears nothing). `RotaScoring` gates submission only on score totals — not setup validity — so scoring against stale rotas is possible in all three cases. | Gate `RotaScoring` submission on setup validity — covers all roster-change paths without enumerating individual clearing logic; add regression coverage. | Design↑ |
-| P2 | Add thin UI workflow coverage | Restore/new session, editing submitted scores, import, and setup invalidation rely on untested React state transitions. `App.tsx` and all React components currently read 0% in the coverage report. | Add focused component/browser tests for critical flows only. | OK |
+| — | ~~Reject ambiguous rota identifiers~~ | ~~Duplicate `rotaNumber` values across rotas, or duplicate `courtNumber` within a rota, make result lookup silently wrong.~~ | Resolved in `feat/session-phase-machine`: uniqueness checks added to `validateRota` and `validateRotas`; negative tests added to `validation.imports.test.ts`. | — |
+| — | ~~Prevent scoring against stale setup data~~ | ~~Three roster-change paths leave stale rotas in place.~~ | Resolved in `feat/session-phase-machine`: phase lock prevents mutations in scoring/complete phase; legacy session recovery clears stale rotas on load and preserves players/settings. | — |
+| P2 | React Testing Library workflow coverage | Setup lock, reset, import confirmation, sequential tab behaviour, and legacy recovery warning are not covered by automated UI tests. `App.tsx` and all React components currently read 0% in the coverage report. | Add focused component/browser tests for these critical flows. | OK |
 | P2 | Reduce rota-generator risk and runtime | Generation is synchronous; the 16-player/3-court CI case took about 4.7 seconds, and SonarCloud flags two complex functions. | Set a phone runtime target; simplify hotspots without weakening invariant tests. | Design↑ |
 | P3 | Verify production security output in CI | CSP injection is a build-time control but is not asserted by a dedicated test. | Check built `index.html` for the expected CSP and referrer policy. | OK |
 | P3 | Review bundled font payload | The mobile-first app ships multiple font files and weights. | Keep only required fonts, weights, and subsets if load size is material. | Design↑ |
 | P3 | Batch low-value SonarCloud cleanup | Most remaining findings are convention or readability items. | Handle only in scoped cleanup work or when touching nearby code. | OK |
+| P3 | `Session.courtCount` as groundwork for Club config | `courtCount` is now a per-session field. Future work: pre-fill from a Club entity or shared config. | Deferred — no immediate action needed. | Design↑ |
 
 ## Agent Notes
 

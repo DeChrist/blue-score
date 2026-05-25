@@ -1,5 +1,5 @@
 import type { Session } from "./types";
-import { parseImportedSession, validateSessionResults } from "./validation";
+import { parseImportedSession, validateSessionResults, validateSessionSetup } from "./validation";
 
 export const STORAGE_KEY = "padel-americano-session-v1";
 
@@ -69,6 +69,21 @@ export function loadSession(options?: StorageOptions): LoadSessionResult {
   const resultsValidation = validateSessionResults(importResult.value);
   if (!resultsValidation.valid) {
     return { session: null, warning: clearCorrupted(storage) };
+  }
+
+  const setupValidation = validateSessionSetup(importResult.value);
+  if (!setupValidation.valid && importResult.value.rotas.length > 0) {
+    const recovered: Session = {
+      ...importResult.value,
+      rotas: [],
+      results: [],
+      currentRotaNumber: 1,
+    };
+    saveSession(recovered, options);
+    return {
+      session: recovered,
+      warning: "Saved play data was incompatible with the stored player setup and has been cleared. Your players and settings have been kept.",
+    };
   }
 
   return { session: importResult.value };
