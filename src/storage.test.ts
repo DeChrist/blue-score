@@ -52,6 +52,7 @@ const validSession: Session = {
   name: "Test Session",
   createdAt: "2026-05-16T10:00:00.000Z",
   pointsPerCourt: 24,
+  courtCount: 3,
   players: [],
   rotas: [],
   results: [],
@@ -151,5 +152,42 @@ describe("storage", () => {
     const result = clearSession({ storage: mock.storage });
     expect(result.ok).toBe(false);
     expect(result.warning).toBe("Could not clear stored session data in this browser.");
+  });
+
+  it("loads a session without courtCount and defaults it to 3", () => {
+    const sessionWithoutCourtCount = { ...validSession };
+    // Remove courtCount to simulate a session stored before this field was added
+    const { courtCount: _removed, ...legacySession } = sessionWithoutCourtCount;
+    void _removed;
+    const mock = createMockStorage({ [STORAGE_KEY]: JSON.stringify(legacySession) });
+    const result = loadSession({ storage: mock.storage });
+
+    expect(result.session?.courtCount).toBe(3);
+    expect(result.warning).toBeUndefined();
+  });
+
+  it("recovers stale rotas: clears rotas/results, preserves players and settings, returns warning", () => {
+    const staleSession: Session = {
+      ...validSession,
+      name: "My Session",
+      pointsPerCourt: 24,
+      courtCount: 3,
+      players: samplePlayers,
+      // Rotas have courtCount=3 but session now has courtCount=2 (simulates mismatch after court count change)
+      rotas: sampleRotas,
+      results: [],
+      currentRotaNumber: 1,
+    };
+    // Force invalid setup by overriding courtCount to 2 (rotas have 3 courts each → mismatch)
+    const invalidCourtCountSession = { ...staleSession, courtCount: 2 };
+    const mock = createMockStorage({ [STORAGE_KEY]: JSON.stringify(invalidCourtCountSession) });
+    const result = loadSession({ storage: mock.storage });
+
+    expect(result.session).not.toBeNull();
+    expect(result.session?.rotas).toHaveLength(0);
+    expect(result.session?.results).toHaveLength(0);
+    expect(result.session?.players).toHaveLength(samplePlayers.length);
+    expect(result.session?.name).toBe("My Session");
+    expect(result.warning).toBe("Saved play data was incompatible with the stored player setup and has been cleared. Your players and settings have been kept.");
   });
 });

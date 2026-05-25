@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { samplePlayers, sampleRotas } from "./sampleData";
-import { parseImportedPlayers, parseImportedRotas, parseImportedSession, validateSessionResults } from "./validation";
+import { parseImportedPlayers, parseImportedRotas, parseImportedSession, validateRotas, validateRota, validateSessionResults } from "./validation";
 
 describe("import parsers", () => {
   it("parses valid players JSON", () => {
@@ -42,6 +42,7 @@ describe("import parsers", () => {
       name: "Session",
       createdAt: "2026-05-16T10:00:00.000Z",
       pointsPerCourt: 24,
+      courtCount: 3,
       players: samplePlayers,
       rotas: sampleRotas,
       results: [
@@ -221,5 +222,78 @@ describe("import parsers", () => {
     const validation = validateSessionResults(result.value!);
     expect(validation.valid).toBe(false);
     expect(validation.errors).toContain("Result for rota 99 references an unknown rota.");
+  });
+
+  it("session without courtCount defaults to 3", () => {
+    const result = parseImportedSession({
+      id: "session-1",
+      name: "Session",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      pointsPerCourt: 24,
+      players: [],
+      rotas: [],
+      results: [],
+      currentRotaNumber: 1,
+    });
+    expect(result.value).not.toBeNull();
+    expect(result.value?.courtCount).toBe(3);
+  });
+
+  it("courtCount: 5 parses correctly", () => {
+    const result = parseImportedSession({
+      id: "session-1",
+      name: "Session",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      pointsPerCourt: 24,
+      courtCount: 5,
+      players: [],
+      rotas: [],
+      results: [],
+      currentRotaNumber: 1,
+    });
+    expect(result.value).not.toBeNull();
+    expect(result.value?.courtCount).toBe(5);
+  });
+
+  it("courtCount: 2.5 fails parsing (non-integer)", () => {
+    const result = parseImportedSession({
+      id: "session-1",
+      name: "Session",
+      createdAt: "2026-05-16T10:00:00.000Z",
+      pointsPerCourt: 24,
+      courtCount: 2.5,
+      players: [],
+      rotas: [],
+      results: [],
+      currentRotaNumber: 1,
+    });
+    expect(result.value).toBeNull();
+    expect(result.errors).toContain("session.courtCount must be an integer when provided.");
+  });
+
+  it("rejects duplicate rotaNumber values across rota set", () => {
+    const rotasWithDuplicate = [
+      { ...sampleRotas[0], rotaNumber: 1 },
+      { ...sampleRotas[1], rotaNumber: 1 },
+    ];
+    const result = validateRotas(rotasWithDuplicate, samplePlayers, 3);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("Duplicate rota number: 1.");
+  });
+
+  it("rejects duplicate courtNumber within a single rota", () => {
+    const players16 = Array.from({ length: 16 }, (_, i) => ({ id: `p${i + 1}`, displayName: `Player ${i + 1}` }));
+    const rotaWithDuplicateCourt = {
+      rotaNumber: 1,
+      courts: [
+        { courtNumber: 1, leftPair: { player1Id: "p1", player2Id: "p2" }, rightPair: { player1Id: "p3", player2Id: "p4" } },
+        { courtNumber: 1, leftPair: { player1Id: "p5", player2Id: "p6" }, rightPair: { player1Id: "p7", player2Id: "p8" } },
+        { courtNumber: 3, leftPair: { player1Id: "p9", player2Id: "p10" }, rightPair: { player1Id: "p11", player2Id: "p12" } },
+      ],
+      sitOutPlayerIds: ["p13", "p14", "p15", "p16"],
+    };
+    const result = validateRota(rotaWithDuplicateCourt, players16, 3);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("Rota 1 has duplicate court number: 1.");
   });
 });

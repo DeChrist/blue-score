@@ -28,6 +28,7 @@ describe("CSV escaping", () => {
       name: "Session",
       createdAt: "2026-05-20T00:00:00.000Z",
       pointsPerCourt: 24,
+      courtCount: 3,
       currentRotaNumber: 1,
       players: [
         { id: "p1", displayName: "Smith, Bob" },
