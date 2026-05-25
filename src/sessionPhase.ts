@@ -15,5 +15,6 @@ export function isRotaAccessible(rota: Rota, allRotas: Rota[], results: RotaResu
     (r) => !results.some((res) => res.rotaNumber === r.rotaNumber),
   );
   const thisIndex = allRotas.findIndex((r) => r.rotaNumber === rota.rotaNumber);
+  if (thisIndex === -1) return false;
   return firstUnsubmittedIndex !== -1 && thisIndex <= firstUnsubmittedIndex;
 }

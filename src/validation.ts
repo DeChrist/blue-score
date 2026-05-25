@@ -433,7 +433,7 @@ export function validateSessionSetup(session: Pick<Session, "name" | "players" |
   const errors: string[] = [];
   const courts = session.courtCount;
   if (!Number.isInteger(courts) || courts < 2 || courts > 6) {
-    errors.push("Court count must be an integer from 2 through 6.");
+    return fail(["Court count must be an integer from 2 through 6."]);
   }
   const minPlayers = courts * 4;
   const maxPlayers = minPlayers + 4;

@@ -234,9 +234,13 @@ export default function App() {
     if (!session || generating) return;
     if (phase !== "setup") return;
 
+    const errors: string[] = [];
+    if (!Number.isInteger(session.courtCount) || session.courtCount < 2 || session.courtCount > 6) {
+      setSetupErrors(["Court count must be an integer from 2 through 6."]);
+      return;
+    }
     const minPlayers = session.courtCount * 4;
     const maxPlayers = minPlayers + 4;
-    const errors: string[] = [];
     if (!session.name.trim()) errors.push("Session name is required.");
     if (!Number.isInteger(session.pointsPerCourt) || session.pointsPerCourt <= 0) errors.push("Points per court must be a positive integer.");
     if (session.players.length < minPlayers || session.players.length > maxPlayers) {
@@ -452,7 +456,10 @@ export default function App() {
                     min={2}
                     max={6}
                     value={session.courtCount}
-                    onChange={(event) => commitSession({ ...session, courtCount: Number(event.target.value), rotas: [], results: [] })}
+                    onChange={(event) => {
+                      const v = event.target.valueAsNumber;
+                      if (Number.isFinite(v)) commitSession({ ...session, courtCount: v, rotas: [], results: [] });
+                    }}
                   />
                 </label>
 
