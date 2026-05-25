@@ -65,6 +65,64 @@ function setupStatusLabel(phase: "setup" | "scoring" | "complete", setupValid: b
   return "Complete";
 }
 
+function formatRotaProgress(resultsCount: number, rotaCount: number): string {
+  return `${resultsCount} of ${rotaCount} rotas played.`;
+}
+
+function sessionStartNotice(source: "generated" | "imported", rotaCount: number): string {
+  if (source === "generated") {
+    return `Generated ${rotaCount} rotas. Session started.`;
+  }
+  return `Imported ${rotaCount} rotas. Session started.`;
+}
+
+function clipboardNotice(kind: "unavailable" | "copied" | "denied", label: string): string {
+  if (kind === "unavailable") {
+    return `Clipboard is unavailable in this browser. Use Export to download ${label.toLowerCase()} instead.`;
+  }
+  if (kind === "copied") {
+    return `${label} copied.`;
+  }
+  return `Could not copy ${label.toLowerCase()}. Browser denied clipboard access; try Export instead.`;
+}
+
+function appFlowNotice(kind: "generatingRotas" | "sessionImported" | "freshSessionStarted"): string {
+  if (kind === "generatingRotas") return "Generating rotas...";
+  if (kind === "sessionImported") return "Session imported.";
+  return "Started a fresh session.";
+}
+
+function sessionUpdateNotice(previousSession: Session | null, nextSession: Session): string | null {
+  const previousPhase = previousSession ? deriveSessionPhase(previousSession) : "setup";
+  const nextPhase = deriveSessionPhase(nextSession);
+
+  if (previousSession) {
+    const addedResult = nextSession.results.find((nextResult) =>
+      !previousSession.results.some((existing) => existing.rotaNumber === nextResult.rotaNumber),
+    );
+    if (addedResult) {
+      if (nextPhase === "complete") {
+        return `Rota ${addedResult.rotaNumber} submitted. Session complete - ${formatRotaProgress(nextSession.results.length, nextSession.rotas.length)}`;
+      }
+      return `Rota ${addedResult.rotaNumber} submitted. ${formatRotaProgress(nextSession.results.length, nextSession.rotas.length)}`;
+    }
+
+    const updatedResult = nextSession.results.find((nextResult) => {
+      const previousResult = previousSession.results.find((existing) => existing.rotaNumber === nextResult.rotaNumber);
+      return previousResult && previousResult.submittedAt !== nextResult.submittedAt;
+    });
+    if (updatedResult) {
+      return `Rota ${updatedResult.rotaNumber} updated. Standings refreshed.`;
+    }
+  }
+
+  if (previousPhase !== "complete" && nextPhase === "complete") {
+    return `Session complete - ${formatRotaProgress(nextSession.results.length, nextSession.rotas.length)}`;
+  }
+
+  return null;
+}
+
 export default function App() {
   const [storedAtLoad] = useState(() => loadSession());
   const [session, setSession] = useState<Session | null>(() => {
@@ -98,25 +156,22 @@ export default function App() {
   }
 
   function updateSession(next: Session) {
-    const previousPhase = session ? deriveSessionPhase(session) : "setup";
-    const nextPhase = deriveSessionPhase(next);
+    const noticeMessage = sessionUpdateNotice(session, next);
     commitSession(next);
     setSelectedRotaNumber(next.currentRotaNumber);
-    if (previousPhase !== "complete" && nextPhase === "complete") {
-      setNotice("Session complete.");
-    }
+    if (noticeMessage) setNotice(noticeMessage);
   }
 
   async function copy(text: string, label: string) {
     if (!navigator.clipboard?.writeText) {
-      setNotice(`Clipboard is unavailable in this browser. Use Export to download ${label.toLowerCase()} instead.`);
+      setNotice(clipboardNotice("unavailable", label));
       return;
     }
     try {
       await navigator.clipboard.writeText(text);
-      setNotice(`${label} copied.`);
+      setNotice(clipboardNotice("copied", label));
     } catch {
-      setNotice(`Could not copy ${label.toLowerCase()}. Browser denied clipboard access; try Export instead.`);
+      setNotice(clipboardNotice("denied", label));
     }
   }
 
@@ -168,7 +223,7 @@ export default function App() {
       setSetupErrors([]);
       setSetupOpen(false);
       if (saveResult.ok) {
-        setNotice("Rotas imported. Session started.");
+        setNotice(sessionStartNotice("imported", rotas.length));
       }
     } catch (error) {
       setSetupErrors([error instanceof Error ? error.message : "Could not import rotas."]);
@@ -195,7 +250,7 @@ export default function App() {
 
     setGenerating(true);
     try {
-      setNotice("Generating rotas...");
+      setNotice(appFlowNotice("generatingRotas"));
       // Yield so the busy state paints before the synchronous generator runs.
       await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
       const provider = new GeneratedRotaProvider();
@@ -204,7 +259,7 @@ export default function App() {
       setSelectedRotaNumber(rotas[0]?.rotaNumber ?? 1);
       setSetupErrors([]);
       setSetupOpen(false);
-      setNotice(`Generated ${rotas.length} rotas.`);
+      setNotice(sessionStartNotice("generated", rotas.length));
     } catch (error) {
       setSetupErrors([error instanceof Error ? error.message : "Could not generate rotas."]);
       setNotice("");
@@ -240,7 +295,7 @@ export default function App() {
     setSelectedRotaNumber(importedSession.value.currentRotaNumber);
     setSetupErrors([]);
     if (saveResult.ok) {
-      setNotice("Session imported.");
+      setNotice(appFlowNotice("sessionImported"));
     }
   }
 
@@ -345,7 +400,7 @@ export default function App() {
             const saveResult = commitSession(newSession());
             setSelectedRotaNumber(1);
             if (clearResult.ok && saveResult.ok) {
-              setNotice("Started a fresh session.");
+              setNotice(appFlowNotice("freshSessionStarted"));
             }
           }}
         >
