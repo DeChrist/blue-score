@@ -14,3 +14,4 @@ Quality follow-up items are tracked separately in the [Technical Debt (TD) Backl
 | [ADR-006](006-test-strategy.md) | Prefer focused pure-function tests until UI regressions justify DOM tests |
 | [ADR-007](007-deterministic-rota-generation.md) | Generate Americano rotas in-browser with bounded deterministic search |
 | [ADR-008](008-browser-security-hardening.md) | Apply layered browser security controls: production-only CSP, referrer policy, self-contained assets |
+| [ADR-009](009-session-phase-workflow.md) | Derive session phase (setup/scoring/complete) from data; phase gates setup mutations and sequential play |

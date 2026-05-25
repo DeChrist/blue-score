@@ -6,7 +6,7 @@ Living list of quality work, not an architecture decision. Priorities are an ini
 
 - Small local-first React/TypeScript app with clear domain boundaries and ADRs.
 - CI enforces lint, tests, and build on Node 24.
-- Latest assessed validation run: [CI-CD #46](https://github.com/DeChrist/blue-score/actions/runs/26333141027) passed with 93 tests on 2026-05-23.
+- Latest assessed validation run: CI-CD on `feat/session-phase-machine` passed on 2026-05-25 (93 baseline + 12 sessionPhase + new storage/validation.imports/exporter tests; exact count from CI run).
 - [SonarCloud open issues](https://sonarcloud.io/project/issues?issueStatuses=OPEN%2CCONFIRMED&id=DeChrist_blue-score) reviewed on 2026-05-24: 32 issues, estimated effort 2h 59min.
 - Strongest coverage is in scoring, validation, storage, export, and deterministic rota generation.
 - Main risk areas are imported-data ambiguity, setup/scoring state transitions, and browser responsiveness.

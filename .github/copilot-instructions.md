@@ -28,6 +28,7 @@ Important boundaries:
 - `validation.ts` contains JSON shape parsing plus domain validation for players, rotas, scores, and submitted results.
 - `rotaGenerator.ts` contains pure deterministic Americano rota generation using numeric player indexes internally.
 - `rotaProvider.ts` defines the rota provider interface, maps generated technical rotas back to domain `Player.id` values, and preserves static import support.
+- `sessionPhase.ts` derives `SessionPhase` (`setup` | `scoring` | `complete`) from session data and exports `isRotaAccessible` for sequential tab gating; no side effects.
 - `appMode.ts` parses `?mode=` into `AppMode` (`standard` | `demo` | `advanced`); `App.tsx` reads it at module level.
 - `styles.css` is guided by `design-system/MASTER.md`; do not add Tailwind or a component framework.
 
