@@ -5,10 +5,10 @@ Living list of quality work, not an architecture decision. Priorities are an ini
 ## Current Baseline
 
 - Small local-first React/TypeScript app with clear domain boundaries and ADRs.
-- CI enforces lint, tests, and build on Node 24.
+- CI enforces lint, `test:coverage`, and build on Node 24; a `coverage-report` artifact is uploaded on every run.
 - Latest assessed validation run: CI-CD on `feat/session-phase-machine` passed on 2026-05-25 (93 baseline + 12 sessionPhase + new storage/validation.imports/exporter tests; exact count from CI run).
 - [SonarCloud open issues](https://sonarcloud.io/project/issues?issueStatuses=OPEN%2CCONFIRMED&id=DeChrist_blue-score) reviewed on 2026-05-24: 32 issues, estimated effort 2h 59min.
-- Strongest coverage is in scoring, validation, storage, export, and deterministic rota generation.
+- Pure-logic modules are well covered (scoring, validation, storage, export, rota generation, and provider mapping). Overall statement coverage is depressed by `App.tsx` and React components sitting at 0% — no UI tests yet. Current per-file numbers are in the `coverage-report` CI artifact.
 - Main risk areas are imported-data ambiguity, setup/scoring state transitions, and browser responsiveness.
 
 ## SonarCloud Summary
@@ -31,7 +31,7 @@ Issue links identify the current SonarCloud findings; resolved or removed issues
 | — | ~~SonarCloud reliability findings in `validation.ts`~~ | ~~Two bare `.sort()` calls without a comparator (S2871).~~ | Fixed in #23; pending SonarCloud refresh. | — |
 | — | ~~Reject ambiguous rota identifiers~~ | ~~Duplicate `rotaNumber` values across rotas, or duplicate `courtNumber` within a rota, make result lookup silently wrong.~~ | Resolved in `feat/session-phase-machine`: uniqueness checks added to `validateRota` and `validateRotas`; negative tests added to `validation.imports.test.ts`. | — |
 | — | ~~Prevent scoring against stale setup data~~ | ~~Three roster-change paths leave stale rotas in place.~~ | Resolved in `feat/session-phase-machine`: phase lock prevents mutations in scoring/complete phase; legacy session recovery clears stale rotas on load and preserves players/settings. | — |
-| P2 | React Testing Library workflow coverage | Setup lock, reset, import confirmation, sequential tab behaviour, and legacy recovery warning are not covered by automated UI tests. | Add focused component/browser tests for these critical flows. | OK |
+| P2 | React Testing Library workflow coverage | Setup lock, reset, import confirmation, sequential tab behaviour, and legacy recovery warning are not covered by automated UI tests. `App.tsx` and all React components currently read 0% in the coverage report. | Add focused component/browser tests for these critical flows. | OK |
 | P2 | Reduce rota-generator risk and runtime | Generation is synchronous; the 16-player/3-court CI case took about 4.7 seconds, and SonarCloud flags two complex functions. | Set a phone runtime target; simplify hotspots without weakening invariant tests. | Design↑ |
 | P3 | Verify production security output in CI | CSP injection is a build-time control but is not asserted by a dedicated test. | Check built `index.html` for the expected CSP and referrer policy. | OK |
 | P3 | Review bundled font payload | The mobile-first app ships multiple font files and weights. | Keep only required fonts, weights, and subsets if load size is material. | Design↑ |

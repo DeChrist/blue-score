@@ -77,14 +77,28 @@ describe("generateTechnicalRotas", () => {
     [8, 2],
     [12, 2],
     [12, 3],
-    [16, 3],
     [24, 6],
-    [28, 6],
   ])("generates supported bounds for %i players / %i courts", (playerCount, courtCount) => {
     const rotas = generateCached(playerCount, courtCount);
     expect(rotas.length).toBeGreaterThanOrEqual(calculateRotationLowerBound(playerCount, courtCount));
     expect(rotas[0]?.rotaNumber).toBe(1);
   });
+
+  it("generates supported bounds for 16 players / 3 courts", () => {
+    const playerCount = 16;
+    const courtCount = 3;
+    const rotas = generateCached(playerCount, courtCount);
+    expect(rotas.length).toBeGreaterThanOrEqual(calculateRotationLowerBound(playerCount, courtCount));
+    expect(rotas[0]?.rotaNumber).toBe(1);
+  }, 15000);
+
+  it("generates supported bounds for 28 players / 6 courts", () => {
+    const playerCount = 28;
+    const courtCount = 6;
+    const rotas = generateCached(playerCount, courtCount);
+    expect(rotas.length).toBeGreaterThanOrEqual(calculateRotationLowerBound(playerCount, courtCount));
+    expect(rotas[0]?.rotaNumber).toBe(1);
+  }, 15000);
 
   it.each([
     [7, 2],

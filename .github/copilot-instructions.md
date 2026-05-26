@@ -11,11 +11,14 @@ npm run dev:advanced
 npm run mobile-test
 npm run lint
 npm test
+npm run test:coverage
 npm run build
 npx vitest run src/scoring.test.ts
 ```
 
-CI/CD runs in `.github/workflows/ci-cd.yml` on Node 24. It enforces lint, tests, and build before GitHub Pages deployment, then runs an automated `release` job on pushes to `main`.
+CI/CD runs in `.github/workflows/ci-cd.yml` on Node 24. It enforces lint, `test:coverage` (uploads a coverage artifact), and build before GitHub Pages deployment, then runs an automated `release` job on pushes to `main`.
+
+The project uses a devcontainer (`.devcontainer/devcontainer.json`) running Node 24. Evaluate package engine constraints against Node 24, not the local environment.
 
 ## Architecture
 
@@ -41,11 +44,14 @@ The backlog is a living document: update it when a finding is dispositioned, a f
 
 The project is monitored by [SonarCloud](https://sonarcloud.io/project/overview?id=DeChrist_blue-score) (public, no auth — OSS project). A subset of Sonar findings are also enforced by ESLint; see [`docs/sonar-eslint-mapping.md`](../docs/sonar-eslint-mapping.md) for the full mapping. When a static analyser flags a pattern that is functionally correct, a brief inline disposition comment is lower-risk than auto-refactoring; the backlog's Agent Notes section explains this.
 
+SonarCloud uses CI-based analysis (not Automatic Analysis). If the workflow or `sonar-project.properties` is reconfigured, Automatic Analysis must remain disabled in SonarCloud → Administration → Analysis Method — enabling it alongside the CI scanner causes duplicate, conflicting analyses.
+
 ## Testing Rules
 
 - Keep warnings at zero; lint uses `--max-warnings 0`. 
 - If lint or tests fail after your change, fix them before presenting the result. If a fix is non-obvious or would require a design decision, present the failure and ask the user.
 - When adding a new module with exported pure functions, add a matching `*.test.ts` in the same PR.
+- `vitest` and `@vitest/coverage-v8` must always be bumped together to the same version — they are peer-locked.
 - When changing scoring behavior, update `src/scoring.test.ts`.
 - When changing import or storage trust boundaries, update `validation.imports.test.ts` or `storage.test.ts`.
 - When changing generated rota behavior, update `src/rotaGenerator.test.ts` and provider coverage in `src/rotaProvider.test.ts`.
