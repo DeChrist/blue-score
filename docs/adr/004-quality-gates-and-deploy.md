@@ -9,7 +9,7 @@ CI/CD is the source of truth for release readiness.
 `.github/workflows/ci-cd.yml` runs on pull requests and `main`, using Node 24. It enforces:
 
 - `npm run lint`
-- `npm run test:coverage` — runs all tests via Vitest with `@vitest/coverage-v8`; uploads a `coverage-report` artifact (text, HTML, lcov) on every run
+- `npm run test:coverage` — runs all tests via Vitest with `@vitest/coverage-v8`; reports summary text in the job log and uploads a `coverage-report` artifact (HTML + lcov) on every run
 - `npm run build`
 
 Pushes to `main` deploy the Vite build to GitHub Pages.
