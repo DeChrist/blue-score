@@ -8,7 +8,7 @@ Living list of quality work, not an architecture decision. Priorities are an ini
 - CI enforces lint, `test:coverage`, and build on Node 24; a `coverage-report` artifact is uploaded on every run.
 - Latest assessed validation run: CI-CD on `feat/session-phase-machine` passed on 2026-05-25 (93 baseline + 12 sessionPhase + new storage/validation.imports/exporter tests; exact count from CI run).
 - [SonarCloud open issues](https://sonarcloud.io/project/issues?issueStatuses=OPEN%2CCONFIRMED&id=DeChrist_blue-score) reviewed on 2026-05-24: 32 issues, estimated effort 2h 59min.
-- Pure-logic modules are well covered: `appMode`, `playerLookup`, `exporters`, `scoring` at 100% statements; `validation` 88%, `storage` 80%, `rotaProvider` 81%, `rotaGenerator` 97%. Overall statements sit at ~60% because `App.tsx` and React components are at 0% — no UI tests yet.
+- Pure-logic modules are well covered (scoring, validation, storage, export, rota generation, and provider mapping). Overall statement coverage is depressed by `App.tsx` and React components sitting at 0% — no UI tests yet. Current per-file numbers are in the `coverage-report` CI artifact.
 - Main risk areas are imported-data ambiguity, setup/scoring state transitions, and browser responsiveness.
 
 ## SonarCloud Summary
