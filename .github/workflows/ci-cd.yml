@@ -55,6 +55,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Determine current version
+        id: version
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
       - name: Download coverage artifact
         uses: actions/download-artifact@v4
         with:
@@ -66,6 +72,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: -Dsonar.projectVersion=${{ steps.version.outputs.version }}
 
   deploy:
     needs: quality
