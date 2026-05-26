@@ -1,5 +1,9 @@
 # Blue Score
 
+[![CI-CD](https://github.com/DeChrist/blue-score/actions/workflows/ci-cd.yml/badge.svg?branch=main&event=push)](https://github.com/DeChrist/blue-score/actions/workflows/ci-cd.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DeChrist_blue-score&metric=alert_status)](https://sonarcloud.io/dashboard?id=DeChrist_blue-score)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DeChrist_blue-score&metric=coverage)](https://sonarcloud.io/component_measures?id=DeChrist_blue-score&metric=coverage)
+
 Single-page, browser-only React + TypeScript app for running a padel Americano scoring session.
 
 ## Current MVP
@@ -34,10 +38,11 @@ npm run dev:demo      # demo mode (pre-loaded data)
 npm run dev:advanced  # advanced mode (import/export)
 npm run lint
 npm test
+npm run test:coverage
 npm run build
 ```
 
-CI uses Node 24 and runs lint, tests, and build before deployment.
+CI uses Node 24 and runs lint, `test:coverage`, and build before deployment. Coverage summary text is shown in the job log, and HTML/lcov output is uploaded in the `coverage-report` artifact for SonarQube Cloud analysis.
 
 On pushes to `main`, the workflow then runs a `release` job after deploy:
 
@@ -81,3 +86,7 @@ npm run mobile-test
 ```
 
 Open the generated `trycloudflare.com` URL on the phone.
+
+## License
+
+Licensed under the [MIT License](LICENSE).
