@@ -15,19 +15,16 @@ These rules are active in `eslint.config.js`. SonarCloud violations that fall in
 | S3358 | Major | `no-nested-ternary` | Nested ternary expression |
 | S4138 | Minor | `@typescript-eslint/prefer-for-of` | Index-only `for` loop iterable as `for-of` |
 | S6571 | Minor | `@typescript-eslint/no-redundant-type-constituents` | `unknown \| null` union — `unknown` already subsumes `null` |
+| S6759 | Minor | `react/prefer-read-only-props` | React props should be typed as read-only |
+| S6772 | Major | `react/jsx-child-element-spacing` | Ambiguous spacing between text and JSX elements |
+| S7764 | Minor | `unicorn/prefer-global-this` | Prefer `globalThis` instead of environment-specific globals such as `window` |
+| S7778 | Minor | `unicorn/no-array-push-push` | Multiple adjacent `.push()` calls on the same array |
 
 `require-array-sort-compare` and `no-redundant-type-constituents` require type-aware linting; `parserOptions.projectService` is set in `eslint.config.js` to enable this.
 
 ## Not covered — would need new packages
 
-| Sonar rule | Severity | Findings | ESLint equivalent | Package needed |
-| --- | --- | --- | --- | --- |
-| S6759 | Minor | 4 | `react/prefer-read-only-props` | `eslint-plugin-react` |
-| S6772 | Major | 2 | `react/jsx-child-element-spacing` | `eslint-plugin-react` |
-| S7764 | Minor | 4 | `unicorn/prefer-global-this` | `eslint-plugin-unicorn` |
-| S7778 | Minor | 2 | `unicorn/no-array-push-push` | `eslint-plugin-unicorn` |
-
-Adding `eslint-plugin-react` would cover the two Major JSX/props findings and is worth considering if the React surface grows.
+No remaining rules in this category at the moment.
 
 ## No standard ESLint equivalent
 

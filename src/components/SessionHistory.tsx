@@ -2,8 +2,8 @@ import { formatPair, makePlayerNameLookup } from "../playerLookup";
 import type { Session } from "../types";
 
 interface Props {
-  session: Session;
-  onSelectRota: (rotaNumber: number) => void;
+  readonly session: Session;
+  readonly onSelectRota: (rotaNumber: number) => void;
 }
 
 export function SessionHistory({ session, onSelectRota }: Props) {

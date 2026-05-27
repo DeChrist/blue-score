@@ -1,7 +1,7 @@
 import type { StandingRow } from "../types";
 
 interface Props {
-  standings: StandingRow[];
+  readonly standings: StandingRow[];
 }
 
 export function StandingsTable({ standings }: Props) {

@@ -20,7 +20,7 @@ import {
   validateSessionSetup,
 } from "./validation";
 
-const mode = parseAppMode(window.location.search);
+const mode = parseAppMode(globalThis.location.search);
 
 function newSession(): Session {
   return {
@@ -256,7 +256,7 @@ export default function App() {
     try {
       setNotice(appFlowNotice("generatingRotas"));
       // Yield so the busy state paints before the synchronous generator runs.
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+      await new Promise<void>((resolve) => globalThis.setTimeout(resolve, 0));
       const provider = new GeneratedRotaProvider();
       const rotas = await provider.getRotas({ players: session.players, courts: session.courtCount, pointsPerCourt: session.pointsPerCourt });
       commitSession({ ...session, rotas, results: [], currentRotaNumber: rotas[0]?.rotaNumber ?? 1 });
@@ -285,7 +285,7 @@ export default function App() {
       return;
     }
 
-    if (phase !== "setup" && !window.confirm("Importing a session will replace the current session including all results. Continue?")) return;
+    if (phase !== "setup" && !globalThis.confirm("Importing a session will replace the current session including all results. Continue?")) return;
 
     const validation = validateSessionSetup(importedSession.value);
     const resultsValidation = validateSessionResults(importedSession.value);
@@ -329,7 +329,7 @@ export default function App() {
 
   function resetToSetup() {
     if (!session) return;
-    if (!window.confirm("This will clear all rotas and results. Your player list and settings will be kept. Continue?")) return;
+    if (!globalThis.confirm("This will clear all rotas and results. Your player list and settings will be kept. Continue?")) return;
     commitSession({ ...session, rotas: [], results: [], currentRotaNumber: 1 });
     setSelectedRotaNumber(1);
     setSetupErrors([]);
@@ -363,7 +363,7 @@ export default function App() {
               className="danger"
               type="button"
               onClick={() => {
-                if (sessionHasData(restoredSession) && !window.confirm("Start a new session and replace the saved one?")) return;
+                if (sessionHasData(restoredSession) && !globalThis.confirm("Start a new session and replace the saved one?")) return;
                 setStorageWarning(clearSession().warning);
                 commitSession(newSession());
                 setSelectedRotaNumber(1);
@@ -398,7 +398,7 @@ export default function App() {
           className="danger"
           type="button"
           onClick={() => {
-            if (sessionHasData(session) && !window.confirm("Start a new session and replace the current one?")) return;
+            if (sessionHasData(session) && !globalThis.confirm("Start a new session and replace the current one?")) return;
             const clearResult = clearSession();
             setStorageWarning(clearResult.warning);
             const saveResult = commitSession(newSession());
@@ -437,11 +437,11 @@ export default function App() {
             {phase === "setup" ? (
               <>
                 <label>
-                  Session name
+                  <span>Session name</span>
                   <input value={session.name} onChange={(event) => commitSession({ ...session, name: event.target.value })} />
                 </label>
                 <label>
-                  Points per court
+                  <span>Points per court</span>
                   <input
                     type="number"
                     min="1"
@@ -450,7 +450,7 @@ export default function App() {
                   />
                 </label>
                 <label>
-                  Court count
+                  <span>Court count</span>
                   <input
                     type="number"
                     min={2}

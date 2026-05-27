@@ -7,10 +7,10 @@ import type { CourtScore, RotaResult, Session } from "../types";
 import { combineValidation, validateCourtScore } from "../validation";
 
 interface Props {
-  session: Session;
-  selectedRotaNumber: number;
-  onSessionChange: (session: Session) => void;
-  onRotaChange: (rotaNumber: number) => void;
+  readonly session: Session;
+  readonly selectedRotaNumber: number;
+  readonly onSessionChange: (session: Session) => void;
+  readonly onRotaChange: (rotaNumber: number) => void;
 }
 
 export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRotaChange }: Props) {
@@ -135,10 +135,10 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
 }
 
 interface ScoreSpinnerProps {
-  value: number;
-  max: number;
-  label: string;
-  onChange: (value: number) => void;
+  readonly value: number;
+  readonly max: number;
+  readonly label: string;
+  readonly onChange: (value: number) => void;
 }
 
 function ScoreSpinner({ value, max, label, onChange }: ScoreSpinnerProps) {
