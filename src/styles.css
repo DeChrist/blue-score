@@ -1,39 +1,106 @@
 :root {
-  --color-bg: #f5f7f2;
-  --color-surface: #ffffff;
-  --color-fg: #17201b;
-  --color-fg-muted: #66736b;
-  --color-border: #dce4df;
-  --color-border-soft: #e6ece8;
+  /* =========================================================================
+   * Surface & ink
+   * ========================================================================= */
+  --bg: #f4f6f2;
+  --bg-sunken: #ebeee9;
+  --surface: #ffffff;
+  --surface-2: #f8faf6;
 
-  --color-primary: #176b4d;
-  --color-on-primary: #ffffff;
+  --ink: #14181a;
+  --ink-strong: #07090a;
+  --ink-muted: #5b645e;
+  --ink-soft: #8a938d;
+  --on-brand: #ffffff;
 
-  --color-left-bg: #eef7f1;
-  --color-left-border: #abd4bd;
-  --color-right-bg: #fff5e6;
-  --color-right-border: #e0bb78;
+  --border: #dde2dc;
+  --border-soft: #ebefe9;
+  --border-strong: #c5ccc4;
 
-  --color-success-bg: #e7f5ee;
-  --color-success-border: #9fcdb7;
-  --color-danger: #982a1f;
-  --color-danger-bg: #fff0ed;
-  --color-danger-border: #e7a39a;
-  --color-info-bg: #eef2ff;
-  --color-info-fg: #31428f;
+  /* =========================================================================
+   * Brand & team colours
+   * ========================================================================= */
+  --brand: #0e7b53;
+  --brand-strong: #0a5e3f;
+  --brand-tint: #e3f3eb;
 
-  --font-ui: "Fira Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-num: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --left-fill: #e7f5ee;
+  --left-border: #9ed3b8;
+  --left-accent: #0e7b53;
+  --left-ink: #08402a;
 
-  --radius: 8px;
-  --radius-pill: 999px;
-  --shadow-panel: 0 10px 30px rgba(23, 32, 27, 0.06);
+  --right-fill: #fdecd0;
+  --right-border: #e8b878;
+  --right-accent: #8a4a00;
+  --right-ink: #4a2700;
 
-  color: var(--color-fg);
-  background: var(--color-bg);
+  /* =========================================================================
+   * State
+   * ========================================================================= */
+  --success-fill: #e3f3eb;
+  --success-border: #9ed3b8;
+  --success-ink: #0a5e3f;
+
+  --danger: #b42318;
+  --danger-fill: #fee4e2;
+  --danger-border: #fda29b;
+  --danger-ink: #912018;
+
+  --warn-fill: #fef3c7;
+  --warn-border: #fcd34d;
+  --warn-ink: #92400e;
+
+  --info-fill: #e0eaff;
+  --info-border: #b8c8f5;
+  --info-ink: #2d4daa;
+
+  /* =========================================================================
+   * Typography
+   * ========================================================================= */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+             Roboto, "Helvetica Neue", system-ui, sans-serif;
+  --font-num: "Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas,
+              monospace;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+                  "Segoe UI", Roboto, "Helvetica Neue", system-ui, sans-serif;
+
+  /* =========================================================================
+   * Shape & elevation
+   * ========================================================================= */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  --shadow-sm: 0 1px 0 rgba(7, 9, 10, 0.02), 0 1px 2px rgba(20, 30, 25, 0.05);
+  --shadow-md: 0 1px 0 rgba(7, 9, 10, 0.02), 0 8px 24px -12px rgba(20, 30, 25, 0.12);
+  --shadow-lg: 0 4px 16px -8px rgba(7, 9, 10, 0.08), 0 16px 36px -16px rgba(20, 30, 25, 0.20);
+  --shadow-top: 0 -1px 0 rgba(7, 9, 10, 0.04), 0 -10px 24px -12px rgba(20, 30, 25, 0.10);
+
+  /* =========================================================================
+   * Touch & sizing
+   * ========================================================================= */
+  --touch: 44px;
+  --touch-lg: 56px;
+  --touch-xl: 64px;
+
+  /* =========================================================================
+   * Motion
+   * ========================================================================= */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-emph: cubic-bezier(0.2, 0.9, 0.1, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-emph: 320ms;
+
+  color: var(--ink);
+  background: var(--bg);
   font-family: var(--font-ui);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
@@ -46,7 +113,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
 
@@ -58,10 +125,10 @@ textarea {
 
 button {
   align-items: center;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  color: var(--color-fg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--ink);
   cursor: pointer;
   display: inline-flex;
   gap: 0.45rem;
@@ -71,7 +138,7 @@ button {
 }
 
 button:hover {
-  border-color: var(--color-primary);
+  border-color: var(--brand);
 }
 
 button:disabled {
@@ -81,10 +148,10 @@ button:disabled {
 
 input,
 textarea {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  color: var(--color-fg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--ink);
   padding: 0.7rem 0.75rem;
   width: 100%;
 }
@@ -146,10 +213,10 @@ h3 {
 }
 
 .panel {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-panel);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-sm);
   padding: 1rem;
 }
 
@@ -171,22 +238,22 @@ h3 {
 }
 
 .muted {
-  color: var(--color-fg-muted);
+  color: var(--ink-muted);
 }
 
 .notice {
-  background: var(--color-success-bg);
-  border: 1px solid var(--color-success-border);
-  border-radius: var(--radius);
+  background: var(--success-fill);
+  border: 1px solid var(--success-border);
+  border-radius: var(--r-sm);
   margin-bottom: 1rem;
   padding: 0.8rem 1rem;
 }
 
 .error {
-  background: var(--color-danger-bg);
-  border: 1px solid var(--color-danger-border);
-  border-radius: var(--radius);
-  color: var(--color-danger);
+  background: var(--danger-fill);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--r-sm);
+  color: var(--danger);
   margin-top: 0.6rem;
   padding: 0.65rem;
 }
@@ -196,14 +263,19 @@ h3 {
 }
 
 .primary {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-on-primary);
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
   font-weight: 800;
 }
 
+.primary:hover {
+  background: var(--brand-strong);
+  border-color: var(--brand-strong);
+}
+
 .danger {
-  color: var(--color-danger);
+  color: var(--danger);
 }
 
 .ghost {
@@ -249,8 +321,8 @@ h3 {
 }
 
 .court-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
   padding: 0.8rem;
 }
 
@@ -273,20 +345,20 @@ h3 {
 }
 
 .pair {
-  border-radius: var(--radius);
+  border-radius: var(--r-sm);
   display: grid;
   gap: 0.35rem;
   padding: 0.75rem;
 }
 
 .left-pair {
-  background: var(--color-left-bg);
-  border: 1px solid var(--color-left-border);
+  background: var(--left-fill);
+  border: 1px solid var(--left-border);
 }
 
 .right-pair {
-  background: var(--color-right-bg);
-  border: 1px solid var(--color-right-border);
+  background: var(--right-fill);
+  border: 1px solid var(--right-border);
 }
 
 .pair.leading {
@@ -295,18 +367,18 @@ h3 {
 }
 
 .left-pair.leading .player-chip {
-  border-color: var(--color-left-border);
+  border-color: var(--left-border);
   border-width: 2px;
 }
 
 .right-pair.leading .player-chip {
-  border-color: var(--color-right-border);
+  border-color: var(--right-border);
   border-width: 2px;
 }
 
 
 .player-chip {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 0.875rem;
   min-height: 36px;
@@ -353,31 +425,31 @@ h3 {
 
 .versus {
   align-self: center;
-  color: var(--color-fg-muted);
+  color: var(--ink-muted);
   font-size: 0.8rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 
 .sit-outs {
-  background: var(--color-bg);
-  border-radius: var(--radius);
+  background: var(--bg);
+  border-radius: var(--r-sm);
   margin: 0.9rem 0;
   padding: 0.75rem;
 }
 
 .status {
-  background: var(--color-info-bg);
-  border-radius: var(--radius-pill);
-  color: var(--color-info-fg);
+  background: var(--info-fill);
+  border-radius: var(--r-pill);
+  color: var(--info-ink);
   font-size: 0.85rem;
   font-weight: 800;
   padding: 0.3rem 0.6rem;
 }
 
 .status.edited {
-  background: var(--color-success-bg);
-  color: var(--color-primary);
+  background: var(--success-fill);
+  color: var(--brand);
 }
 
 .table-wrap {
@@ -392,13 +464,13 @@ table {
 
 th,
 td {
-  border-bottom: 1px solid var(--color-border-soft);
+  border-bottom: 1px solid var(--border-soft);
   padding: 0.7rem 0.5rem;
   text-align: left;
 }
 
 th {
-  color: var(--color-fg-muted);
+  color: var(--ink-muted);
   font-size: 0.78rem;
   text-transform: uppercase;
 }
@@ -424,13 +496,13 @@ td:nth-child(6) {
 }
 
 .history-item {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
   padding: 0.8rem;
 }
 
 .history-score {
-  border-top: 1px solid var(--color-border-soft);
+  border-top: 1px solid var(--border-soft);
   font-size: 0.9rem;
   margin-top: 0.55rem;
   padding-top: 0.55rem;
@@ -470,8 +542,8 @@ td:nth-child(6) {
 }
 
 .rota-tab.selected {
-  background: var(--color-fg);
-  color: var(--color-on-primary);
+  background: var(--ink);
+  color: var(--on-brand);
 }
 
 .setup-title-actions {
@@ -560,8 +632,8 @@ td:nth-child(6) {
   }
 
   tr {
-    border: 1px solid var(--color-border-soft);
-    border-radius: var(--radius);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--r-sm);
     margin-bottom: 0.55rem;
     padding: 0.55rem;
   }
@@ -576,7 +648,7 @@ td:nth-child(6) {
   }
 
   td::before {
-    color: var(--color-fg-muted);
+    color: var(--ink-muted);
     content: attr(data-label);
     font-family: var(--font-ui);
     font-variant-numeric: normal;

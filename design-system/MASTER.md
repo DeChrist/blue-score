@@ -1,59 +1,201 @@
-# Blue Score Design System
+# Blue Score — Design System
 
-Durable UI guidance for the courtside scoring app. Page-specific notes live in `design-system/pages/`.
+Durable UI guidance for the courtside Padel Americano scoring app. Page-specific notes live in `design-system/pages/`. **Dark mode is explicitly out of scope** for this phase — every token here is tuned for day-mode outdoor screens.
+
+> Source of truth. When agents (Claude, Copilot, Codex) and human contributors disagree, this file wins. ADR-005 still governs the "small CSS design system, no Tailwind" architecture.
+
+---
 
 ## Product Context
 
-- Single-purpose padel Americano scoring utility.
-- Used outdoors, phone-held, often one-handed.
-- One browser-only SPA with setup, scoring, standings/history, and import/export panels.
+- Single-purpose Padel Americano scoring utility.
+- Used outdoors, phone-held, often one-handed, between matches.
+- One browser-only SPA with **four primary surfaces** — Score · Standings · History · More — plus Setup as a phase-gated screen.
+- Planned: mid-match player swap via drag &amp; drop, reachable from the Score surface without breaking flow.
+
+## Scoring Model — invariants that drive the UI
+
+These are non-negotiable and shape every visual decision below.
+
+1. **Coupled scoring.** Each court is two coupled steppers: incrementing one side decrements the other. The per-court invariant `leftScore + rightScore = pointsPerCourt` (default `24`) is **guaranteed by construction** — never as a validation that can fail.
+2. **End-of-match entry.** Scores are entered once, after the match is played — not live during the rally. There is no running "Even · 0–0" or "Left leads · 14–8" indicator.
+3. **Touched ⇒ recorded.** A court starts at the default split (`pointsPerCourt / 2` on each side, i.e. **12 – 12**). The first stepper press on a court flips it from *pending* to *recorded*. There is no separate "save match" action per court.
+4. **Submit gates on recorded count, not on totals.** "Submit Rota N" is enabled when **every court** in the current rota is `recorded`. Totals can never be off, so there is no "X / 24 short" message anywhere.
 
 ## Principles
 
-- Outdoor-readable first: light mode, high contrast, no decorative low-contrast effects.
-- Touch-first controls: interactive targets should be at least 44x44px; score controls stay larger.
-- Stable left/right team identity: left uses green, right uses amber.
-- Numeric stability: scores and standings use tabular numeric styling.
-- Minimal chrome: panels, borders, and clear actions over marketing-style layout.
+1. **Outdoor-readable first.** Light mode only. High contrast on text, scoreboard numerics, and rota status. No decorative low-contrast effects.
+2. **Touch-first.** Interactive targets ≥ 44×44 px; score steppers are 56×56 px on phone. The thumb-reachable bottom 25% of the viewport is reserved for the active CTA and tab bar.
+3. **Confidence over speed.** Every screen makes the operator confident they are scoring the right rota and the right court *before* speed matters. Big rota IDs, big court numbers, persistent session-name app bar.
+4. **Stable team identity.** Left = jade, right = copper. Stable regardless of who won. Leader is communicated additively (rail + score-ink colour), never by recolouring the pair.
+5. **Numeric stability.** Scores, totals, and standings use tabular monospace. Numbers never reflow when they tick up.
+6. **Minimal chrome.** No marketing hero, no decorative gradients, no glass effects. Panels, cards, and grouped lists carry the structure.
+7. **One concern at a time.** On phone, only one of Score/Standings/History/More/Setup is visible at once. On desktop, scoring stays primary; standings ride along in a narrow rail.
+
+## Court States
+
+A single visual vocabulary, used consistently on phone and desktop. **No third "in-progress" state** — by the scoring model, a court is either pending or recorded.
+
+| State | Trigger | Visual | Header |
+| --- | --- | --- | --- |
+| **Pending** | Court at the default 12–12, untouched | Score tabs render in a muted grey gradient; pair-chip text drops to `--ink-muted`; a thin dashed "Tap a score to record this match" footer sits below the steppers on phone. On desktop, a small `Not entered` hint replaces the status pill. | Court number only |
+| **Recorded** | At least one stepper has been touched | Score tabs lift to full team tint; leading-side gets the 4 px rail on its left edge and the score ink shifts to `--left-accent` / `--right-accent`. | Court number + `Recorded` success pill |
+| **Submitted** | The owning rota has been submitted | Court card is read-only; scores keep the recorded styling; rota stepper above it shows the `Done` chip. Edit re-enters the rota via the History tab pencil action. | Court number + `Done` success pill |
+
+Untap (returning a court to exactly 12–12 via stepper presses) returns the court to **pending**. This is intentional: it lets the operator clear an accidental entry without a separate "reset" affordance.
 
 ## Core Tokens
 
+### Surface &amp; ink
+
 | Token | Value | Use |
 | --- | --- | --- |
-| `--color-bg` | `#f5f7f2` | Page background |
-| `--color-surface` | `#ffffff` | Panels and inputs |
-| `--color-fg` | `#17201b` | Primary text |
-| `--color-fg-muted` | `#66736b` | Secondary text |
-| `--color-border` | `#dce4df` | Main borders |
-| `--color-primary` | `#176b4d` | Primary actions |
-| `--color-left-bg` | `#eef7f1` | Left pair background |
-| `--color-right-bg` | `#fff5e6` | Right pair background |
-| `--color-danger` | `#982a1f` | Destructive labels and errors |
+| `--bg` | `#f4f6f2` | Page background |
+| `--bg-sunken` | `#ebeee9` | Stepper tracks, chips, recessed wells |
+| `--surface` | `#ffffff` | Panels, cards, sheets |
+| `--surface-2` | `#f8faf6` | Nested surfaces, side rail |
+| `--ink` | `#14181a` | Primary text |
+| `--ink-strong` | `#07090a` | Score display, emphasis |
+| `--ink-muted` | `#5b645e` | Secondary text, pending court names |
+| `--ink-soft` | `#8a938d` | Tertiary text, icon resting, pending score numbers |
+| `--border` | `#dde2dc` | Primary borders |
+| `--border-soft` | `#ebefe9` | Row separators |
+| `--border-strong` | `#c5ccc4` | Inset / pressed |
 
-Typography:
+### Brand &amp; teams
 
-- UI font: Fira Sans with system fallback.
-- Numeric font: Fira Code with tabular figures.
-- Body text should remain at least 16px on mobile.
+| Token | Value | Use |
+| --- | --- | --- |
+| `--brand` | `#0e7b53` | Primary action, current rota, left-pair accent, success ink |
+| `--brand-strong` | `#0a5e3f` | Hover / pressed primary |
+| `--brand-tint` | `#e3f3eb` | Brand backgrounds (pills, drop targets) |
+| `--left-fill` | `#e7f5ee` | Left pair background (recorded) |
+| `--left-border` | `#9ed3b8` | Left pair rail (resting) |
+| `--left-accent` | `#0e7b53` | Left pair rail (leading), score colour |
+| `--right-fill` | `#fdecd0` | Right pair background (recorded) |
+| `--right-border` | `#e8b878` | Right pair rail (resting) |
+| `--right-accent` | `#8a4a00` | Right pair rail (leading), score colour |
+
+Pending courts override `--left-fill`/`--right-fill` with a `linear-gradient(180deg, #eef0ec 0%, #e2e6df 100%)` muted gradient (phone) or `linear-gradient(180deg, #f0f2ee 0%, #e3e6e0 100%)` (desktop). Pending score-ink is `--ink-soft`.
+
+Left/right hues stay more saturated than the earlier `#eef7f1` / `#fff5e6` for sun-readability; the accent inks pass WCAG AA against their own fills.
+
+### State
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--success-fill` / `--success-ink` | `#e3f3eb` / `#0a5e3f` | Recorded · Submitted · Done |
+| `--danger` / `--danger-fill` / `--danger-ink` | `#b42318` / `#fee4e2` / `#912018` | Destructive actions (reset, remove), system errors |
+| `--warn-fill` / `--warn-ink` | `#fef3c7` / `#92400e` | Operator cautions (e.g. unsaved-draft indicator, destructive-action confirmation) — **not** for score validation; we have no invalid scores |
+| `--info-fill` / `--info-ink` | `#e0eaff` / `#2d4daa` | Neutral toasts, "edited", system messages |
+
+## Typography
+
+- **UI font.** System stack: `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", system-ui, sans-serif`. The native stack is the single biggest contributor to the "feels like a phone app" verdict.
+- **Numeric font.** `Fira Code` with `font-variant-numeric: tabular-nums`. Kept from v0.x — distinctive without being precious. Wins for scores at 28 px+ and standings columns.
+- **Body** is 15 px on mobile, 14 px in dense list rows. **Never below 13 px** for non-decorative copy. Score readout is **28 px on phone, 26–28 px on desktop**.
+
+### Ramp
+
+| Role | Family | Size / weight | Notes |
+| --- | --- | --- | --- |
+| Scoreboard | Fira Code | 26–48 px / 700 | tabular-nums, -0.02em |
+| Display | System | 28 px / 800 | -0.02em, restore/empty states |
+| Title | System | 17 px / 700 | App bar, section heads |
+| Body | System | 15 px / 400 | Default copy |
+| Small | System | 13 px / 500 | Meta, secondary |
+| Caps | System | 11 px / 700 | tracked 0.08em, sectioning |
+
+## Shape &amp; elevation
+
+- **Radii:** `6 · 8 · 12 · 16 · 20 · 999`. Cards 16 px; rows-in-cards 12 px; chips 8 px or pill; pills 999.
+- **Shadows:** three levels — resting (1 px inset line + 1 px diffuse), sticky (8 px diffuse), lifted (16 px diffuse for drag, modal, sheet). All warm-grey-toned (`rgba(20, 30, 25, 0.08–0.20)`).
+
+## Motion
+
+- `--dur-fast: 120ms` — taps, stepper feedback, pending → recorded fade
+- `--dur-base: 200ms` — drawer / sheet
+- `--dur-emph: 320ms` — page transition, rota auto-advance
+- Under `prefers-reduced-motion: reduce`, all of the above clamp to ≤ 10 ms; only colour/opacity changes remain.
+- **Haptics:** on iOS, score steppers fire `UIImpactFeedback` light; submit fires `UINotificationFeedback` success. Both no-op silently if unavailable.
 
 ## Layout
 
-- Mobile-first, single column below 980px.
-- Desktop layout uses three practical columns: setup, scoring/standings/history, export.
-- Cards are for repeated items and panels only; avoid nested decorative cards.
-- Do not introduce router-driven screens for v0.1.x.
+### Mobile (≤ 980 px)
+
+- **Bottom tab bar:** Score · Standings · History · More.
+- **Top app bar:** session name + "N of M rotas played · K players" + overflow.
+- **Rota strip** directly below the app bar — horizontally scrollable stepper cards with `Done / Scoring / Open / Locked` status.
+- **Score is the home tab** during the scoring phase. During setup phase, Setup takes the home position and the other tabs render an empty state.
+- **Sticky submit bar** above the tab bar. Title shows `K of N matches recorded`; sub shows which courts are still pending. CTA is enabled iff all courts in the rota are recorded; on tap, auto-advances to the next open rota and shows a 4 s toast with Undo.
+- **One concern at a time:** Setup, Import/Export, and Session info live behind navigation, not stacked panels.
+
+### Desktop (≥ 1080 px)
+
+- **Single primary column** for the active surface + a **320 px right rail** showing top-8 live standings and a "Recent" event log.
+- App bar across the top with session block centred and actions right-aligned. Rota strip on its own row directly beneath.
+- **Court rows** (one per court) replace the side-by-side card layout. Anatomy:
+  `[ court-tag 56 px ] [ versus-block — left pair · VS · right pair, distributed with space-between ] [ status-pill auto ]`
+  - **Pair tiles hug their content.** `display: inline-grid; grid-template-columns: auto auto`; `max-width: 46%` of the versus-block. Names sit immediately left of the stepper, no trailing whitespace.
+  - **Compact stepper on desktop:** +/− buttons are 40×48 px; score number stays at 26 px / 700.
+  - **Court tag always reserves vertical room** for an optional `court-name` line (e.g. sponsor / club label) below the court number. Render it when present; reserve the line height when absent so rows never reflow as names are added or removed across courts.
+- Sticky submit bar fixed to the viewport bottom, full width, with `⌘⏎` keyboard shortcut hint.
+- **Setup is a sheet**, not a sidebar. Triggered by the Session button.
+
+## Components — keep, change, add
+
+### Keep
+
+- Per-court coupled-scoring invariant.
+- Explicit submit; no auto-submit when all courts are recorded.
+- Sit-outs visible on the Score surface during scoring.
+- Storage philosophy: full session in `localStorage`, refresh-safe drafts.
+- Stable left/right colour metaphor (jade/copper).
+
+### Change
+
+- **Score steppers.** Remove the global wheel listener that mutates scores while the user scrolls the page. Wheel only fires when the input has focus, per the page-spec note. Tap targets bump to 56×56 px (phone) / 40×48 px (desktop). Default value is `pointsPerCourt / 2` on each side.
+- **Court card.** Top-to-bottom on phone (header · left row · right row); horizontal row on desktop. Pending vs recorded styling per the table above.
+- **Rota nav.** Pills become small stepper cards with status (`Done / Scoring / Open / Locked`).
+- **Standings.** Native list on phone — Rank · Name · Points — with a sort segment. Table form only on the desktop full-page view.
+- **History.** Per-rota cards with a 3-line scoreboard mini-view; relative timestamp; leading side bolded.
+- **Restore screen.** Adds context (session name, time saved, progress, top player) so the operator picks confidently.
+- **Setup.** iOS-style grouped lists; drag handles on player rows.
+- **More tab — mode-gated exports.** Standard mode always exposes **Session JSON export** and the CSV exports (Standings, Results); these are harmless and useful. **Copy JSON** and **Import session JSON** are advanced-mode only. "Reset to setup" and "Start new session" live at the bottom of More under a Danger section regardless of mode.
+
+### Add
+
+- **App shell** (top bar + tab bar) with Score / Standings / History / More.
+- **Pending court state** with muted gradient + footer hint, per the Court States table.
+- **Sticky submit bar** with `K of N matches recorded` meta and inline Undo on the post-submit toast.
+- **Mid-match player swap** drag-and-drop affordance on every player chip (long-press / grip glyph). Position-attached score model: scores stay on the court when chips swap. **Scope: same-court swaps only** (e.g. partners or opponents on Court 2), plus a separate **sit-out swap** for injury-style scenarios (active player ↔ sitting-out player). Cross-court swaps are out of scope — they would break the same-rota rota structure and aren't required by the use cases that drove this feature.
+- **Keyboard:** `⌘⏎` submits; arrow keys step the focused score input; Tab moves between steppers in court / pair order.
 
 ## Accessibility
 
 - Keep visible labels for form fields.
-- Preserve focus-visible rings.
+- Preserve focus-visible rings (2 px brand outline, 2 px offset).
 - Icon-only buttons need `aria-label`.
-- Do not convey meaning by color alone.
+- Do not convey meaning by colour alone — pending state pairs the muted gradient with the textual `Not entered` / "Tap a score to record" hint; recorded state pairs the tint with the `Recorded` pill.
 - Respect `prefers-reduced-motion`.
+- Bottom tab bar items need full `role="tab"` semantics and a 44 px hit target inside the 76 px bar (padding accommodates safe-area).
+- Drag-and-drop has a keyboard / right-click fallback: long-press / contextmenu on a chip opens a "Swap with…" popover with valid targets as a tappable list.
+- `aria-live="polite"` announces rota-level transitions: `Match on court 1 recorded`, `Rota 2 submitted`, etc. Per-stepper presses are not announced (too noisy).
 
 ## Anti-Patterns
 
-- No dark mode for this product phase.
-- No hero sections, gradients, glass effects, charts, or decorative animation.
+- No dark mode for this product phase (backlog).
+- No hero sections, decorative gradients, glass effects, or marketing-style chrome.
+- No live "Even · 0–0" / "Left leads · 14–8" running summaries — scoring is end-of-match only.
+- No "X / 24 short" or "Total OK" validation pills — the model can't produce an invalid total.
+- No charts, sparklines, or trend microcharts on standings — keep numerics primary.
 - No hover-only affordances.
-- No Tailwind or component-library adoption without a new ADR.
+- No emoji or decorative iconography. Lucide icons only, monoline, 22 px on mobile / 16–18 px in dense lists.
+- No Tailwind or component-library adoption without a new ADR (see ADR-005).
+- No `scrollIntoView` — it interacts badly with sticky bars.
+- No global wheel listener on score inputs.
+
+## Open Questions
+
+*None at this writing. Add new questions here as they surface.*
+
