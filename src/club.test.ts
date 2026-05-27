@@ -17,7 +17,7 @@ describe("club config", () => {
     const club = parseClubConfig(validClub());
 
     expect(club.name).toBe("Club");
-    expect(club.websiteUrl).toBe("");
+    expect(club.websiteUrl).toBeUndefined();
     expect(club.courts).toHaveLength(3);
   });
 
@@ -28,8 +28,14 @@ describe("club config", () => {
 
   it("accepts empty and absolute http(s) website URLs", () => {
     expect(validateClub(validClub({ websiteUrl: "" })).valid).toBe(true);
+    expect(validateClub(validClub({ websiteUrl: undefined })).valid).toBe(true);
     expect(validateClub(validClub({ websiteUrl: "https://example.com/club" })).valid).toBe(true);
     expect(validateClub(validClub({ websiteUrl: "http://example.com" })).valid).toBe(true);
+  });
+
+  it("rejects missing and non-SVG logos", () => {
+    expect(validateClub(validClub({ logoSvg: "" })).errors).toContain("Club logo SVG is required.");
+    expect(validateClub(validClub({ logoSvg: "not svg" })).errors).toContain("Club logo must be an SVG string.");
   });
 
   it("rejects invalid or non-web website URLs", () => {

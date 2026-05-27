@@ -17,6 +17,7 @@ import {
   parseImportedRotas,
   parseImportedSession,
   validatePlayers,
+  validateCourtCount,
   validateSessionResults,
   validateSessionSetup,
 } from "./validation";
@@ -96,10 +97,7 @@ function appFlowNotice(kind: "generatingRotas" | "sessionImported" | "freshSessi
 }
 
 function validateCourtCountForClub(courtCount: number): string | null {
-  if (!Number.isInteger(courtCount) || courtCount < 2 || courtCount > clubCourtLimit) {
-    return `Court count must be an integer from 2 through ${clubCourtLimit}.`;
-  }
-  return null;
+  return validateCourtCount(courtCount, clubCourtLimit).errors[0] ?? null;
 }
 
 function sessionUpdateNotice(previousSession: Session | null, nextSession: Session): string | null {

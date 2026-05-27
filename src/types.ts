@@ -25,7 +25,7 @@ export interface Club {
   name: string;
   logoSvg: string;
   courts: Court[];
-  websiteUrl: string;
+  websiteUrl?: string;
 }
 
 export interface Rota {

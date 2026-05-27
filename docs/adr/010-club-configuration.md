@@ -14,9 +14,9 @@ The current Club fields are:
 - `logoSvg` — required SVG string, stored for future icon/app-icon use but not rendered in the UI yet.
 - `courts` — ordered array of 2 through 6 courts; array position maps to court number.
 - `courts[].name` — optional display name, max 32 characters.
-- `websiteUrl` — empty or absolute `http(s)` URL.
+- `websiteUrl` — optional; omitted/empty in JSON or absolute `http(s)` URL.
 
-The visible app title and browser document title render as `{Club name} - Padel Americano`. If `websiteUrl` is non-empty, the visible club name links to it.
+The visible app title and browser document title render as `{Club name} - Padel Americano`. If `websiteUrl` is present, the visible club name links to it.
 
 ## Court Count Rules
 

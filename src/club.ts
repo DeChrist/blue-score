@@ -8,7 +8,7 @@ const MAX_COURTS = 6;
 
 type UnknownRecord = Record<string, unknown>;
 
-function fail(errors: string[]): ValidationResult {
+function validationResult(errors: string[]): ValidationResult {
   return { valid: errors.length === 0, errors };
 }
 
@@ -17,8 +17,6 @@ function isRecord(value: unknown): value is UnknownRecord {
 }
 
 function isValidWebsiteUrl(value: string): boolean {
-  if (value === "") return true;
-
   try {
     const url = new URL(value);
     return url.protocol === "http:" || url.protocol === "https:";
@@ -30,6 +28,7 @@ function isValidWebsiteUrl(value: string): boolean {
 export function validateClub(club: Club): ValidationResult {
   const errors: string[] = [];
   const name = club.name.trim();
+  const websiteUrl = club.websiteUrl?.trim();
 
   if (!name) errors.push("Club name is required.");
   if (name.length > CLUB_NAME_MAX_LENGTH) errors.push(`Club name cannot exceed ${CLUB_NAME_MAX_LENGTH} characters.`);
@@ -38,7 +37,7 @@ export function validateClub(club: Club): ValidationResult {
   if (!Array.isArray(club.courts) || club.courts.length < MIN_COURTS || club.courts.length > MAX_COURTS) {
     errors.push(`Club courts must contain ${MIN_COURTS} through ${MAX_COURTS} courts.`);
   }
-  if (!isValidWebsiteUrl(club.websiteUrl)) {
+  if (websiteUrl && !isValidWebsiteUrl(websiteUrl)) {
     errors.push("Club website URL must be empty or an absolute http(s) URL.");
   }
 
@@ -48,7 +47,7 @@ export function validateClub(club: Club): ValidationResult {
     }
   });
 
-  return fail(errors);
+  return validationResult(errors);
 }
 
 export function parseClubConfig(input: unknown): Club {
@@ -63,11 +62,13 @@ export function parseClubConfig(input: unknown): Club {
     }))
     : [];
 
+  const websiteUrl = typeof input.websiteUrl === "string" ? input.websiteUrl.trim() : "";
+
   const club: Club = {
     name: typeof input.name === "string" ? input.name.trim() : "",
     logoSvg: typeof input.logoSvg === "string" ? input.logoSvg : "",
     courts,
-    websiteUrl: typeof input.websiteUrl === "string" ? input.websiteUrl.trim() : "",
+    ...(websiteUrl ? { websiteUrl } : {}),
   };
 
   const validation = validateClub(club);
