@@ -199,6 +199,17 @@ h1 {
   font-size: clamp(1.8rem, 4vw, 3rem);
 }
 
+.club-title-link {
+  color: inherit;
+  text-decoration-color: var(--brand);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.12em;
+}
+
+.club-title-link:hover {
+  color: var(--brand);
+}
+
 h2 {
   font-size: 1.25rem;
 }

@@ -9,6 +9,7 @@ Durable UI guidance for the courtside Padel Americano scoring app. Page-specific
 ## Product Context
 
 - Single-purpose Padel Americano scoring utility.
+- One app-bundled Club configuration provides title branding, optional website link, setup court-count cap, and court display names.
 - Used outdoors, phone-held, often one-handed, between matches.
 - One browser-only SPA with **four primary surfaces** — Score · Standings · History · More — plus Setup as a phase-gated screen.
 - Planned: mid-match player swap via drag &amp; drop, reachable from the Score surface without breaking flow.
@@ -26,7 +27,7 @@ These are non-negotiable and shape every visual decision below.
 
 1. **Outdoor-readable first.** Light mode only. High contrast on text, scoreboard numerics, and rota status. No decorative low-contrast effects.
 2. **Touch-first.** Interactive targets ≥ 44×44 px; score steppers are 56×56 px on phone. The thumb-reachable bottom 25% of the viewport is reserved for the active CTA and tab bar.
-3. **Confidence over speed.** Every screen makes the operator confident they are scoring the right rota and the right court *before* speed matters. Big rota IDs, big court numbers, persistent session-name app bar.
+3. **Confidence over speed.** Every screen makes the operator confident they are scoring the right rota and the right court *before* speed matters. Big rota IDs, big court numbers, Club-branded app title, and persistent session context.
 4. **Stable team identity.** Left = jade, right = copper. Stable regardless of who won. Leader is communicated additively (rail + score-ink colour), never by recolouring the pair.
 5. **Numeric stability.** Scores, totals, and standings use tabular monospace. Numbers never reflow when they tick up.
 6. **Minimal chrome.** No marketing hero, no decorative gradients, no glass effects. Panels, cards, and grouped lists carry the structure.
@@ -43,6 +44,8 @@ A single visual vocabulary, used consistently on phone and desktop. **No third "
 | **Submitted** | The owning rota has been submitted | Court card is read-only; scores keep the recorded styling; rota stepper above it shows the `Done` chip. Edit re-enters the rota via the History tab pencil action. | Court number + `Done` success pill |
 
 Untap (returning a court to exactly 12–12 via stepper presses) returns the court to **pending**. This is intentional: it lets the operator clear an accidental entry without a separate "reset" affordance.
+
+Configured Club court names append to the court heading when present: `Court 2 - Center`. Empty court names render as `Court 2` with no trailing separator.
 
 ## Core Tokens
 
@@ -125,6 +128,7 @@ Left/right hues stay more saturated than the earlier `#eef7f1` / `#fff5e6` for s
 
 - **Bottom tab bar:** Score · Standings · History · More.
 - **Top app bar:** session name + "N of M rotas played · K players" + overflow.
+- **Visible app title:** `{Club name} - Padel Americano`; the Club name links to the configured website when present.
 - **Rota strip** directly below the app bar — horizontally scrollable stepper cards with `Done / Scoring / Open / Locked` status.
 - **Score is the home tab** during the scoring phase. During setup phase, Setup takes the home position and the other tabs render an empty state.
 - **Sticky submit bar** above the tab bar. Title shows `K of N matches recorded`; sub shows which courts are still pending. CTA is enabled iff all courts in the rota are recorded; on tap, auto-advances to the next open rota and shows a 4 s toast with Undo.
@@ -161,6 +165,7 @@ Left/right hues stay more saturated than the earlier `#eef7f1` / `#fff5e6` for s
 - **History.** Per-rota cards with a 3-line scoreboard mini-view; relative timestamp; leading side bolded.
 - **Restore screen.** Adds context (session name, time saved, progress, top player) so the operator picks confidently.
 - **Setup.** iOS-style grouped lists; drag handles on player rows.
+- **Club config.** Setup court count stays editable but cannot exceed the active Club's configured court count. Court names are display-only and do not become session data.
 - **More tab — mode-gated exports.** Standard mode always exposes **Session JSON export** and the CSV exports (Standings, Results); these are harmless and useful. **Copy JSON** and **Import session JSON** are advanced-mode only. "Reset to setup" and "Start new session" live at the bottom of More under a Danger section regardless of mode.
 
 ### Add
@@ -198,4 +203,3 @@ Left/right hues stay more saturated than the earlier `#eef7f1` / `#fff5e6` for s
 ## Open Questions
 
 *None at this writing. Add new questions here as they surface.*
-

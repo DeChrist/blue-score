@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Edit3 } from "lucide-react";
+import { formatCourtTitle } from "../club";
 import { makePlayerNameLookup } from "../playerLookup";
 import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
 import { isRotaAccessible } from "../sessionPhase";
-import type { CourtScore, RotaResult, Session } from "../types";
+import type { Court, CourtScore, RotaResult, Session } from "../types";
 import { combineValidation, validateCourtScore } from "../validation";
 
 interface Props {
@@ -11,9 +12,10 @@ interface Props {
   readonly selectedRotaNumber: number;
   readonly onSessionChange: (session: Session) => void;
   readonly onRotaChange: (rotaNumber: number) => void;
+  readonly clubCourts: readonly Court[];
 }
 
-export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRotaChange }: Props) {
+export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRotaChange, clubCourts }: Props) {
   const rota = session.rotas.find((item) => item.rotaNumber === selectedRotaNumber) ?? session.rotas[0];
   const existingResult = session.results.find((result) => result.rotaNumber === rota?.rotaNumber);
   const playerName = makePlayerNameLookup(session.players);
@@ -83,7 +85,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
           return (
             <article className="court-card" key={court.courtNumber}>
               <div className="court-head">
-                <strong>Court {court.courtNumber}</strong>
+                <strong>{formatCourtTitle(court.courtNumber, clubCourts)}</strong>
               </div>
               <div className="score-row">
                 <div

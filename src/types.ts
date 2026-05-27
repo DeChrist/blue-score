@@ -17,6 +17,17 @@ export interface CourtMatch {
   rightPair: Pair;
 }
 
+export interface Court {
+  name: string;
+}
+
+export interface Club {
+  name: string;
+  logoSvg: string;
+  courts: Court[];
+  websiteUrl: string;
+}
+
 export interface Rota {
   rotaNumber: number;
   courts: CourtMatch[];
