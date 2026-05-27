@@ -403,6 +403,7 @@ export default function App() {
             setStorageWarning(clearResult.warning);
             const saveResult = commitSession(newSession());
             setSelectedRotaNumber(1);
+            setSetupOpen(true);
             if (clearResult.ok && saveResult.ok) {
               setNotice(appFlowNotice("freshSessionStarted"));
             }
@@ -516,7 +517,7 @@ export default function App() {
                   </details>
                 )}
 
-                {mode.kind === "standard" && (
+                {mode.kind !== "advanced" && (
                   <button
                     className="primary wide"
                     type="button"
