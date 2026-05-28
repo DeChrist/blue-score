@@ -823,7 +823,7 @@ export default function App() {
 
   return (
     <AppShell
-      sessionName={session.name || "Padel Americano"}
+      sessionName={appTitle}
       meta={shellMeta(session, phase)}
       leadingAction={leadingAction}
       trailingAction={trailingAction}
