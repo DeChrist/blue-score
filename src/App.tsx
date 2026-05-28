@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Clipboard, Download, FileDown, Plus, RotateCcw, Save, Trash2, Upload } from "lucide-react";
 import { parseAppMode } from "./appMode";
+import { activeClub, formatAppTitle } from "./club";
 import { SessionHistory } from "./components/SessionHistory";
 import { StandingsTable } from "./components/StandingsTable";
 import { RotaScoring } from "./components/RotaScoring";
@@ -16,11 +17,14 @@ import {
   parseImportedRotas,
   parseImportedSession,
   validatePlayers,
+  validateCourtCount,
   validateSessionResults,
   validateSessionSetup,
 } from "./validation";
 
 const mode = parseAppMode(globalThis.location.search);
+const appTitle = formatAppTitle(activeClub);
+const clubCourtLimit = activeClub.courts.length;
 
 function newSession(): Session {
   return {
@@ -92,6 +96,10 @@ function appFlowNotice(kind: "generatingRotas" | "sessionImported" | "freshSessi
   return "Started a fresh session.";
 }
 
+function validateCourtCountForClub(courtCount: number): string | null {
+  return validateCourtCount(courtCount, clubCourtLimit).errors[0] ?? null;
+}
+
 function sessionUpdateNotice(previousSession: Session | null, nextSession: Session): string | null {
   const previousPhase = previousSession ? deriveSessionPhase(previousSession) : "setup";
   const nextPhase = deriveSessionPhase(nextSession);
@@ -123,7 +131,26 @@ function sessionUpdateNotice(previousSession: Session | null, nextSession: Sessi
   return null;
 }
 
+function AppTitle() {
+  return (
+    <h1>
+      {activeClub.websiteUrl ? (
+        <a className="club-title-link" href={activeClub.websiteUrl} rel="noreferrer" target="_blank">
+          {activeClub.name}
+        </a>
+      ) : (
+        activeClub.name
+      )}
+      {" - Padel Americano"}
+    </h1>
+  );
+}
+
 export default function App() {
+  useEffect(() => {
+    document.title = appTitle;
+  }, []);
+
   const [storedAtLoad] = useState(() => loadSession());
   const [session, setSession] = useState<Session | null>(() => {
     if (mode.kind === "demo") {
@@ -203,6 +230,12 @@ export default function App() {
   async function loadRotas() {
     if (!session) return;
     if (phase !== "setup") return;
+    const courtCountError = validateCourtCountForClub(session.courtCount);
+    if (courtCountError) {
+      setSetupErrors([courtCountError]);
+      return;
+    }
+
     const parsedJson = parseJsonInput(rotaJson, "rotas");
     if (parsedJson.error) {
       setSetupErrors([parsedJson.error]);
@@ -235,8 +268,9 @@ export default function App() {
     if (phase !== "setup") return;
 
     const errors: string[] = [];
-    if (!Number.isInteger(session.courtCount) || session.courtCount < 2 || session.courtCount > 6) {
-      setSetupErrors(["Court count must be an integer from 2 through 6."]);
+    const courtCountError = validateCourtCountForClub(session.courtCount);
+    if (courtCountError) {
+      setSetupErrors([courtCountError]);
       return;
     }
     const minPlayers = session.courtCount * 4;
@@ -287,7 +321,7 @@ export default function App() {
 
     if (phase !== "setup" && !globalThis.confirm("Importing a session will replace the current session including all results. Continue?")) return;
 
-    const validation = validateSessionSetup(importedSession.value);
+    const validation = validateSessionSetup(importedSession.value, { maxCourtCount: clubCourtLimit });
     const resultsValidation = validateSessionResults(importedSession.value);
     const errors = [...validation.errors, ...resultsValidation.errors];
     if (errors.length > 0) {
@@ -342,7 +376,7 @@ export default function App() {
     return (
       <main className="app-shell">
         <section className="panel restore-panel">
-          <h1>Padel Americano</h1>
+          <AppTitle />
           <p>There is an existing session in this browser.</p>
           <div className="actions">
             <button
@@ -380,7 +414,7 @@ export default function App() {
   if (!session) return null;
 
   const phase = deriveSessionPhase(session);
-  const setupValidation = validateSessionSetup(session);
+  const setupValidation = validateSessionSetup(session, { maxCourtCount: clubCourtLimit });
   const fullSessionJson = JSON.stringify(session, null, 2);
   const standingsCsv = exportStandingsCsv(standings);
   const resultsCsv = exportResultsCsv(session);
@@ -391,7 +425,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <div>
-          <h1>Padel Americano</h1>
+          <AppTitle />
           <p>{session.results.length} of {session.rotas.length} rotas submitted</p>
         </div>
         <button
@@ -455,7 +489,7 @@ export default function App() {
                   <input
                     type="number"
                     min={2}
-                    max={6}
+                    max={clubCourtLimit}
                     value={session.courtCount}
                     onChange={(event) => {
                       const v = event.target.valueAsNumber;
@@ -555,6 +589,7 @@ export default function App() {
             selectedRotaNumber={selectedRotaNumber}
             onSessionChange={updateSession}
             onRotaChange={setSelectedRotaNumber}
+            clubCourts={activeClub.courts}
           />
 
           {phase === "complete" && (

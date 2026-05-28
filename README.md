@@ -11,6 +11,7 @@ Single-page, browser-only React + TypeScript app for running a padel Americano s
 - Versioning: Git tags and GitHub Releases are created by CI on `main`
 - Runtime: browser only, no backend, no authentication
 - Persistence: full session in `localStorage` under `padel-americano-session-v1`
+- Club config: one app-bundled `src/clubConfig.json` controls title branding, court labels, and the setup court-count cap; it is not persisted in session exports
 - Rota source: in-browser deterministic generation in standard mode; imported JSON through `StaticRotaProvider` in advanced mode
 - Deployment: GitHub Pages via `.github/workflows/ci-cd.yml`
 - Security: all assets self-contained; production build applies a strict Content-Security-Policy via Vite transform (see [ADR-008](docs/adr/008-browser-security-hardening.md))
@@ -63,11 +64,14 @@ Key source boundaries:
 
 - `src/scoring.ts`: deterministic scoring and standings helpers
 - `src/validation.ts`: JSON import parsing and domain validation
+- `src/club.ts`: app-bundled Club config parsing/validation plus app title and court-label helpers
 - `src/storage.ts`: guarded browser storage reads/writes
 - `src/rotaGenerator.ts`: deterministic bounded Americano rota generation using numeric player indexes
 - `src/rotaProvider.ts`: rota provider interface, generated provider, and static import provider
 
 The generator starts iterative deepening from the theoretical lower bound and returns the first fully covered rota found by bounded deterministic beam search. The rotation count is the minimum found by that search, not a proof of global optimality.
+
+Club configuration is loaded at startup and remains separate from `Session`. Fresh sessions still default to three courts, but setup validation and rota start/import flows cannot exceed the active Club's configured court count. Court names from the config are display-only headings such as `Court 2 - Center`.
 
 ## Mobile Testing
 

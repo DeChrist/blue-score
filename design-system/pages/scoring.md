@@ -5,6 +5,7 @@ Applies to the `RotaScoring` panel and score controls.
 ## Current Accepted Behavior
 
 - One court card per court, stacked vertically.
+- Court headings use Club display metadata: `Court N` when the configured court name is empty, or `Court N - Name` when present.
 - Score controls mirror the opposite side so each court totals `pointsPerCourt`.
 - Left/right pair colors stay stable regardless of who is leading.
 - Submitted rota results can be replaced explicitly.

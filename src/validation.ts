@@ -429,12 +429,26 @@ export function validateSessionResults(
   return fail(errors);
 }
 
-export function validateSessionSetup(session: Pick<Session, "name" | "players" | "rotas" | "pointsPerCourt" | "courtCount">): ValidationResult {
+interface SessionSetupValidationOptions {
+  maxCourtCount?: number;
+}
+
+export function validateCourtCount(courts: number, maxCourtCount = 6): ValidationResult {
+  if (!Number.isInteger(courts) || courts < 2 || courts > maxCourtCount) {
+    return fail([`Court count must be an integer from 2 through ${maxCourtCount}.`]);
+  }
+  return ok();
+}
+
+export function validateSessionSetup(
+  session: Pick<Session, "name" | "players" | "rotas" | "pointsPerCourt" | "courtCount">,
+  options: SessionSetupValidationOptions = {},
+): ValidationResult {
   const errors: string[] = [];
   const courts = session.courtCount;
-  if (!Number.isInteger(courts) || courts < 2 || courts > 6) {
-    return fail(["Court count must be an integer from 2 through 6."]);
-  }
+  const maxCourtCount = options.maxCourtCount ?? 6;
+  const courtCountValidation = validateCourtCount(courts, maxCourtCount);
+  if (!courtCountValidation.valid) return courtCountValidation;
   const minPlayers = courts * 4;
   const maxPlayers = minPlayers + 4;
   if (!session.name.trim()) errors.push("Session name is required.");

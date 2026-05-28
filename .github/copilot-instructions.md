@@ -27,6 +27,7 @@ Read the ADR index first for durable decisions: `docs/adr/README.md`.
 Important boundaries:
 
 - `App.tsx` owns the current `Session` and persists changes through `storage.ts`.
+- `club.ts` validates the app-bundled `clubConfig.json` at startup and formats the visible app title and court headings. Club data is app configuration, not persisted `Session` data.
 - `scoring.ts` contains pure scoring utilities and standings calculation.
 - `validation.ts` contains JSON shape parsing plus domain validation for players, rotas, scores, and submitted results.
 - `rotaGenerator.ts` contains pure deterministic Americano rota generation using numeric player indexes internally.
@@ -34,6 +35,8 @@ Important boundaries:
 - `sessionPhase.ts` derives `SessionPhase` (`setup` | `scoring` | `complete`) from session data and exports `isRotaAccessible` for sequential tab gating; no side effects.
 - `appMode.ts` parses `?mode=` into `AppMode` (`standard` | `demo` | `advanced`); `App.tsx` reads it at module level.
 - `styles.css` is guided by `design-system/MASTER.md`; do not add Tailwind or a component framework.
+
+Club configuration rules are documented in ADR-010. Fresh sessions default to three courts, while app setup, generated rotas, imported rotas, and full-session imports are capped by the active Club's configured court count. Keep Club metadata out of session import/export unless a new ADR changes that.
 
 ## Quality Guide
 
@@ -54,6 +57,7 @@ SonarCloud uses CI-based analysis (not Automatic Analysis). If the workflow or `
 - `vitest` and `@vitest/coverage-v8` must always be bumped together to the same version — they are peer-locked.
 - When changing scoring behavior, update `src/scoring.test.ts`.
 - When changing import or storage trust boundaries, update `validation.imports.test.ts` or `storage.test.ts`.
+- When changing Club config parsing, title formatting, or court-label formatting, update `src/club.test.ts`.
 - When changing generated rota behavior, update `src/rotaGenerator.test.ts` and provider coverage in `src/rotaProvider.test.ts`.
 
 ## Commit Rules

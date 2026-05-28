@@ -9,7 +9,7 @@ Living list of quality work, not an architecture decision. Priorities are an ini
 - Latest assessed validation run: CI-CD on `feat/session-phase-machine` passed on 2026-05-25 (93 baseline + 12 sessionPhase + new storage/validation.imports/exporter tests; exact count from CI run).
 - [SonarCloud open issues](https://sonarcloud.io/project/issues?issueStatuses=OPEN%2CCONFIRMED&id=DeChrist_blue-score) reviewed on 2026-05-24: 32 issues, estimated effort 2h 59min.
 - Pure-logic modules are well covered (scoring, validation, storage, export, rota generation, and provider mapping). Overall statement coverage is depressed by `App.tsx` and React components sitting at 0% — no UI tests yet. Current per-file numbers are in the `coverage-report` CI artifact.
-- Main risk areas are imported-data ambiguity, setup/scoring state transitions, and browser responsiveness.
+- Main risk areas are imported-data ambiguity, app-bundled Club config validation, setup/scoring state transitions, and browser responsiveness.
 
 ## SonarCloud Summary
 
@@ -36,7 +36,7 @@ Issue links identify the current SonarCloud findings; resolved or removed issues
 | P3 | Verify production security output in CI | CSP injection is a build-time control but is not asserted by a dedicated test. | Check built `index.html` for the expected CSP and referrer policy. | OK |
 | P3 | Review bundled font payload | The mobile-first app ships multiple font files and weights. | Keep only required fonts, weights, and subsets if load size is material. | Design↑ |
 | P3 | Batch low-value SonarCloud cleanup | Most remaining findings are convention or readability items. | Handle only in scoped cleanup work or when touching nearby code. | OK |
-| P3 | `Session.courtCount` as groundwork for Club config | `courtCount` is now a per-session field. Future work: pre-fill from a Club entity or shared config. | Deferred — no immediate action needed. | Design↑ |
+| — | ~~`Session.courtCount` as groundwork for Club config~~ | ~~`courtCount` is now a per-session field awaiting app-level court configuration.~~ | Resolved: ADR-010 adds app-bundled Club config; fresh sessions still default to 3, while setup validation and rota start/import flows are capped by configured Club courts. | — |
 
 ## Agent Notes
 

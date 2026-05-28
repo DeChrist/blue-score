@@ -166,4 +166,34 @@ describe("validateSessionSetup", () => {
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
+
+  it("uses a configured court count maximum when supplied", () => {
+    const result = validateSessionSetup(
+      {
+        name: "League Night",
+        pointsPerCourt: 24,
+        courtCount: 4,
+        players,
+        rotas: [validRota],
+      },
+      { maxCourtCount: 3 },
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("Court count must be an integer from 2 through 3.");
+  });
+
+  it("keeps the default court count maximum at six", () => {
+    const result = validateSessionSetup(
+      {
+        name: "League Night",
+        pointsPerCourt: 24,
+        courtCount: 7,
+        players,
+        rotas: [validRota],
+      },
+    );
+
+    expect(result.errors).toContain("Court count must be an integer from 2 through 6.");
+  });
 });
