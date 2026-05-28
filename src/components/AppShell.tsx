@@ -27,11 +27,11 @@ import type { Rota, RotaResult } from "../types";
 export type ShellTab = "score" | "standings" | "history" | "more";
 
 interface RotaStripProps {
-  rotas: Rota[];
-  results: RotaResult[];
-  currentRotaNumber: number;
-  selectedRotaNumber: number;
-  onSelect: (rotaNumber: number) => void;
+  readonly rotas: Rota[];
+  readonly results: RotaResult[];
+  readonly currentRotaNumber: number;
+  readonly selectedRotaNumber: number;
+  readonly onSelect: (rotaNumber: number) => void;
 }
 
 type RotaStatus = "submitted" | "current" | "open" | "locked";
@@ -95,16 +95,16 @@ export function RotaStrip({
 }
 
 interface AppShellProps {
-  sessionName: string;
-  meta: string;
-  leadingAction?: ReactNode;
-  trailingAction?: ReactNode;
-  rotaStrip?: ReactNode;
-  notice?: ReactNode;
-  sideRail?: ReactNode;
-  activeTab: ShellTab;
-  onTabChange: (tab: ShellTab) => void;
-  children: ReactNode;
+  readonly sessionName: string;
+  readonly meta: string;
+  readonly leadingAction?: ReactNode;
+  readonly trailingAction?: ReactNode;
+  readonly rotaStrip?: ReactNode;
+  readonly notice?: ReactNode;
+  readonly sideRail?: ReactNode;
+  readonly activeTab: ShellTab;
+  readonly onTabChange: (tab: ShellTab) => void;
+  readonly children: ReactNode;
 }
 
 const TAB_DEFS: { id: ShellTab; label: string; render: () => ReactNode }[] = [
@@ -139,7 +139,7 @@ export function AppShell({
 
       {rotaStrip}
 
-      <nav className="shell-tab-bar" aria-label="App sections" role="tablist">
+        <div className="shell-tab-bar" aria-label="App sections" role="tablist">
         {TAB_DEFS.map((tab) => {
           const isActive = tab.id === activeTab;
           return (
@@ -158,7 +158,7 @@ export function AppShell({
             </button>
           );
         })}
-      </nav>
+        </div>
 
       {notice && <div className="shell-notice">{notice}</div>}
 

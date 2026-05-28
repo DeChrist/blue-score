@@ -35,7 +35,7 @@ import {
   validateSessionSetup,
 } from "./validation";
 
-const mode = parseAppMode(window.location.search);
+const mode = parseAppMode(globalThis.location.search);
 
 function newSession(): Session {
   return {
@@ -146,8 +146,8 @@ function shellMeta(session: Session, phase: "setup" | "scoring" | "complete"): s
 }
 
 interface EmptyStateProps {
-  title: string;
-  hint: string;
+  readonly title: string;
+  readonly hint: string;
 }
 function EmptyState({ title, hint }: EmptyStateProps) {
   return (
@@ -159,9 +159,9 @@ function EmptyState({ title, hint }: EmptyStateProps) {
 }
 
 interface SideRailProps {
-  standings: StandingRow[];
-  resultCount: number;
-  rotaCount: number;
+  readonly standings: StandingRow[];
+  readonly resultCount: number;
+  readonly rotaCount: number;
 }
 function SideRail({ standings, resultCount, rotaCount }: SideRailProps) {
   const top = standings.slice(0, 8);
@@ -323,7 +323,7 @@ export default function App() {
     setGenerating(true);
     try {
       setNotice(appFlowNotice("generatingRotas"));
-      await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
+      await new Promise<void>((resolve) => globalThis.setTimeout(resolve, 0));
       const provider = new GeneratedRotaProvider();
       const rotas = await provider.getRotas({ players: session.players, courts: session.courtCount, pointsPerCourt: session.pointsPerCourt });
       commitSession({ ...session, rotas, results: [], currentRotaNumber: rotas[0]?.rotaNumber ?? 1 });
@@ -352,7 +352,7 @@ export default function App() {
       return;
     }
 
-    if (phase !== "setup" && !window.confirm("Importing a session will replace the current session including all results. Continue?")) return;
+    if (phase !== "setup" && !globalThis.confirm("Importing a session will replace the current session including all results. Continue?")) return;
 
     const validation = validateSessionSetup(importedSession.value);
     const resultsValidation = validateSessionResults(importedSession.value);
@@ -396,7 +396,7 @@ export default function App() {
 
   function resetToSetup() {
     if (!session) return;
-    if (!window.confirm("This will clear all rotas and results. Your player list and settings will be kept. Continue?")) return;
+    if (!globalThis.confirm("This will clear all rotas and results. Your player list and settings will be kept. Continue?")) return;
     commitSession({ ...session, rotas: [], results: [], currentRotaNumber: 1 });
     setSelectedRotaNumber(1);
     setSetupErrors([]);
@@ -406,7 +406,7 @@ export default function App() {
 
   function startNewSession() {
     if (!session) return;
-    if (sessionHasData(session) && !window.confirm("Start a new session and replace the current one?")) return;
+    if (sessionHasData(session) && !globalThis.confirm("Start a new session and replace the current one?")) return;
     const clearResult = clearSession();
     setStorageWarning(clearResult.warning);
     const saveResult = commitSession(newSession());
@@ -445,7 +445,7 @@ export default function App() {
               className="danger"
               type="button"
               onClick={() => {
-                if (sessionHasData(restoredSession) && !window.confirm("Start a new session and replace the saved one?")) return;
+                  if (sessionHasData(restoredSession) && !globalThis.confirm("Start a new session and replace the saved one?")) return;
                 setStorageWarning(clearSession().warning);
                 commitSession(newSession());
                 setSelectedRotaNumber(1);
@@ -494,11 +494,11 @@ export default function App() {
         {phase === "setup" ? (
           <>
             <label>
-              Session name
+                Session name{" "}
               <input value={session.name} onChange={(event) => commitSession({ ...session, name: event.target.value })} />
             </label>
             <label>
-              Points per court
+                Points per court{" "}
               <input
                 type="number"
                 min="1"
@@ -507,7 +507,7 @@ export default function App() {
               />
             </label>
             <label>
-              Court count
+                Court count{" "}
               <input
                 type="number"
                 min={2}
@@ -730,11 +730,16 @@ export default function App() {
     );
   }
 
-  const tabContent =
-    activeTab === "score" ? scoreTabContent
-    : activeTab === "standings" ? standingsTabContent
-    : activeTab === "history" ? historyTabContent
-    : morePanel;
+    let tabContent;
+    if (activeTab === "score") {
+      tabContent = scoreTabContent;
+    } else if (activeTab === "standings") {
+      tabContent = standingsTabContent;
+    } else if (activeTab === "history") {
+      tabContent = historyTabContent;
+    } else {
+      tabContent = morePanel;
+    }
 
   const leadingAction = (
     <button
