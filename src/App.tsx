@@ -607,7 +607,7 @@ export default function App() {
               </details>
             )}
 
-            {mode.kind === "standard" && (
+            {mode.kind !== "advanced" && (
               <button
                 className="primary wide"
                 type="button"
