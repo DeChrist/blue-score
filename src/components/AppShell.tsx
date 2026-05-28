@@ -107,11 +107,11 @@ interface AppShellProps {
   readonly children: ReactNode;
 }
 
-const TAB_DEFS: { id: ShellTab; label: string; render: () => ReactNode }[] = [
-  { id: "score", label: "Score", render: () => <ClipboardList size={22} aria-hidden="true" /> },
-  { id: "standings", label: "Standings", render: () => <Trophy size={22} aria-hidden="true" /> },
-  { id: "history", label: "History", render: () => <HistoryIcon size={22} aria-hidden="true" /> },
-  { id: "more", label: "More", render: () => <MoreHorizontal size={22} aria-hidden="true" /> },
+const TAB_DEFS: { id: ShellTab; label: string; icon: ReactNode }[] = [
+  { id: "score", label: "Score", icon: <ClipboardList size={22} aria-hidden="true" /> },
+  { id: "standings", label: "Standings", icon: <Trophy size={22} aria-hidden="true" /> },
+  { id: "history", label: "History", icon: <HistoryIcon size={22} aria-hidden="true" /> },
+  { id: "more", label: "More", icon: <MoreHorizontal size={22} aria-hidden="true" /> },
 ];
 
 export function AppShell({
@@ -139,7 +139,7 @@ export function AppShell({
 
       {rotaStrip}
 
-        <div className="shell-tab-bar" aria-label="App sections" role="tablist">
+      <div className="shell-tab-bar" aria-label="App sections" role="tablist">
         {TAB_DEFS.map((tab) => {
           const isActive = tab.id === activeTab;
           return (
@@ -153,12 +153,12 @@ export function AppShell({
               className={isActive ? "tab current" : "tab"}
               onClick={() => onTabChange(tab.id)}
             >
-              {tab.render()}
+              {tab.icon}
               <span>{tab.label}</span>
             </button>
           );
         })}
-        </div>
+      </div>
 
       {notice && <div className="shell-notice">{notice}</div>}
 

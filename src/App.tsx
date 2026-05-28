@@ -6,7 +6,7 @@ import {
   Download,
   FileDown,
   ListChecks,
-  Menu,
+  // Menu, -- future improvement
   MoreHorizontal,
   Plus,
   RotateCcw,
@@ -479,7 +479,7 @@ export default function App() {
               className="danger"
               type="button"
               onClick={() => {
-                  if (sessionHasData(restoredSession) && !globalThis.confirm("Start a new session and replace the saved one?")) return;
+                if (sessionHasData(restoredSession) && !globalThis.confirm("Start a new session and replace the saved one?")) return;
                 setStorageWarning(clearSession().warning);
                 commitSession(newSession());
                 setSelectedRotaNumber(1);
@@ -528,11 +528,11 @@ export default function App() {
         {phase === "setup" ? (
           <>
             <label>
-                Session name{" "}
+              Session name{" "}
               <input value={session.name} onChange={(event) => commitSession({ ...session, name: event.target.value })} />
             </label>
             <label>
-                Points per court{" "}
+              Points per court{" "}
               <input
                 type="number"
                 min="1"
@@ -541,11 +541,11 @@ export default function App() {
               />
             </label>
             <label>
-                Court count{" "}
+              Court count{" "}
               <input
                 type="number"
                 min={2}
-                  max={clubCourtLimit}
+                max={clubCourtLimit}
                 value={session.courtCount}
                 onChange={(event) => {
                   const v = event.target.valueAsNumber;
@@ -724,7 +724,7 @@ export default function App() {
   // ----- Tab routing -----
   // During setup phase, the Score tab takes over and shows the Setup panel;
   // Standings/History render an empty state until rotas exist.
-  // (See MASTER.md "During setup phase, Setup takes the home position.")
+  // (See design-system/MASTER.md "During setup phase, Setup takes the home position.")
 
   let scoreTabContent;
   if (phase === "setup") {
@@ -765,27 +765,27 @@ export default function App() {
     );
   }
 
-    let tabContent;
-    if (activeTab === "score") {
-      tabContent = scoreTabContent;
-    } else if (activeTab === "standings") {
-      tabContent = standingsTabContent;
-    } else if (activeTab === "history") {
-      tabContent = historyTabContent;
-    } else {
-      tabContent = morePanel;
-    }
+  let tabContent;
+  if (activeTab === "score") {
+    tabContent = scoreTabContent;
+  } else if (activeTab === "standings") {
+    tabContent = standingsTabContent;
+  } else if (activeTab === "history") {
+    tabContent = historyTabContent;
+  } else {
+    tabContent = morePanel;
+  }
 
-  const leadingAction = (
-    <button
-      className="icon-btn"
-      type="button"
-      aria-label="Open session menu"
-      onClick={() => setActiveTab("more")}
-    >
-      <Menu size={22} />
-    </button>
-  );
+  // const leadingAction = ( for future improvement 
+  //   <button
+  //     className="icon-btn"
+  //     type="button"
+  //     aria-label="Open session menu"
+  //     onClick={() => setActiveTab("more")}
+  //   >
+  //     <Menu size={22} />
+  //   </button>
+  // );
 
   const trailingAction = (
     <button
@@ -825,7 +825,7 @@ export default function App() {
     <AppShell
       sessionName={appTitle}
       meta={shellMeta(session, phase)}
-      leadingAction={leadingAction}
+      // leadingAction={leadingAction}
       trailingAction={trailingAction}
       rotaStrip={rotaStrip}
       sideRail={sideRail}

@@ -6,11 +6,14 @@
   --bg-sunken: #ebeee9;
   --surface: #ffffff;
   --surface-2: #f8faf6;
+  --surface-glass: rgba(255, 255, 255, 0.92);
 
   --ink: #14181a;
   --ink-strong: #07090a;
   --ink-muted: #5b645e;
   --ink-soft: #8a938d;
+  --on-ink: #ffffff;
+  --on-ink-muted: rgba(255, 255, 255, 0.72);
   --on-brand: #ffffff;
 
   --border: #dde2dc;
@@ -859,15 +862,15 @@ td:nth-child(6) {
 .shell-rota-strip .rota-step.current {
   background: var(--ink-strong);
   border-color: var(--ink-strong);
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--on-ink-muted);
 }
 
 .shell-rota-strip .rota-step.current .num {
-  color: #fff;
+  color: var(--on-ink);
 }
 
 .shell-rota-strip .rota-step.current .dot {
-  background: #fff;
+  background: var(--on-ink);
 }
 
 .shell-rota-strip .rota-step.locked {
@@ -885,7 +888,7 @@ td:nth-child(6) {
 .shell-tab-bar {
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--surface-glass);
   border-top: 1px solid var(--border);
   bottom: 0;
   display: grid;
