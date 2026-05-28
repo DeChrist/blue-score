@@ -1,3 +1,4 @@
+import { activeClub, formatCourtTitle } from "../club";
 import { formatPair, makePlayerNameLookup } from "../playerLookup";
 import type { Session } from "../types";
 
@@ -33,7 +34,7 @@ export function SessionHistory({ session, onSelectRota }: Props) {
                   const court = rota?.courts.find((item) => item.courtNumber === score.courtNumber);
                   return (
                     <div className="history-score" key={score.courtNumber}>
-                      <span>Court {score.courtNumber}</span>
+                      <span>{formatCourtTitle(score.courtNumber, activeClub.courts)}</span>
                       <span>
                         {court ? formatPair(playerName, court.leftPair) : "Left pair"}{" "}
                         <strong>{score.leftScore}</strong>
