@@ -1,7 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Clipboard, Download, FileDown, Plus, RotateCcw, Save, Trash2, Upload } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Clipboard,
+  Download,
+  FileDown,
+  ListChecks,
+  // Menu, -- future improvement
+  MoreHorizontal,
+  Plus,
+  RotateCcw,
+  Save,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { parseAppMode } from "./appMode";
 import { activeClub, formatAppTitle } from "./club";
+import { AppShell, RotaStrip, type ShellTab } from "./components/AppShell";
 import { SessionHistory } from "./components/SessionHistory";
 import { StandingsTable } from "./components/StandingsTable";
 import { RotaScoring } from "./components/RotaScoring";
@@ -11,13 +26,13 @@ import { calculateStandings } from "./scoring";
 import { samplePlayers, sampleRotas } from "./sampleData";
 import { deriveSessionPhase } from "./sessionPhase";
 import { clearSession, loadSession, saveSession } from "./storage";
-import type { Player, Session } from "./types";
+import type { Player, Session, StandingRow } from "./types";
 import {
   parseImportedPlayers,
   parseImportedRotas,
   parseImportedSession,
-  validatePlayers,
   validateCourtCount,
+  validatePlayers,
   validateSessionResults,
   validateSessionSetup,
 } from "./validation";
@@ -146,6 +161,59 @@ function AppTitle() {
   );
 }
 
+function shellMeta(session: Session, phase: "setup" | "scoring" | "complete"): string {
+  if (phase === "setup") {
+    return `${session.players.length} players · ${session.courtCount} courts`;
+  }
+  return `${session.results.length} of ${session.rotas.length} rotas played · ${session.players.length} players`;
+}
+
+interface EmptyStateProps {
+  readonly title: string;
+  readonly hint: string;
+}
+function EmptyState({ title, hint }: EmptyStateProps) {
+  return (
+    <section className="panel empty-state">
+      <h2>{title}</h2>
+      <p className="muted">{hint}</p>
+    </section>
+  );
+}
+
+interface SideRailProps {
+  readonly standings: StandingRow[];
+  readonly resultCount: number;
+  readonly rotaCount: number;
+}
+function SideRail({ standings, resultCount, rotaCount }: SideRailProps) {
+  const top = standings.slice(0, 8);
+  return (
+    <>
+      <section className="side-card">
+        <h3>Live standings</h3>
+        {top.length === 0 ? (
+          <p className="muted">No results yet.</p>
+        ) : (
+          <ol className="mini-stand">
+            {top.map((row) => (
+              <li key={row.playerId} className="row">
+                <span className="rk">{row.rank}</span>
+                <span className="name">{row.displayName}</span>
+                <span className="points">{row.totalPoints}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+      <section className="side-card">
+        <h3>Session</h3>
+        <p className="muted">{resultCount} of {rotaCount} rotas played</p>
+      </section>
+    </>
+  );
+}
+
 export default function App() {
   useEffect(() => {
     document.title = appTitle;
@@ -167,6 +235,7 @@ export default function App() {
   const [setupOpen, setSetupOpen] = useState(() => !session || session.rotas.length === 0);
   const [notice, setNotice] = useState(storedAtLoad.warning ?? "");
   const [generating, setGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState<ShellTab>("score");
 
   const standings = useMemo(() => (session ? calculateStandings(session) : []), [session]);
 
@@ -174,7 +243,6 @@ export default function App() {
     if (warning) setNotice(warning);
   }
 
-  // Most callers only need side effects; a few branch on saveResult.ok for success messaging.
   function commitSession(next: Session) {
     const saveResult = saveSession(next);
     setStorageWarning(saveResult.warning);
@@ -289,7 +357,6 @@ export default function App() {
     setGenerating(true);
     try {
       setNotice(appFlowNotice("generatingRotas"));
-      // Yield so the busy state paints before the synchronous generator runs.
       await new Promise<void>((resolve) => globalThis.setTimeout(resolve, 0));
       const provider = new GeneratedRotaProvider();
       const rotas = await provider.getRotas({ players: session.players, courts: session.courtCount, pointsPerCourt: session.pointsPerCourt });
@@ -368,8 +435,26 @@ export default function App() {
     setSelectedRotaNumber(1);
     setSetupErrors([]);
     setSetupOpen(true);
+    setActiveTab("score");
   }
 
+  function startNewSession() {
+    if (!session) return;
+    if (sessionHasData(session) && !globalThis.confirm("Start a new session and replace the current one?")) return;
+    const clearResult = clearSession();
+    setStorageWarning(clearResult.warning);
+    const saveResult = commitSession(newSession());
+    setSelectedRotaNumber(1);
+    setSetupOpen(true);
+    setSetupErrors([]);
+    setSessionJson("");
+    setActiveTab("score");
+    if (clearResult.ok && saveResult.ok) {
+      setNotice(appFlowNotice("freshSessionStarted"));
+    }
+  }
+
+  // ----- Restore screen (no shell) -----
   if (!session && storedAtLoad.session) {
     const restoredSession = storedAtLoad.session;
     const storedText = JSON.stringify(restoredSession, null, 2);
@@ -421,220 +506,337 @@ export default function App() {
   const selectedRota = session.rotas.find((rota) => rota.rotaNumber === selectedRotaNumber);
   const selectedRotaKey = `${selectedRotaNumber}-${selectedRota?.courts.length ?? 0}-${session.pointsPerCourt}`;
 
-  return (
-    <main className="app-shell">
-      <header className="topbar">
-        <div>
-          <AppTitle />
-          <p>{session.results.length} of {session.rotas.length} rotas submitted</p>
-        </div>
-        <button
-          className="danger"
-          type="button"
-          onClick={() => {
-            if (sessionHasData(session) && !globalThis.confirm("Start a new session and replace the current one?")) return;
-            const clearResult = clearSession();
-            setStorageWarning(clearResult.warning);
-            const saveResult = commitSession(newSession());
-            setSelectedRotaNumber(1);
-            setSetupOpen(true);
-            if (clearResult.ok && saveResult.ok) {
-              setNotice(appFlowNotice("freshSessionStarted"));
-            }
-          }}
-        >
-          <RotateCcw size={18} /> New
-        </button>
-      </header>
+  // ----- Panels (rendered into shell body by activeTab) -----
 
-      {notice && <div className="notice">{notice}</div>}
-
-      <section className="grid">
-        <section className="panel setup-panel">
-          <div className="section-title">
-            <h2>Session setup</h2>
-            <div className="setup-title-actions">
-              <span>{setupStatusLabel(phase, setupValidation.valid)}</span>
-              {session.rotas.length > 0 && (
-                <button
-                  type="button"
-                  className="ghost icon setup-toggle"
-                  aria-label={setupOpen ? "Collapse setup" : "Expand setup"}
-                  aria-expanded={setupOpen}
-                  onClick={() => setSetupOpen((v) => !v)}
-                >
-                  {setupOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-              )}
-            </div>
-          </div>
-          <div className={setupOpen ? "setup-body" : "setup-body setup-body--collapsed"}>
-            {phase === "setup" ? (
-              <>
-                <label>
-                  <span>Session name</span>
-                  <input value={session.name} onChange={(event) => commitSession({ ...session, name: event.target.value })} />
-                </label>
-                <label>
-                  <span>Points per court</span>
-                  <input
-                    type="number"
-                    min="1"
-                    value={session.pointsPerCourt}
-                    onChange={(event) => commitSession({ ...session, pointsPerCourt: Number(event.target.value), results: [] })}
-                  />
-                </label>
-                <label>
-                  <span>Court count</span>
-                  <input
-                    type="number"
-                    min={2}
-                    max={clubCourtLimit}
-                    value={session.courtCount}
-                    onChange={(event) => {
-                      const v = event.target.valueAsNumber;
-                      if (Number.isFinite(v)) commitSession({ ...session, courtCount: v, rotas: [], results: [] });
-                    }}
-                  />
-                </label>
-
-                <div className="section-title compact-title">
-                  <h3>Players</h3>
-                  <button type="button" onClick={addPlayer}>
-                    <Plus size={16} /> Add
-                  </button>
-                </div>
-                <div className="player-editor">
-                  {session.players.map((player, index) => (
-                    <div
-                      className={mode.kind === "advanced" ? "player-row" : "player-row player-row--no-id"}
-                      key={`${player.id}-${index}`}
-                    >
-                      {mode.kind === "advanced" && (
-                        <input aria-label={`Player ${index + 1} id`} value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
-                      )}
-                      <input
-                        aria-label={`Player ${index + 1} display name`}
-                        placeholder={`Player ${index + 1}`}
-                        value={player.displayName}
-                        onChange={(event) => updatePlayer(index, { displayName: event.target.value })}
-                      />
-                      <button
-                        aria-label={`Remove player ${player.displayName || index + 1}`}
-                        className="icon danger"
-                        type="button"
-                        onClick={() => removePlayer(index)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                {mode.kind === "advanced" && (
-                  <details>
-                    <summary>Import players JSON</summary>
-                    <textarea value={playerJson} onChange={(event) => setPlayerJson(event.target.value)} />
-                    <button type="button" onClick={loadPlayers}>
-                      <Upload size={16} /> Import players
-                    </button>
-                  </details>
-                )}
-
-                {mode.kind === "advanced" && (
-                  <details open>
-                    <summary>Import rotas JSON</summary>
-                    <textarea value={rotaJson} onChange={(event) => setRotaJson(event.target.value)} />
-                    <button type="button" onClick={loadRotas}>
-                      <Upload size={16} /> Import rotas
-                    </button>
-                  </details>
-                )}
-
-                {mode.kind !== "advanced" && (
-                  <button
-                    className="primary wide"
-                    type="button"
-                    onClick={setupGeneratedRotas}
-                    disabled={generating}
-                    aria-busy={generating}
-                  >
-                    <Save size={18} /> {generating ? "Generating rotas..." : "Start session"}
-                  </button>
-                )}
-
-                {Array.from(new Set([...setupErrors, ...setupValidation.errors])).filter(Boolean).slice(0, 8).map((error) => (
-                  <p className="error" key={error}>
-                    {error}
-                  </p>
-                ))}
-              </>
-            ) : (
-              <>
-                <p><strong>Session:</strong> {session.name}</p>
-                <p><strong>Points per court:</strong> {session.pointsPerCourt}</p>
-                <p><strong>Court count:</strong> {session.courtCount}</p>
-                <button className="danger wide" type="button" onClick={resetToSetup}>
-                  <RotateCcw size={18} /> Reset to setup
-                </button>
-              </>
-            )}
-          </div>
-        </section>
-
-        <section className="main-stack">
-          <RotaScoring
-            key={`${selectedRotaKey}-${session.results.find((result) => result.rotaNumber === selectedRotaNumber)?.submittedAt ?? "open"}`}
-            session={session}
-            selectedRotaNumber={selectedRotaNumber}
-            onSessionChange={updateSession}
-            onRotaChange={setSelectedRotaNumber}
-            clubCourts={activeClub.courts}
-          />
-
-          {phase === "complete" && (
-            <section className="panel complete-panel">
-              <h2>Session complete</h2>
-              <p>{session.results.length} rotas played — see standings below.</p>
-              <button className="ghost" type="button" disabled title="Coming soon">
-                Add rota
-              </button>
-            </section>
+  const setupPanel = (
+    <section className="panel setup-panel">
+      <div className="section-title">
+        <h2>Session setup</h2>
+        <div className="setup-title-actions">
+          <span>{setupStatusLabel(phase, setupValidation.valid)}</span>
+          {session.rotas.length > 0 && (
+            <button
+              type="button"
+              className="ghost icon setup-toggle"
+              aria-label={setupOpen ? "Collapse setup" : "Expand setup"}
+              aria-expanded={setupOpen}
+              onClick={() => setSetupOpen((v) => !v)}
+            >
+              {setupOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
           )}
+        </div>
+      </div>
+      <div className={setupOpen ? "setup-body" : "setup-body setup-body--collapsed"}>
+        {phase === "setup" ? (
+          <>
+            <label>
+              Session name{" "}
+              <input value={session.name} onChange={(event) => commitSession({ ...session, name: event.target.value })} />
+            </label>
+            <label>
+              Points per court{" "}
+              <input
+                type="number"
+                min="1"
+                value={session.pointsPerCourt}
+                onChange={(event) => commitSession({ ...session, pointsPerCourt: Number(event.target.value), results: [] })}
+              />
+            </label>
+            <label>
+              Court count{" "}
+              <input
+                type="number"
+                min={2}
+                max={clubCourtLimit}
+                value={session.courtCount}
+                onChange={(event) => {
+                  const v = event.target.valueAsNumber;
+                  if (Number.isFinite(v)) commitSession({ ...session, courtCount: v, rotas: [], results: [] });
+                }}
+              />
+            </label>
 
-          <StandingsTable standings={standings} />
-          <SessionHistory session={session} onSelectRota={setSelectedRotaNumber} />
-        </section>
+            <div className="section-title compact-title">
+              <h3>Players</h3>
+              <button type="button" onClick={addPlayer}>
+                <Plus size={16} /> Add
+              </button>
+            </div>
+            <div className="player-editor">
+              {session.players.map((player, index) => (
+                <div
+                  className={mode.kind === "advanced" ? "player-row" : "player-row player-row--no-id"}
+                  key={`${player.id}-${index}`}
+                >
+                  {mode.kind === "advanced" && (
+                    <input aria-label={`Player ${index + 1} id`} value={player.id} onChange={(event) => updatePlayer(index, { id: event.target.value })} />
+                  )}
+                  <input
+                    aria-label={`Player ${index + 1} display name`}
+                    placeholder={`Player ${index + 1}`}
+                    value={player.displayName}
+                    onChange={(event) => updatePlayer(index, { displayName: event.target.value })}
+                  />
+                  <button
+                    aria-label={`Remove player ${player.displayName || index + 1}`}
+                    className="icon danger"
+                    type="button"
+                    onClick={() => removePlayer(index)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
 
-        {mode.kind === "advanced" && (
-          <section className="panel export-panel">
-            <div className="section-title">
-              <h2>Import / export</h2>
-            </div>
-            <div className="actions vertical">
-              <button type="button" onClick={() => downloadText("padel-americano-session.json", fullSessionJson, "application/json")}>
-                <FileDown size={18} /> Export session JSON
+            {mode.kind === "advanced" && (
+              <details>
+                <summary>Import players JSON</summary>
+                <textarea value={playerJson} onChange={(event) => setPlayerJson(event.target.value)} />
+                <button type="button" onClick={loadPlayers}>
+                  <Upload size={16} /> Import players
+                </button>
+              </details>
+            )}
+
+            {mode.kind === "advanced" && (
+              <details open>
+                <summary>Import rotas JSON</summary>
+                <textarea value={rotaJson} onChange={(event) => setRotaJson(event.target.value)} />
+                <button type="button" onClick={loadRotas}>
+                  <Upload size={16} /> Import rotas
+                </button>
+              </details>
+            )}
+
+            {mode.kind !== "advanced" && (
+              <button
+                className="primary wide"
+                type="button"
+                onClick={setupGeneratedRotas}
+                disabled={generating}
+                aria-busy={generating}
+              >
+                <Save size={18} /> {generating ? "Generating rotas..." : "Start session"}
               </button>
-              <button type="button" onClick={() => copy(fullSessionJson, "Session JSON")}>
-                <Clipboard size={18} /> Copy session JSON
-              </button>
-              <button type="button" onClick={() => downloadText("standings.csv", standingsCsv, "text/csv")}>
-                <FileDown size={18} /> Export standings CSV
-              </button>
-              <button type="button" onClick={() => downloadText("results-history.csv", resultsCsv, "text/csv")}>
-                <FileDown size={18} /> Export results CSV
-              </button>
-            </div>
-            <details>
-              <summary>Import full session JSON</summary>
-              <textarea value={sessionJson} onChange={(event) => setSessionJson(event.target.value)} />
-              <button type="button" onClick={importFullSession}>
-                <Upload size={16} /> Import session
-              </button>
-            </details>
-          </section>
+            )}
+
+            {Array.from(new Set([...setupErrors, ...setupValidation.errors])).filter(Boolean).slice(0, 8).map((error) => (
+              <p className="error" key={error}>
+                {error}
+              </p>
+            ))}
+          </>
+        ) : (
+          <>
+            <p><strong>Session:</strong> {session.name}</p>
+            <p><strong>Points per court:</strong> {session.pointsPerCourt}</p>
+            <p><strong>Court count:</strong> {session.courtCount}</p>
+          </>
         )}
-      </section>
-    </main>
+      </div>
+    </section>
+  );
+
+  const scorePanel = (
+    <>
+      <RotaScoring
+        key={`${selectedRotaKey}-${session.results.find((result) => result.rotaNumber === selectedRotaNumber)?.submittedAt ?? "open"}`}
+        session={session}
+        selectedRotaNumber={selectedRotaNumber}
+        onSessionChange={updateSession}
+        onRotaChange={setSelectedRotaNumber}
+        clubCourts={activeClub.courts}
+      />
+      {phase === "complete" && (
+        <section className="panel complete-panel">
+          <h2>Session complete</h2>
+          <p>{session.results.length} rotas played — see standings tab.</p>
+        </section>
+      )}
+    </>
+  );
+
+  const morePanel = (
+    <section className="panel more-panel">
+      <div className="section-title">
+        <h2>Session</h2>
+        <span>{setupStatusLabel(phase, setupValidation.valid)}</span>
+      </div>
+
+      <dl className="session-info">
+        <div><dt>Name</dt><dd>{session.name}</dd></div>
+        <div><dt>Points per court</dt><dd>{session.pointsPerCourt}</dd></div>
+        <div><dt>Courts</dt><dd>{session.courtCount}</dd></div>
+        <div><dt>Players</dt><dd>{session.players.length}</dd></div>
+        <div><dt>Rotas played</dt><dd>{session.results.length} of {session.rotas.length}</dd></div>
+      </dl>
+
+      <div className="section-title compact-title">
+        <h3>Export</h3>
+      </div>
+      <div className="actions vertical">
+        <button type="button" onClick={() => downloadText("padel-americano-session.json", fullSessionJson, "application/json")}>
+          <FileDown size={18} /> Export session JSON
+        </button>
+        <button type="button" onClick={() => downloadText("standings.csv", standingsCsv, "text/csv")}>
+          <FileDown size={18} /> Export standings CSV
+        </button>
+        <button type="button" onClick={() => downloadText("results-history.csv", resultsCsv, "text/csv")}>
+          <FileDown size={18} /> Export results CSV
+        </button>
+      </div>
+
+      {mode.kind === "advanced" && (
+        <>
+          <div className="section-title compact-title">
+            <h3>Advanced</h3>
+          </div>
+          <div className="actions vertical">
+            <button type="button" onClick={() => copy(fullSessionJson, "Session JSON")}>
+              <Clipboard size={18} /> Copy session JSON
+            </button>
+          </div>
+          <details>
+            <summary>Import full session JSON</summary>
+            <textarea value={sessionJson} onChange={(event) => setSessionJson(event.target.value)} />
+            <button type="button" onClick={importFullSession}>
+              <Upload size={16} /> Import session
+            </button>
+          </details>
+        </>
+      )}
+
+      <div className="section-title compact-title">
+        <h3>Danger zone</h3>
+      </div>
+      <div className="actions vertical">
+        {phase !== "setup" && (
+          <button className="danger wide" type="button" onClick={resetToSetup}>
+            <RotateCcw size={18} /> Reset to setup
+          </button>
+        )}
+        <button className="danger wide" type="button" onClick={startNewSession}>
+          <RotateCcw size={18} /> Start new session
+        </button>
+      </div>
+    </section>
+  );
+
+  // ----- Tab routing -----
+  // During setup phase, the Score tab takes over and shows the Setup panel;
+  // Standings/History render an empty state until rotas exist.
+  // (See design-system/MASTER.md "During setup phase, Setup takes the home position.")
+
+  let scoreTabContent;
+  if (phase === "setup") {
+    scoreTabContent = setupPanel;
+  } else {
+    scoreTabContent = scorePanel;
+  }
+
+  let standingsTabContent;
+  if (phase === "setup") {
+    standingsTabContent = (
+      <EmptyState
+        title="Standings appear once scoring starts"
+        hint="Finish setup on the Score tab to generate rotas."
+      />
+    );
+  } else {
+    standingsTabContent = <StandingsTable standings={standings} />;
+  }
+
+  let historyTabContent;
+  if (phase === "setup") {
+    historyTabContent = (
+      <EmptyState
+        title="No history yet"
+        hint="Submitted rotas will appear here."
+      />
+    );
+  } else {
+    historyTabContent = (
+      <SessionHistory
+        session={session}
+        onSelectRota={(rotaNumber) => {
+          setSelectedRotaNumber(rotaNumber);
+          setActiveTab("score");
+        }}
+      />
+    );
+  }
+
+  let tabContent;
+  if (activeTab === "score") {
+    tabContent = scoreTabContent;
+  } else if (activeTab === "standings") {
+    tabContent = standingsTabContent;
+  } else if (activeTab === "history") {
+    tabContent = historyTabContent;
+  } else {
+    tabContent = morePanel;
+  }
+
+  // const leadingAction = ( for future improvement 
+  //   <button
+  //     className="icon-btn"
+  //     type="button"
+  //     aria-label="Open session menu"
+  //     onClick={() => setActiveTab("more")}
+  //   >
+  //     <Menu size={22} />
+  //   </button>
+  // );
+
+  const trailingAction = (
+    <button
+      className="icon-btn"
+      type="button"
+      aria-label="More actions"
+      onClick={() => setActiveTab("more")}
+    >
+      <MoreHorizontal size={22} />
+    </button>
+  );
+
+  const rotaStrip = (
+    <RotaStrip
+      rotas={session.rotas}
+      results={session.results}
+      currentRotaNumber={session.currentRotaNumber}
+      selectedRotaNumber={selectedRotaNumber}
+      onSelect={(rotaNumber) => {
+        setSelectedRotaNumber(rotaNumber);
+        setActiveTab("score");
+      }}
+    />
+  );
+
+  // Side rail is desktop-only via CSS; we always provide content when there
+  // are rotas, and let the layout decide whether to show it.
+  const sideRail = session.rotas.length > 0 ? (
+    <SideRail
+      standings={standings}
+      resultCount={session.results.length}
+      rotaCount={session.rotas.length}
+    />
+  ) : null;
+
+  return (
+    <AppShell
+      sessionName={appTitle}
+      meta={shellMeta(session, phase)}
+      // leadingAction={leadingAction}
+      trailingAction={trailingAction}
+      rotaStrip={rotaStrip}
+      sideRail={sideRail}
+      notice={notice ? <div className="notice shell-notice-body" role="status"><ListChecks size={16} aria-hidden="true" />{notice}</div> : null}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      {tabContent}
+    </AppShell>
   );
 }

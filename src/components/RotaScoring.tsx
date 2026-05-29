@@ -69,6 +69,12 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
         </div>
         <span className={isSubmitted ? "status edited" : "status"}>{isSubmitted ? "Submitted" : "Open"}</span>
       </div>
+
+      <div className="sit-outs">
+        <strong>Sit-outs</strong>
+        <span>{rota.sitOutPlayerIds.map(playerName).join(", ")}</span>
+      </div>
+
       <p className="muted">{isSubmitted ? "Editing submitted rota" : "Enter each court result"}</p>
 
       <div className="courts">
@@ -120,11 +126,6 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
             </article>
           );
         })}
-      </div>
-
-      <div className="sit-outs">
-        <strong>Sit-outs</strong>
-        <span>{rota.sitOutPlayerIds.map(playerName).join(", ")}</span>
       </div>
 
       <button className="primary submit" type="button" disabled={!validation.valid} onClick={submit}>
