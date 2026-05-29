@@ -139,17 +139,14 @@ export function AppShell({
 
       {rotaStrip}
 
-      <div className="shell-tab-bar" aria-label="App sections" role="tablist">
+      <nav className="shell-tab-bar" aria-label="App sections">
         {TAB_DEFS.map((tab) => {
           const isActive = tab.id === activeTab;
           return (
             <button
               key={tab.id}
               type="button"
-              role="tab"
-              aria-selected={isActive}
-              aria-controls={`shell-panel-${tab.id}`}
-              id={`shell-tab-${tab.id}`}
+              aria-current={isActive ? "page" : undefined}
               className={isActive ? "tab current" : "tab"}
               onClick={() => onTabChange(tab.id)}
             >
@@ -158,17 +155,12 @@ export function AppShell({
             </button>
           );
         })}
-      </div>
+      </nav>
 
       {notice && <div className="shell-notice">{notice}</div>}
 
       <div className="shell-body">
-        <main
-          className="shell-main"
-          role="tabpanel"
-          id={`shell-panel-${activeTab}`}
-          aria-labelledby={`shell-tab-${activeTab}`}
-        >
+        <main className="shell-main">
           {children}
         </main>
         {sideRail && <aside className="shell-rail" aria-label="Live standings">{sideRail}</aside>}

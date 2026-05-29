@@ -893,7 +893,7 @@ td:nth-child(6) {
   bottom: 0;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  height: var(--tab-bar-h);
+  min-height: calc(var(--tab-bar-h) + env(safe-area-inset-bottom, 0px));
   left: 0;
   padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
   position: fixed;
@@ -1144,6 +1144,7 @@ td:nth-child(6) {
     gap: 0;
     grid-template-columns: repeat(4, max-content);
     height: auto;
+    min-height: 0;
     left: auto;
     padding: 0 24px;
     position: static;

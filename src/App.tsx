@@ -445,6 +445,9 @@ export default function App() {
     setStorageWarning(clearResult.warning);
     const saveResult = commitSession(newSession());
     setSelectedRotaNumber(1);
+    setSetupOpen(true);
+    setSetupErrors([]);
+    setSessionJson("");
     setActiveTab("score");
     if (clearResult.ok && saveResult.ok) {
       setNotice(appFlowNotice("freshSessionStarted"));
