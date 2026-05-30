@@ -47,7 +47,7 @@ npm run build
 
 CI uses Node 24 and runs lint, `test:coverage`, and build before deployment. Coverage summary text is shown in the job log, and HTML/lcov output is uploaded in the `coverage-report` artifact for SonarQube Cloud analysis.
 
-On pushes to `main`, the workflow then runs a `release` job after `deploy`, that creates and pushes a semantic versioning compliant `vX.Y.Z` tag and publishes a GitHub Release with generated notes:
+On pushes to `main`, the workflow then runs a `release` job after `deploy`; it creates and pushes a semantic-versioning-compliant `vX.Y.Z` tag and publishes a GitHub Release with generated notes:
 
 
 - major bump: commits matching `+semver: major`, `BREAKING CHANGE`, or Conventional Commit bang form (for example `feat!:`)
