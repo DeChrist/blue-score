@@ -5,6 +5,21 @@
   "portsAttributes": {
     "5173": { "label": "Vite dev server", "onAutoForward": "openBrowser" }
   },
-  "postCreateCommand": "npm install",
-  "remoteUser": "node"
+  "remoteUser": "node",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true
+    },
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+  "postCreateCommand": "sudo chown -R node:node /home/node/.claude && npm install && node -e \"const fs=require('fs'),os=require('os'),p=os.homedir()+'/.claude.json',c=fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):{};c.hasCompletedOnboarding=true;fs.writeFileSync(p,JSON.stringify(c,null,2))\"",
+  "mounts": [
+    "source=claude-code-${devcontainerId},target=/home/node/.claude,type=volume"
+  ],
+  "containerEnv": {
+  "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN}"
+  }
 }
