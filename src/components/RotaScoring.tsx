@@ -41,6 +41,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
   const [scores, setScores] = useState<CourtScore[]>(() =>
     existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []),
   );
+  const [touchedCourtNumbers, setTouchedCourtNumbers] = useState<ReadonlySet<number>>(() => new Set());
   const [undoState, setUndoState] = useState<UndoState | null>(() => readPendingUndoState());
   const undoTimerRef = useRef<number | null>(null);
   const toastMessage = undoState?.message ?? "";
@@ -75,24 +76,20 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
     [defaultLeftScore, defaultRightScore, scores],
   );
 
-  const isCourtPending = useCallback(
-    (score: CourtScore): boolean => score.leftScore === defaultLeftScore && score.rightScore === defaultRightScore,
-    [defaultLeftScore, defaultRightScore],
-  );
-
   const changeScore = useCallback(
     (courtNumber: number, side: ScoreSide, value: number) => {
       if (isSubmitted) return;
+      setTouchedCourtNumbers((current) => new Set(current).add(courtNumber));
       setScores((current) => updateCourtScore(current, courtNumber, side, value, session.pointsPerCourt));
     },
     [isSubmitted, session.pointsPerCourt],
   );
 
   const recordedCount = rota
-    ? rota.courts.filter((court) => isSubmitted || !isCourtPending(getScore(court.courtNumber))).length
+    ? rota.courts.filter((court) => isSubmitted || touchedCourtNumbers.has(court.courtNumber)).length
     : 0;
   const courtCount = rota?.courts.length ?? 0;
-  const pendingCourts = rota?.courts.filter((court) => !isSubmitted && isCourtPending(getScore(court.courtNumber))) ?? [];
+  const pendingCourts = rota?.courts.filter((court) => !isSubmitted && !touchedCourtNumbers.has(court.courtNumber)) ?? [];
   const canSubmit = Boolean(rota) && !isSubmitted && courtCount > 0 && recordedCount === courtCount;
 
   const submit = useCallback(() => {
@@ -167,7 +164,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
         <div className="courts score-courts">
           {rota.courts.map((court) => {
             const score = getScore(court.courtNumber);
-            const isPending = !isSubmitted && isCourtPending(score);
+            const isPending = !isSubmitted && !touchedCourtNumbers.has(court.courtNumber);
             const leading = getLeadingSide(score);
             const courtName = getCourtName(court.courtNumber, clubCourts);
             return (
