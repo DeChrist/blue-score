@@ -67,7 +67,13 @@ export function getCourtName(courtNumber: number, courts: readonly Court[]): str
 export function formatPendingCourtDetail(courts: readonly CourtMatch[], clubCourts: readonly Court[]): string {
   if (courts.length === 0) return "";
   const labels = courts.map((court) => getCourtName(court.courtNumber, clubCourts) || `Court ${court.courtNumber}`);
-  return `${labels.join(", ")} still pending`;
+  if (labels.length === 1) return `${labels[0]} still pending`;
+  return `Tap a score on ${formatConjunction(labels)} to record`;
+}
+
+function formatConjunction(labels: readonly string[]): string {
+  if (labels.length <= 2) return labels.join(" & ");
+  return `${labels.slice(0, -1).join(", ")} & ${labels.at(-1)}`;
 }
 
 export function findNextOpenRota(

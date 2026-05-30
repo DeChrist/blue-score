@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ChangeEvent, KeyboardEvent, TouchEvent } from "react";
-import { Minus, Plus } from "lucide-react";
+import type { KeyboardEvent } from "react";
+import { CheckCircle, GripVertical } from "lucide-react";
 import { makePlayerNameLookup } from "../playerLookup";
 import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
 import {
@@ -156,7 +156,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
           {toastMessage}
         </div>
 
-        <div className="courts score-courts">
+        <div className="score-courts">
           {rota.courts.map((court) => {
             const score = getScore(court.courtNumber);
             const isPending = !isCourtRecorded(court.courtNumber, touchedCourtNumbers, isSubmitted);
@@ -180,11 +180,11 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
         </div>
 
         {rota.sitOutPlayerIds.length > 0 && (
-          <div className="sit-outs court-sitouts">
-            <strong>Sitting out this rota:</strong>
-            <div className="court-sitouts__chips">
+          <div className="sit-outs">
+            <h3>Sitting out this rota</h3>
+            <div className="chip-row">
               {rota.sitOutPlayerIds.map((playerId) => (
-                <span className="player-chip" key={playerId}>
+                <span className="chip" key={playerId}>
                   {playerName(playerId)}
                 </span>
               ))}
@@ -194,28 +194,26 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
       </section>
 
       <div className="submit-bar">
-        <div className="submit-bar__meta">
-          <div className="submit-bar__title">
+        <div className="submit-meta">
+          <div className="title">
             {recordedCount} of {courtCount} matches recorded
           </div>
-          {pendingDetail && <div className="submit-bar__detail">{pendingDetail}</div>}
+          {pendingDetail && <div className="sub">{pendingDetail}</div>}
         </div>
-        {undoState ? (
-          <div className="submit-toast">
-            <span>{toastMessage}</span>
-            <button className="ghost" type="button" onClick={undoSubmit}>
-              Undo
-            </button>
-          </div>
-        ) : (
-          <div className="submit-bar__cta">
-            <button className="primary" type="button" disabled={!canSubmit} onClick={submit}>
-              {isSubmitted ? `Rota ${rota.rotaNumber} submitted` : `Submit Rota ${rota.rotaNumber}`}
-            </button>
-            <kbd className="submit-bar__hint">⌘↵</kbd>
-          </div>
-        )}
+        <button className="cta" type="button" disabled={!canSubmit} onClick={submit}>
+          {isSubmitted ? `Rota ${rota.rotaNumber} submitted` : `Submit Rota ${rota.rotaNumber}`}
+        </button>
       </div>
+
+      {undoState && (
+        <div className="submit-toast">
+          <CheckCircle className="icon" size={18} aria-hidden="true" />
+          <span>{toastMessage}</span>
+          <button className="undo" type="button" onClick={undoSubmit}>
+            Undo
+          </button>
+        </div>
+      )}
     </>
   );
 }
@@ -244,133 +242,142 @@ function CourtScoreItem({
   onChangeScore,
 }: CourtScoreItemProps) {
   const stateClass = isPending ? "is-pending" : "is-recorded";
+  const cardStateClass = [
+    "court-card",
+    isPending ? "pending" : "",
+    isSubmitted ? "submitted" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const rowStateClass = [
+    "d-court-row",
+    isPending ? "pending" : "",
+    isSubmitted ? "submitted" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const statusText = isSubmitted ? "Done" : "Recorded";
-  const courtLabel = courtName ? `Court ${court.courtNumber} · ${courtName}` : `Court ${court.courtNumber}`;
 
   return (
     <article className={`court-score ${stateClass}`}>
-      <div className="court-card">
-        <div className="court-card__head">
-          <strong className="court-card__id">{courtLabel}</strong>
-          {!isPending && <span className="status court-card__pill">{statusText}</span>}
-        </div>
-        <CourtPair
-          className="court-card__pair"
+      <div className={cardStateClass}>
+        <header className="court-card__head">
+          <div className="court-num">
+            <span className="label">Court</span>
+            <span className="n">{court.courtNumber}</span>
+            {courtName && <span className="court-name">· {courtName}</span>}
+          </div>
+          {isPending ? (
+            <span className="court-state">Not entered</span>
+          ) : (
+            <span className="pill success"><span className="dot" />{statusText}</span>
+          )}
+        </header>
+        <PairRow
           courtNumber={court.courtNumber}
           disabled={isSubmitted}
-          isPending={isPending}
           leading={leading === "left"}
           pairSide="left"
           playerIds={[court.leftPair.player1Id, court.leftPair.player2Id]}
           playerName={playerName}
           pointsPerCourt={pointsPerCourt}
+          variant="phone"
           score={score.leftScore}
           onChange={(value) => onChangeScore(court.courtNumber, "leftScore", value)}
         />
-        <CourtPair
-          className="court-card__pair"
+        <PairRow
           courtNumber={court.courtNumber}
           disabled={isSubmitted}
-          isPending={isPending}
           leading={leading === "right"}
           pairSide="right"
           playerIds={[court.rightPair.player1Id, court.rightPair.player2Id]}
           playerName={playerName}
           pointsPerCourt={pointsPerCourt}
+          variant="phone"
           score={score.rightScore}
           onChange={(value) => onChangeScore(court.courtNumber, "rightScore", value)}
         />
-        {isPending && <div className="court-card__pending-hint">Tap a score to record this match</div>}
       </div>
 
-      <div className="court-row">
-        <div className="court-row__tag">
-          <strong>{court.courtNumber}</strong>
-          <span className="court-row__tag-name">{courtName}</span>
+      <div className={rowStateClass}>
+        <div className="court-tag">
+          <span className="label">Court</span>
+          <span className="n">{court.courtNumber}</span>
+          {courtName && <span className="court-name">{courtName}</span>}
         </div>
-        <div className="court-row__versus">
-          <CourtPair
-            className="court-row__pair"
+        <div className="versus-block">
+          <PairRow
             courtNumber={court.courtNumber}
             disabled={isSubmitted}
-            isPending={isPending}
             leading={leading === "left"}
             pairSide="left"
             playerIds={[court.leftPair.player1Id, court.leftPair.player2Id]}
             playerName={playerName}
             pointsPerCourt={pointsPerCourt}
+            variant="desktop"
             score={score.leftScore}
             onChange={(value) => onChangeScore(court.courtNumber, "leftScore", value)}
           />
-          <span className="court-row__vs">VS</span>
-          <CourtPair
-            className="court-row__pair"
+          <span className="d-versus">VS</span>
+          <PairRow
             courtNumber={court.courtNumber}
             disabled={isSubmitted}
-            isPending={isPending}
             leading={leading === "right"}
             pairSide="right"
             playerIds={[court.rightPair.player1Id, court.rightPair.player2Id]}
             playerName={playerName}
             pointsPerCourt={pointsPerCourt}
+            variant="desktop"
             score={score.rightScore}
             onChange={(value) => onChangeScore(court.courtNumber, "rightScore", value)}
           />
         </div>
-        <div className="court-row__status">
-          {isPending ? <span>Not entered</span> : <span className="status">{statusText}</span>}
+        <div className="d-court-status">
+          {isPending ? (
+            <span className="pending-hint">Not entered</span>
+          ) : (
+            <span className="pill success"><span className="dot" />{statusText}</span>
+          )}
         </div>
       </div>
     </article>
   );
 }
 
-interface CourtPairProps {
-  readonly className: string;
+interface PairRowProps {
   readonly courtNumber: number;
   readonly disabled: boolean;
-  readonly isPending: boolean;
   readonly leading: boolean;
   readonly pairSide: "left" | "right";
   readonly playerIds: readonly string[];
   readonly playerName: (playerId: string) => string;
   readonly pointsPerCourt: number;
   readonly score: number;
+  readonly variant: "phone" | "desktop";
   readonly onChange: (value: number) => void;
 }
 
-function CourtPair({
-  className,
+function PairRow({
   courtNumber,
   disabled,
-  isPending,
   leading,
   pairSide,
   playerIds,
   playerName,
   pointsPerCourt,
   score,
+  variant,
   onChange,
-}: CourtPairProps) {
+}: PairRowProps) {
   const sideLabel = pairSide === "left" ? "left" : "right";
-  const pairClass = [
-    "pair",
-    `${pairSide}-pair`,
-    className,
-    isPending ? "pending" : "",
-    leading ? "leading" : "",
-  ]
+  const pairClass = [variant === "desktop" ? "d-pair" : "pair-row", pairSide, leading ? "leading" : ""]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div className={pairClass} aria-label={leading ? "Leading pair" : undefined}>
-      <div className="court-pair__players">
-        {playerIds.map((playerId) => (
-          <div className="player-chip" key={playerId}>
-            {playerName(playerId)}
-          </div>
-        ))}
+      <div className="pair-names">
+        <PlayerNameChips playerIds={playerIds} playerName={playerName} />
       </div>
       <ScoreSpinner
         label={`Court ${courtNumber} ${sideLabel} score`}
@@ -383,6 +390,24 @@ function CourtPair({
   );
 }
 
+interface PlayerNameChipsProps {
+  readonly playerIds: readonly string[];
+  readonly playerName: (playerId: string) => string;
+}
+
+function PlayerNameChips({ playerIds, playerName }: PlayerNameChipsProps) {
+  return (
+    <>
+      {playerIds.map((playerId) => (
+        <span className="pair-chip" key={playerId}>
+          <GripVertical className="grip" size={14} aria-hidden="true" />
+          {playerName(playerId)}
+        </span>
+      ))}
+    </>
+  );
+}
+
 interface ScoreSpinnerProps {
   readonly value: number;
   readonly max: number;
@@ -392,8 +417,7 @@ interface ScoreSpinnerProps {
 }
 
 function ScoreSpinner({ value, max, label, disabled, onChange }: ScoreSpinnerProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const touchStartY = useRef<number | null>(null);
+  const outputRef = useRef<HTMLOutputElement>(null);
   const latestValueRef = useRef(value);
 
   useEffect(() => {
@@ -409,31 +433,7 @@ function ScoreSpinner({ value, max, label, disabled, onChange }: ScoreSpinnerPro
     onChange(clamp(latestValueRef.current + delta));
   }
 
-  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
-    if (disabled) return;
-    touchStartY.current = event.touches[0].clientY;
-  }
-
-  function handleTouchMove(event: TouchEvent<HTMLDivElement>) {
-    if (disabled || touchStartY.current === null) return;
-    const delta = touchStartY.current - event.touches[0].clientY;
-    if (Math.abs(delta) >= 18) {
-      step(delta > 0 ? 1 : -1);
-      touchStartY.current = event.touches[0].clientY;
-    }
-  }
-
-  function handleTouchEnd() {
-    touchStartY.current = null;
-  }
-
-  function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
-    if (disabled) return;
-    const parsed = event.target.value === "" ? 0 : Number(event.target.value);
-    if (!Number.isNaN(parsed)) onChange(clamp(parsed));
-  }
-
-  function handleInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+  function handleOutputKeyDown(event: KeyboardEvent<HTMLOutputElement>) {
     if (event.key === "ArrowUp") {
       event.preventDefault();
       step(1);
@@ -444,56 +444,57 @@ function ScoreSpinner({ value, max, label, disabled, onChange }: ScoreSpinnerPro
     }
   }
 
-  function handleInputFocus() {
-    const input = inputRef.current;
-    if (!input || disabled) return;
+  function handleOutputFocus() {
+    const output = outputRef.current;
+    if (!output || disabled) return;
 
     function handleWheel(event: WheelEvent) {
       event.preventDefault();
       step(event.deltaY < 0 ? 1 : -1);
     }
 
-    input.addEventListener("wheel", handleWheel, { passive: false });
-    input.addEventListener("blur", () => input.removeEventListener("wheel", handleWheel), { once: true });
+    output.addEventListener("wheel", handleWheel, { passive: false });
+    output.addEventListener("blur", () => output.removeEventListener("wheel", handleWheel), { once: true });
   }
 
   return (
-    <div
-      className="score-spinner"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="stepper">
       <button
         type="button"
-        className="stepper-btn"
+        className="step minus"
         aria-label={`Decrease ${label}`}
+        aria-disabled={disabled ? "true" : undefined}
         disabled={disabled || value <= 0}
         onClick={() => step(-1)}
       >
-        <Minus size={18} aria-hidden="true" />
+        −
       </button>
-      <input
-        ref={inputRef}
+      {/* eslint-disable jsx-a11y/no-noninteractive-element-to-interactive-role -- Rev 2 requires output.score to expose spinbutton keyboard behavior. */}
+      <output
+        ref={outputRef}
+        className="score"
+        role="spinbutton"
+        tabIndex={disabled ? -1 : 0}
         aria-label={label}
-        inputMode="numeric"
-        type="number"
-        min="0"
-        max={max}
-        value={Number.isNaN(value) ? "" : value}
-        disabled={disabled}
-        onChange={handleInputChange}
-        onFocus={handleInputFocus}
-        onKeyDown={handleInputKeyDown}
-      />
+        aria-readonly={disabled ? "true" : undefined}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        onFocus={handleOutputFocus}
+        onKeyDown={handleOutputKeyDown}
+      >
+        {value}
+      </output>
+      {/* eslint-enable jsx-a11y/no-noninteractive-element-to-interactive-role */}
       <button
         type="button"
-        className="stepper-btn"
+        className="step plus"
         aria-label={`Increase ${label}`}
+        aria-disabled={disabled ? "true" : undefined}
         disabled={disabled || value >= max}
         onClick={() => step(1)}
       >
-        <Plus size={18} aria-hidden="true" />
+        +
       </button>
     </div>
   );

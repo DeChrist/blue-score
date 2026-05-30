@@ -81,9 +81,11 @@ describe("score UI state", () => {
 
   it("formats pending court detail with configured names where available", () => {
     expect(formatPendingCourtDetail([courts[0], courts[1]], [{ name: "Center" }, { name: "Back Court" }]))
-      .toBe("Center, Back Court still pending");
+      .toBe("Tap a score on Center & Back Court to record");
     expect(formatPendingCourtDetail([courts[2]], [{ name: "Center" }, { name: "" }, { name: "" }]))
       .toBe("Court 3 still pending");
+    expect(formatPendingCourtDetail([courts[0], courts[1], courts[2]], [{ name: "" }, { name: "Shake" }, { name: "" }]))
+      .toBe("Tap a score on Court 1, Shake & Court 3 to record");
     expect(formatPendingCourtDetail([], [])).toBe("");
   });
 
