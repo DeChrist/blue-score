@@ -1,11 +1,21 @@
-import { useEffect, useRef, useState } from "react";
-import { Check, Edit3 } from "lucide-react";
-import { formatCourtTitle } from "../club";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import type { Dispatch, KeyboardEvent, ReactNode, SetStateAction } from "react";
+import { CheckCircle, GripVertical } from "lucide-react";
 import { makePlayerNameLookup } from "../playerLookup";
 import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
-import { isRotaAccessible } from "../sessionPhase";
-import type { Court, CourtScore, RotaResult, Session } from "../types";
-import { combineValidation, validateCourtScore } from "../validation";
+import {
+  canSubmitRota,
+  findCourtScore,
+  findNextOpenRota,
+  formatPendingCourtDetail,
+  getCourtName,
+  getLeadingSide,
+  getPendingCourts,
+  getRecordedCourtCount,
+  isCourtRecorded,
+} from "../scoreUiState";
+import type { LeadingSide, ScoreSide } from "../scoreUiState";
+import type { Court, CourtMatch, CourtScore, RotaResult, Session } from "../types";
 
 interface Props {
   readonly session: Session;
@@ -15,13 +25,162 @@ interface Props {
   readonly clubCourts: readonly Court[];
 }
 
+interface UndoState {
+  readonly session: Session;
+  readonly rotaNumber: number;
+  readonly message: string;
+  readonly expiresAt: number;
+}
+
+interface UndoContextValue {
+  readonly undoState: UndoState | null;
+  readonly setUndoState: Dispatch<SetStateAction<UndoState | null>>;
+}
+
+interface ScoreDraftState {
+  readonly resetKey: string;
+  readonly scores: readonly CourtScore[];
+  readonly touchedCourtNumbers: ReadonlySet<number>;
+}
+
+const RotaScoringUndoContext = createContext<UndoContextValue | null>(null);
+
+interface RotaScoringUndoProviderProps {
+  readonly children: ReactNode;
+}
+
+export function RotaScoringUndoProvider({ children }: RotaScoringUndoProviderProps) {
+  const [undoState, setUndoState] = useState<UndoState | null>(null);
+  const value = useMemo(() => ({ undoState, setUndoState }), [undoState]);
+
+  return (
+    <RotaScoringUndoContext.Provider value={value}>
+      {children}
+    </RotaScoringUndoContext.Provider>
+  );
+}
+
 export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRotaChange, clubCourts }: Props) {
   const rota = session.rotas.find((item) => item.rotaNumber === selectedRotaNumber) ?? session.rotas[0];
   const existingResult = session.results.find((result) => result.rotaNumber === rota?.rotaNumber);
+  const isSubmitted = Boolean(existingResult);
   const playerName = makePlayerNameLookup(session.players);
-  const [scores, setScores] = useState<CourtScore[]>(() =>
-    existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []),
+  const scoreDraftKey = `${session.id}:${rota?.rotaNumber ?? "none"}:${existingResult?.submittedAt ?? "open"}:${session.pointsPerCourt}`;
+  const initialScores = useMemo(
+    () => existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []),
+    [existingResult?.scores, rota, session.pointsPerCourt],
   );
+  const [scoreDraft, setScoreDraft] = useState<ScoreDraftState>(() => ({
+    resetKey: scoreDraftKey,
+    scores: initialScores,
+    touchedCourtNumbers: new Set(),
+  }));
+  const activeDraft = useMemo<ScoreDraftState>(
+    () =>
+      scoreDraft.resetKey === scoreDraftKey
+        ? scoreDraft
+        : {
+            resetKey: scoreDraftKey,
+            scores: initialScores,
+            touchedCourtNumbers: new Set(),
+          },
+    [initialScores, scoreDraft, scoreDraftKey],
+  );
+  const scores = activeDraft.scores;
+  const touchedCourtNumbers = activeDraft.touchedCourtNumbers;
+  const localUndoState = useState<UndoState | null>(null);
+  const undoContext = useContext(RotaScoringUndoContext);
+  const [undoState, setUndoState] = undoContext
+    ? [undoContext.undoState, undoContext.setUndoState]
+    : localUndoState;
+  const undoTimerRef = useRef<number | null>(null);
+  const toastMessage = undoState?.message ?? "";
+
+  useEffect(() => {
+    if (!undoState) return undefined;
+
+    const remainingMs = Math.max(0, undoState.expiresAt - Date.now());
+    undoTimerRef.current = globalThis.setTimeout(() => {
+      setUndoState((current) => (current === undoState ? null : current));
+      undoTimerRef.current = null;
+    }, remainingMs);
+
+    return () => {
+      if (undoTimerRef.current !== null) globalThis.clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    };
+  }, [setUndoState, undoState]);
+
+  const getScore = useCallback(
+    (courtNumber: number): CourtScore => {
+      return findCourtScore(scores, courtNumber, session.pointsPerCourt);
+    },
+    [scores, session.pointsPerCourt],
+  );
+
+  const changeScore = useCallback(
+    (courtNumber: number, side: ScoreSide, value: number) => {
+      if (isSubmitted) return;
+      setScoreDraft((current) => {
+        const currentDraft =
+          current.resetKey === scoreDraftKey
+            ? current
+            : {
+                resetKey: scoreDraftKey,
+                scores: initialScores,
+                touchedCourtNumbers: new Set<number>(),
+              };
+        const nextTouchedCourtNumbers = new Set(currentDraft.touchedCourtNumbers);
+        nextTouchedCourtNumbers.add(courtNumber);
+
+        return {
+          resetKey: scoreDraftKey,
+          scores: updateCourtScore([...currentDraft.scores], courtNumber, side, value, session.pointsPerCourt),
+          touchedCourtNumbers: nextTouchedCourtNumbers,
+        };
+      });
+    },
+    [initialScores, isSubmitted, scoreDraftKey, session.pointsPerCourt],
+  );
+
+  const recordedCount = rota ? getRecordedCourtCount(rota.courts, touchedCourtNumbers, isSubmitted) : 0;
+  const courtCount = rota?.courts.length ?? 0;
+  const pendingCourts = rota ? getPendingCourts(rota.courts, touchedCourtNumbers, isSubmitted) : [];
+  const canSubmit = Boolean(rota) && canSubmitRota(rota.courts, touchedCourtNumbers, isSubmitted);
+
+  const submit = useCallback(() => {
+    if (!rota || !canSubmit) return;
+
+    const result: RotaResult = {
+      rotaNumber: rota.rotaNumber,
+      scores: rota.courts.map((court) => getScore(court.courtNumber)),
+      submittedAt: new Date().toISOString(),
+    };
+    const nextSession = applyOrReplaceRotaResult(session, result);
+    const nextOpenRota = findNextOpenRota(nextSession.rotas, nextSession.results);
+
+    const nextUndoState: UndoState = {
+      session,
+      rotaNumber: rota.rotaNumber,
+      message: `Rota ${rota.rotaNumber} submitted`,
+      expiresAt: Date.now() + 4000,
+    };
+    setUndoState(nextUndoState);
+    onSessionChange(nextSession);
+    if (nextOpenRota) onRotaChange(nextOpenRota.rotaNumber);
+  }, [canSubmit, getScore, onRotaChange, onSessionChange, rota, session, setUndoState]);
+
+  useEffect(() => {
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Enter" || (!event.metaKey && !event.ctrlKey)) return;
+      if (!canSubmit) return;
+      event.preventDefault();
+      submit();
+    }
+
+    globalThis.addEventListener("keydown", handleKeyDown);
+    return () => globalThis.removeEventListener("keydown", handleKeyDown);
+  }, [canSubmit, submit]);
 
   if (!rota) {
     return (
@@ -32,108 +191,275 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
     );
   }
 
-  const validation = combineValidation(scores.map((score) => validateCourtScore(score, session.pointsPerCourt)));
-  const isSubmitted = Boolean(existingResult);
-
-  function changeScore(courtNumber: number, side: "leftScore" | "rightScore", value: number) {
-    setScores((current) => updateCourtScore(current, courtNumber, side, value, session.pointsPerCourt));
+  function undoSubmit() {
+    if (!undoState) return;
+    if (undoTimerRef.current !== null) {
+      globalThis.clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+    onSessionChange(undoState.session);
+    onRotaChange(undoState.rotaNumber);
+    setUndoState(null);
   }
 
-  function submit() {
-    if (!validation.valid) return;
-    const result: RotaResult = {
-      rotaNumber: rota.rotaNumber,
-      scores,
-      submittedAt: new Date().toISOString(),
-    };
-    onSessionChange(applyOrReplaceRotaResult(session, result));
-  }
+  const pendingDetail = formatPendingCourtDetail(pendingCourts, clubCourts);
 
   return (
-    <section className="panel score-panel">
-      <div className="score-panel-header">
-        <div className="score-rota-nav">
-          <h2 className="score-rota-label">Rota</h2>
-          {session.rotas.map((r) => (
-            <button
-              key={r.rotaNumber}
-              type="button"
-              className={r.rotaNumber === rota.rotaNumber ? "rota-tab selected" : "rota-tab"}
-              aria-current={r.rotaNumber === rota.rotaNumber ? "true" : undefined}
-              disabled={!isRotaAccessible(r, session.rotas, session.results)}
-              onClick={() => onRotaChange(r.rotaNumber)}
-            >
-              {r.rotaNumber}
-            </button>
-          ))}
+    <>
+      <section className="panel score-panel">
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {toastMessage}
         </div>
-        <span className={isSubmitted ? "status edited" : "status"}>{isSubmitted ? "Submitted" : "Open"}</span>
+
+        <div className="score-courts">
+          {rota.courts.map((court) => {
+            const score = getScore(court.courtNumber);
+            const isPending = !isCourtRecorded(court.courtNumber, touchedCourtNumbers, isSubmitted);
+            const leading = getLeadingSide(score);
+            const courtName = getCourtName(court.courtNumber, clubCourts);
+            return (
+              <CourtScoreItem
+                key={court.courtNumber}
+                court={court}
+                courtName={courtName}
+                isPending={isPending}
+                isSubmitted={isSubmitted}
+                leading={leading}
+                playerName={playerName}
+                score={score}
+                pointsPerCourt={session.pointsPerCourt}
+                onChangeScore={changeScore}
+              />
+            );
+          })}
+        </div>
+
+        {rota.sitOutPlayerIds.length > 0 && (
+          <div className="sit-outs">
+            <h3>Sitting out this rota</h3>
+            <div className="chip-row">
+              {rota.sitOutPlayerIds.map((playerId) => (
+                <span className="chip" key={playerId}>
+                  {playerName(playerId)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <div className="submit-bar">
+        <div className="submit-meta">
+          <div className="title">
+            {recordedCount} of {courtCount} matches recorded
+          </div>
+          {pendingDetail && <div className="sub">{pendingDetail}</div>}
+        </div>
+        <button className="cta" type="button" disabled={!canSubmit} onClick={submit}>
+          {isSubmitted ? `Rota ${rota.rotaNumber} submitted` : `Submit Rota ${rota.rotaNumber}`}
+        </button>
       </div>
 
-      <div className="sit-outs">
-        <strong>Sit-outs</strong>
-        <span>{rota.sitOutPlayerIds.map(playerName).join(", ")}</span>
+      {undoState && (
+        <div className="submit-toast">
+          <CheckCircle className="icon" size={18} aria-hidden="true" />
+          <span>{toastMessage}</span>
+          <button className="undo" type="button" onClick={undoSubmit}>
+            Undo
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+interface CourtScoreItemProps {
+  readonly court: CourtMatch;
+  readonly courtName: string;
+  readonly isPending: boolean;
+  readonly isSubmitted: boolean;
+  readonly leading: LeadingSide;
+  readonly playerName: (playerId: string) => string;
+  readonly score: CourtScore;
+  readonly pointsPerCourt: number;
+  readonly onChangeScore: (courtNumber: number, side: ScoreSide, value: number) => void;
+}
+
+function CourtScoreItem({
+  court,
+  courtName,
+  isPending,
+  isSubmitted,
+  leading,
+  playerName,
+  score,
+  pointsPerCourt,
+  onChangeScore,
+}: CourtScoreItemProps) {
+  const stateClass = isPending ? "is-pending" : "is-recorded";
+  const cardStateClass = [
+    "court-card",
+    isPending ? "pending" : "",
+    isSubmitted ? "submitted" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const rowStateClass = [
+    "d-court-row",
+    isPending ? "pending" : "",
+    isSubmitted ? "submitted" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const statusText = isSubmitted ? "Done" : "Recorded";
+
+  return (
+    <article className={`court-score ${stateClass}`}>
+      <div className={cardStateClass}>
+        <header className="court-card__head">
+          <div className="court-num">
+            <span className="label">Court</span>
+            <span className="n">{court.courtNumber}</span>
+            {courtName && <span className="court-name">· {courtName}</span>}
+          </div>
+          {isPending ? (
+            <span className="court-state">Not entered</span>
+          ) : (
+            <span className="pill success"><span className="dot" />{statusText}</span>
+          )}
+        </header>
+        <PairRow
+          courtNumber={court.courtNumber}
+          disabled={isSubmitted}
+          leading={leading === "left"}
+          pairSide="left"
+          playerIds={[court.leftPair.player1Id, court.leftPair.player2Id]}
+          playerName={playerName}
+          pointsPerCourt={pointsPerCourt}
+          variant="phone"
+          score={score.leftScore}
+          onChange={(value) => onChangeScore(court.courtNumber, "leftScore", value)}
+        />
+        <PairRow
+          courtNumber={court.courtNumber}
+          disabled={isSubmitted}
+          leading={leading === "right"}
+          pairSide="right"
+          playerIds={[court.rightPair.player1Id, court.rightPair.player2Id]}
+          playerName={playerName}
+          pointsPerCourt={pointsPerCourt}
+          variant="phone"
+          score={score.rightScore}
+          onChange={(value) => onChangeScore(court.courtNumber, "rightScore", value)}
+        />
       </div>
 
-      <p className="muted">{isSubmitted ? "Editing submitted rota" : "Enter each court result"}</p>
-
-      <div className="courts">
-        {rota.courts.map((court) => {
-          const score = scores.find((item) => item.courtNumber === court.courtNumber) ?? {
-            courtNumber: court.courtNumber,
-            leftScore: 0,
-            rightScore: 0,
-          };
-          const courtValidation = validateCourtScore(score, session.pointsPerCourt);
-          let leading: "left" | "right" | null = null;
-          if (score.leftScore > score.rightScore) leading = "left";
-          else if (score.rightScore > score.leftScore) leading = "right";
-          return (
-            <article className="court-card" key={court.courtNumber}>
-              <div className="court-head">
-                <strong>{formatCourtTitle(court.courtNumber, clubCourts)}</strong>
-              </div>
-              <div className="score-row">
-                <div
-                  className={`pair left-pair${leading === "left" ? " leading" : ""}`}
-                  aria-label={leading === "left" ? "Leading pair" : undefined}
-                >
-                  <div className="player-chip">{playerName(court.leftPair.player1Id)}</div>
-                  <div className="player-chip">{playerName(court.leftPair.player2Id)}</div>
-                  <ScoreSpinner
-                    label={`Court ${court.courtNumber} left score`}
-                    value={score.leftScore}
-                    max={session.pointsPerCourt}
-                    onChange={(v) => changeScore(court.courtNumber, "leftScore", v)}
-                  />
-                </div>
-                <div className="versus">vs</div>
-                <div
-                  className={`pair right-pair${leading === "right" ? " leading" : ""}`}
-                  aria-label={leading === "right" ? "Leading pair" : undefined}
-                >
-                  <div className="player-chip">{playerName(court.rightPair.player1Id)}</div>
-                  <div className="player-chip">{playerName(court.rightPair.player2Id)}</div>
-                  <ScoreSpinner
-                    label={`Court ${court.courtNumber} right score`}
-                    value={score.rightScore}
-                    max={session.pointsPerCourt}
-                    onChange={(v) => changeScore(court.courtNumber, "rightScore", v)}
-                  />
-                </div>
-              </div>
-              {!courtValidation.valid && <p className="error">{courtValidation.errors.join(" ")}</p>}
-            </article>
-          );
-        })}
+      <div className={rowStateClass}>
+        <div className="court-tag">
+          <span className="label">Court</span>
+          <span className="n">{court.courtNumber}</span>
+          {courtName && <span className="court-name">{courtName}</span>}
+        </div>
+        <div className="versus-block">
+          <PairRow
+            courtNumber={court.courtNumber}
+            disabled={isSubmitted}
+            leading={leading === "left"}
+            pairSide="left"
+            playerIds={[court.leftPair.player1Id, court.leftPair.player2Id]}
+            playerName={playerName}
+            pointsPerCourt={pointsPerCourt}
+            variant="desktop"
+            score={score.leftScore}
+            onChange={(value) => onChangeScore(court.courtNumber, "leftScore", value)}
+          />
+          <span className="d-versus">VS</span>
+          <PairRow
+            courtNumber={court.courtNumber}
+            disabled={isSubmitted}
+            leading={leading === "right"}
+            pairSide="right"
+            playerIds={[court.rightPair.player1Id, court.rightPair.player2Id]}
+            playerName={playerName}
+            pointsPerCourt={pointsPerCourt}
+            variant="desktop"
+            score={score.rightScore}
+            onChange={(value) => onChangeScore(court.courtNumber, "rightScore", value)}
+          />
+        </div>
+        <div className="d-court-status">
+          {isPending ? (
+            <span className="pending-hint">Not entered</span>
+          ) : (
+            <span className="pill success"><span className="dot" />{statusText}</span>
+          )}
+        </div>
       </div>
+    </article>
+  );
+}
 
-      <button className="primary submit" type="button" disabled={!validation.valid} onClick={submit}>
-        {isSubmitted ? <Edit3 size={18} /> : <Check size={18} />}
-        {isSubmitted ? "Replace rota result" : "Submit rota"}
-      </button>
-      {!validation.valid && <p className="error prominent">{validation.errors[0]}</p>}
-    </section>
+interface PairRowProps {
+  readonly courtNumber: number;
+  readonly disabled: boolean;
+  readonly leading: boolean;
+  readonly pairSide: "left" | "right";
+  readonly playerIds: readonly string[];
+  readonly playerName: (playerId: string) => string;
+  readonly pointsPerCourt: number;
+  readonly score: number;
+  readonly variant: "phone" | "desktop";
+  readonly onChange: (value: number) => void;
+}
+
+function PairRow({
+  courtNumber,
+  disabled,
+  leading,
+  pairSide,
+  playerIds,
+  playerName,
+  pointsPerCourt,
+  score,
+  variant,
+  onChange,
+}: PairRowProps) {
+  const sideLabel = pairSide === "left" ? "left" : "right";
+  const pairClass = [variant === "desktop" ? "d-pair" : "pair-row", pairSide, leading ? "leading" : ""]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={pairClass} aria-label={leading ? "Leading pair" : undefined}>
+      <div className="pair-names">
+        <PlayerNameChips playerIds={playerIds} playerName={playerName} />
+      </div>
+      <ScoreSpinner
+        label={`Court ${courtNumber} ${sideLabel} score`}
+        value={score}
+        max={pointsPerCourt}
+        disabled={disabled}
+        onChange={onChange}
+      />
+    </div>
+  );
+}
+
+interface PlayerNameChipsProps {
+  readonly playerIds: readonly string[];
+  readonly playerName: (playerId: string) => string;
+}
+
+function PlayerNameChips({ playerIds, playerName }: PlayerNameChipsProps) {
+  return (
+    <>
+      {playerIds.map((playerId) => (
+        <span className="pair-chip" key={playerId}>
+          <GripVertical className="grip" size={14} aria-hidden="true" />
+          {playerName(playerId)}
+        </span>
+      ))}
+    </>
   );
 }
 
@@ -141,77 +467,102 @@ interface ScoreSpinnerProps {
   readonly value: number;
   readonly max: number;
   readonly label: string;
+  readonly disabled: boolean;
   readonly onChange: (value: number) => void;
 }
 
-function ScoreSpinner({ value, max, label, onChange }: ScoreSpinnerProps) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const touchStartY = useRef<number | null>(null);
+function ScoreSpinner({ value, max, label, disabled, onChange }: ScoreSpinnerProps) {
+  const outputRef = useRef<HTMLOutputElement>(null);
+  const latestValueRef = useRef(value);
+  const wheelCleanupRef = useRef<(() => void) | null>(null);
 
-  // Non-passive wheel listener so we can prevent page scroll while adjusting
   useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    function onWheel(e: WheelEvent) {
-      e.preventDefault();
-      onChange(Math.max(0, Math.min(max, value + (e.deltaY < 0 ? 1 : -1))));
+    latestValueRef.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    return () => {
+      wheelCleanupRef.current?.();
+      wheelCleanupRef.current = null;
+    };
+  }, []);
+
+  function clamp(nextValue: number) {
+    return Math.max(0, Math.min(max, nextValue));
+  }
+
+  function step(delta: number) {
+    if (disabled) return;
+    onChange(clamp(latestValueRef.current + delta));
+  }
+
+  function handleOutputKeyDown(event: KeyboardEvent<HTMLOutputElement>) {
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      step(1);
     }
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [value, max, onChange]);
-
-  function handleTouchStart(e: React.TouchEvent) {
-    touchStartY.current = e.touches[0].clientY;
-  }
-
-  function handleTouchMove(e: React.TouchEvent) {
-    if (touchStartY.current === null) return;
-    const delta = touchStartY.current - e.touches[0].clientY;
-    if (Math.abs(delta) >= 18) {
-      onChange(Math.max(0, Math.min(max, value + (delta > 0 ? 1 : -1))));
-      touchStartY.current = e.touches[0].clientY;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      step(-1);
     }
   }
 
-  function handleTouchEnd() {
-    touchStartY.current = null;
+  function handleOutputFocus() {
+    const output = outputRef.current;
+    if (!output || disabled) return;
+    if (wheelCleanupRef.current) return;
+
+    function handleWheel(event: WheelEvent) {
+      event.preventDefault();
+      step(event.deltaY < 0 ? 1 : -1);
+    }
+
+    output.addEventListener("wheel", handleWheel, { passive: false });
+    wheelCleanupRef.current = () => output.removeEventListener("wheel", handleWheel);
   }
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const parsed = e.target.value === "" ? 0 : Number(e.target.value);
-    if (!Number.isNaN(parsed)) onChange(Math.max(0, Math.min(max, parsed)));
+  function handleOutputBlur() {
+    wheelCleanupRef.current?.();
+    wheelCleanupRef.current = null;
   }
 
   return (
-    <div
-      className="score-spinner"
-      ref={wrapRef}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="stepper">
       <button
         type="button"
-        className="stepper-btn"
+        className="step minus"
         aria-label={`Decrease ${label}`}
-        onClick={() => onChange(Math.max(0, value - 1))}
+        aria-disabled={disabled ? "true" : undefined}
+        disabled={disabled || value <= 0}
+        onClick={() => step(-1)}
       >
         −
       </button>
-      <input
+      {/* eslint-disable jsx-a11y/no-noninteractive-element-to-interactive-role -- Rev 2 requires output.score to expose spinbutton keyboard behavior. */}
+      <output
+        ref={outputRef}
+        className="score"
+        role="spinbutton"
+        tabIndex={disabled ? -1 : 0}
         aria-label={label}
-        inputMode="numeric"
-        type="number"
-        min="0"
-        max={max}
-        value={Number.isNaN(value) ? "" : value}
-        onChange={handleInputChange}
-      />
+        aria-readonly={disabled ? "true" : undefined}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        onBlur={handleOutputBlur}
+        onFocus={handleOutputFocus}
+        onKeyDown={handleOutputKeyDown}
+      >
+        {value}
+      </output>
+      {/* eslint-enable jsx-a11y/no-noninteractive-element-to-interactive-role */}
       <button
         type="button"
-        className="stepper-btn"
+        className="step plus"
         aria-label={`Increase ${label}`}
-        onClick={() => onChange(Math.min(max, value + 1))}
+        aria-disabled={disabled ? "true" : undefined}
+        disabled={disabled || value >= max}
+        onClick={() => step(1)}
       >
         +
       </button>

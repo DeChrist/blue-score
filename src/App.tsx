@@ -19,7 +19,7 @@ import { activeClub, formatAppTitle } from "./club";
 import { AppShell, RotaStrip, type ShellTab } from "./components/AppShell";
 import { SessionHistory } from "./components/SessionHistory";
 import { StandingsTable } from "./components/StandingsTable";
-import { RotaScoring } from "./components/RotaScoring";
+import { RotaScoring, RotaScoringUndoProvider } from "./components/RotaScoring";
 import { exportResultsCsv, exportStandingsCsv } from "./exporters";
 import { GeneratedRotaProvider, StaticRotaProvider } from "./rotaProvider";
 import { calculateStandings } from "./scoring";
@@ -640,7 +640,7 @@ export default function App() {
   );
 
   const scorePanel = (
-    <>
+    <RotaScoringUndoProvider>
       <RotaScoring
         key={`${selectedRotaKey}-${session.results.find((result) => result.rotaNumber === selectedRotaNumber)?.submittedAt ?? "open"}`}
         session={session}
@@ -655,7 +655,7 @@ export default function App() {
           <p>{session.results.length} rotas played — see standings tab.</p>
         </section>
       )}
-    </>
+    </RotaScoringUndoProvider>
   );
 
   const morePanel = (
