@@ -1693,14 +1693,15 @@ td:nth-child(6) {
   }
 
   .d-pair {
-    align-items: center;
-    border-radius: var(--r-md);
-    display: inline-grid;
-    gap: 10px;
-    grid-template-columns: auto auto;
-    max-width: 46%;
+    flex: 1;
     min-width: 0;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
     padding: 8px 10px 8px 12px;
+    border-radius: var(--r-md);
     position: relative;
   }
 
