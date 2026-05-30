@@ -129,6 +129,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    concurrency:
+      group: release-main
+      cancel-in-progress: false
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -138,6 +141,7 @@ jobs:
       - name: Determine next version
         id: version
         run: |
+          set -euo pipefail
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           echo "Latest tag: ${LATEST_TAG:-none}"
 
@@ -154,26 +158,47 @@ jobs:
 
           if echo "$COMMITS" | grep -qiE '\+semver: major|BREAKING CHANGE|^[a-z]+(\(.+\))?!:'; then
             NEXT="$((MAJOR + 1)).0.0"
+          elif echo "$COMMITS" | grep -qiE '\+semver: minor|^feat(\(.+\))?:'; then
+            NEXT="${MAJOR}.$((MINOR + 1)).0"
           elif echo "$COMMITS" | grep -qiE '\+semver: patch|^fix(\(.+\))?:'; then
             NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
           else
-            NEXT="${MAJOR}.$((MINOR + 1)).0"
+            echo "No release-worthy commits found (docs or chore)."
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
           echo "Next version: v${NEXT}"
           echo "tag=v${NEXT}" >> "$GITHUB_OUTPUT"
 
       - name: Tag and release
+        if: steps.version.outputs.tag != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           TAG="${{ steps.version.outputs.tag }}"
-          if git tag -l "$TAG" | grep -q "$TAG"; then
-            echo "Tag $TAG already exists, skipping release."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping release."
             exit 0
           fi
-          git tag "$TAG"
-          git push origin "$TAG"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG exists remotely, but GitHub Release $TAG does not."
+            echo "Manual review needed: either create the release manually or delete/recreate the tag intentionally."
+            exit 1
+          fi
+          git fetch origin main:refs/remotes/origin/main
+          CURRENT_MAIN_SHA=$(git rev-parse origin/main)
+          if [ "$GITHUB_SHA" != "$CURRENT_MAIN_SHA" ]; then
+            echo "Skipping release for stale run at $GITHUB_SHA; origin/main is $CURRENT_MAIN_SHA."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" "$GITHUB_SHA" -m "Release $TAG"
+          git push origin "refs/tags/$TAG"
           gh release create "$TAG" \
             --generate-notes \
-            --title "Release $TAG"
+            --title "Release $TAG" \
+            --verify-tag
