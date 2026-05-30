@@ -62,7 +62,7 @@ SonarCloud uses CI-based analysis (not Automatic Analysis). If the workflow or `
 
 ## Commit Rules
 
-- Commit messages should follow conventional commit format (see https://www.conventionalcommits.org/en/v1.0.0/) and include a `+semver:` directive in the body to influence release versioning (e.g., `+semver: patch`).
+- Commit messages must use conventional commit format (see https://www.conventionalcommits.org/en/v1.0.0/) and should include a `+semver:` directive in the body to influence release versioning (e.g., `+semver: patch`) when applicable.
 
 ## Design Rules should follow the architecture and quality guidance above, but in general:
 
