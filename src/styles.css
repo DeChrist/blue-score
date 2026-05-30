@@ -1249,20 +1249,44 @@ td:nth-child(6) {
 }
 
 .court-card__pair {
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--r-md);
   display: grid;
   gap: 10px;
   grid-template-columns: minmax(0, 1fr) auto;
   min-width: 0;
-  padding: 0.75rem;
+  padding: 0.75rem 0.75rem 0.75rem calc(0.75rem - 3px);
   transition: background var(--dur-fast) var(--ease-out),
               border-color var(--dur-fast) var(--ease-out),
               color var(--dur-fast) var(--ease-out);
 }
 
+.court-card__pair.left-pair {
+  border-left: 4px solid var(--left-border);
+}
+
+.court-card__pair.right-pair {
+  border-left: 4px solid var(--right-border);
+}
+
+.court-card__pair.left-pair .score-spinner {
+  background: var(--left-fill);
+  border: 1px solid var(--left-border);
+}
+
+.court-card__pair.right-pair .score-spinner {
+  background: var(--right-fill);
+  border: 1px solid var(--right-border);
+}
+
 .court-card__pair.pending {
+  border-left-color: var(--border);
+}
+
+.court-card__pair.pending .score-spinner {
   background: linear-gradient(180deg, #eef0ec 0%, #e2e6df 100%);
-  border-color: var(--border-strong);
+  border-color: var(--border);
 }
 
 .court-card__pair.pending .player-chip {
@@ -1275,8 +1299,6 @@ td:nth-child(6) {
 
 .court-card__pair.leading {
   border-left-width: 4px;
-  border-width: 1px 1px 1px 4px;
-  padding: 0.75rem 0.75rem 0.75rem calc(0.75rem - 3px);
 }
 
 .court-card__pair.left-pair.leading {
@@ -1322,11 +1344,24 @@ td:nth-child(6) {
 
 .score-spinner {
   align-items: stretch;
+  border-radius: var(--r-sm);
   display: grid;
   gap: 4px;
   grid-template-columns: var(--touch-lg) 76px var(--touch-lg);
   margin-top: 0;
+  padding: 3px;
   touch-action: none;
+}
+
+.score-spinner .stepper-btn,
+.score-spinner input {
+  background: transparent;
+  border-color: transparent;
+}
+
+.score-spinner .stepper-btn:hover {
+  background: rgba(255, 255, 255, 0.45);
+  border-color: transparent;
 }
 
 .score-spinner input {
@@ -1514,6 +1549,8 @@ td:nth-child(6) {
 
   .court-row__pair {
     align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: var(--r-md);
     display: inline-grid;
     flex: 1 1 auto;
@@ -1521,12 +1558,34 @@ td:nth-child(6) {
     grid-template-columns: minmax(0, auto) auto;
     max-width: 46%;
     min-width: 0;
-    padding: 8px;
+    padding: 8px 8px 8px calc(8px - 3px);
+  }
+
+  .court-row__pair.left-pair {
+    border-left: 4px solid var(--left-border);
+  }
+
+  .court-row__pair.right-pair {
+    border-left: 4px solid var(--right-border);
+  }
+
+  .court-row__pair.left-pair .score-spinner {
+    background: var(--left-fill);
+    border: 1px solid var(--left-border);
+  }
+
+  .court-row__pair.right-pair .score-spinner {
+    background: var(--right-fill);
+    border: 1px solid var(--right-border);
   }
 
   .court-row__pair.pending {
+    border-left-color: var(--border);
+  }
+
+  .court-row__pair.pending .score-spinner {
     background: linear-gradient(180deg, #f0f2ee 0%, #e3e6e0 100%);
-    border-color: var(--border-strong);
+    border-color: var(--border);
   }
 
   .court-row__pair.pending .player-chip {
@@ -1539,8 +1598,6 @@ td:nth-child(6) {
 
   .court-row__pair.leading {
     border-left-width: 4px;
-    border-width: 1px 1px 1px 4px;
-    padding: 8px 8px 8px calc(8px - 3px);
   }
 
   .court-row__pair.left-pair.leading {
