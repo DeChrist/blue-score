@@ -124,7 +124,7 @@ Left/right hues stay more saturated than the earlier `#eef7f1` / `#fff5e6` for s
 
 ## Layout
 
-### Mobile (≤ 980 px)
+### Mobile (< 1080 px)
 
 - **Bottom tab bar:** Score · Standings · History · More.
 - **Top app bar:** session name + "N of M rotas played · K players" + overflow.
@@ -183,14 +183,15 @@ Left/right hues stay more saturated than the earlier `#eef7f1` / `#fff5e6` for s
 - Icon-only buttons need `aria-label`.
 - Do not convey meaning by colour alone — pending state pairs the muted gradient with the textual `Not entered` / "Tap a score to record" hint; recorded state pairs the tint with the `Recorded` pill.
 - Respect `prefers-reduced-motion`.
-- Bottom tab bar items need full `role="tab"` semantics and a 44 px hit target inside the 76 px bar (padding accommodates safe-area).
+- Bottom tab bar uses `<nav aria-label="App sections">` with `aria-current="page"` on the active button — not ARIA tab-widget semantics (`role="tablist"` / `role="tab"`). The nav/`aria-current` pattern matches the active-only rendering model and avoids broken `aria-controls` references to non-existent panel IDs.
+- Tab bar buttons need a 44 px touch target. The bar is `--tab-bar-h` (76 px) on phone, with `min-height` expanding by `env(safe-area-inset-bottom)` on devices with a home-indicator inset.
 - Drag-and-drop has a keyboard / right-click fallback: long-press / contextmenu on a chip opens a "Swap with…" popover with valid targets as a tappable list.
 - `aria-live="polite"` announces rota-level transitions: `Match on court 1 recorded`, `Rota 2 submitted`, etc. Per-stepper presses are not announced (too noisy).
 
 ## Anti-Patterns
 
 - No dark mode for this product phase (backlog).
-- No hero sections, decorative gradients, glass effects, or marketing-style chrome.
+- No decorative glass, hero sections, or marketing-style chrome. Functional backdrop-blur on fixed navigation bars (e.g., the phone tab bar) is acceptable — it conveys that content scrolls behind the bar. Disable it in the desktop override where the bar is statically positioned.
 - No live "Even · 0–0" / "Left leads · 14–8" running summaries — scoring is end-of-match only.
 - No "X / 24 short" or "Total OK" validation pills — the model can't produce an invalid total.
 - No charts, sparklines, or trend microcharts on standings — keep numerics primary.
