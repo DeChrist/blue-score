@@ -3,7 +3,18 @@ import type { ChangeEvent, KeyboardEvent, TouchEvent } from "react";
 import { Minus, Plus } from "lucide-react";
 import { makePlayerNameLookup } from "../playerLookup";
 import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
-import { isRotaAccessible } from "../sessionPhase";
+import {
+  canSubmitRota,
+  findCourtScore,
+  findNextOpenRota,
+  formatPendingCourtDetail,
+  getCourtName,
+  getLeadingSide,
+  getPendingCourts,
+  getRecordedCourtCount,
+  isCourtRecorded,
+} from "../scoreUiState";
+import type { LeadingSide, ScoreSide } from "../scoreUiState";
 import type { Court, CourtMatch, CourtScore, RotaResult, Session } from "../types";
 
 interface Props {
@@ -13,9 +24,6 @@ interface Props {
   readonly onRotaChange: (rotaNumber: number) => void;
   readonly clubCourts: readonly Court[];
 }
-
-type ScoreSide = "leftScore" | "rightScore";
-type LeadingSide = "left" | "right" | null;
 
 interface UndoState {
   readonly session: Session;
@@ -62,18 +70,11 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
     };
   }, [undoState]);
 
-  const defaultLeftScore = Math.floor(session.pointsPerCourt / 2);
-  const defaultRightScore = session.pointsPerCourt - defaultLeftScore;
-
   const getScore = useCallback(
     (courtNumber: number): CourtScore => {
-      return scores.find((item) => item.courtNumber === courtNumber) ?? {
-        courtNumber,
-        leftScore: defaultLeftScore,
-        rightScore: defaultRightScore,
-      };
+      return findCourtScore(scores, courtNumber, session.pointsPerCourt);
     },
-    [defaultLeftScore, defaultRightScore, scores],
+    [scores, session.pointsPerCourt],
   );
 
   const changeScore = useCallback(
@@ -85,12 +86,10 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
     [isSubmitted, session.pointsPerCourt],
   );
 
-  const recordedCount = rota
-    ? rota.courts.filter((court) => isSubmitted || touchedCourtNumbers.has(court.courtNumber)).length
-    : 0;
+  const recordedCount = rota ? getRecordedCourtCount(rota.courts, touchedCourtNumbers, isSubmitted) : 0;
   const courtCount = rota?.courts.length ?? 0;
-  const pendingCourts = rota?.courts.filter((court) => !isSubmitted && !touchedCourtNumbers.has(court.courtNumber)) ?? [];
-  const canSubmit = Boolean(rota) && !isSubmitted && courtCount > 0 && recordedCount === courtCount;
+  const pendingCourts = rota ? getPendingCourts(rota.courts, touchedCourtNumbers, isSubmitted) : [];
+  const canSubmit = Boolean(rota) && canSubmitRota(rota.courts, touchedCourtNumbers, isSubmitted);
 
   const submit = useCallback(() => {
     if (!rota || !canSubmit) return;
@@ -101,11 +100,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
       submittedAt: new Date().toISOString(),
     };
     const nextSession = applyOrReplaceRotaResult(session, result);
-    const nextOpenRota = nextSession.rotas.find(
-      (item) =>
-        !nextSession.results.some((stored) => stored.rotaNumber === item.rotaNumber) &&
-        isRotaAccessible(item, nextSession.rotas, nextSession.results),
-    );
+    const nextOpenRota = findNextOpenRota(nextSession.rotas, nextSession.results);
 
     const nextUndoState: UndoState = {
       session,
@@ -152,7 +147,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
     setUndoState(null);
   }
 
-  const pendingDetail = formatPendingCourts(pendingCourts, clubCourts);
+  const pendingDetail = formatPendingCourtDetail(pendingCourts, clubCourts);
 
   return (
     <>
@@ -164,7 +159,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
         <div className="courts score-courts">
           {rota.courts.map((court) => {
             const score = getScore(court.courtNumber);
-            const isPending = !isSubmitted && !touchedCourtNumbers.has(court.courtNumber);
+            const isPending = !isCourtRecorded(court.courtNumber, touchedCourtNumbers, isSubmitted);
             const leading = getLeadingSide(score);
             const courtName = getCourtName(court.courtNumber, clubCourts);
             return (
@@ -502,20 +497,4 @@ function ScoreSpinner({ value, max, label, disabled, onChange }: ScoreSpinnerPro
       </button>
     </div>
   );
-}
-
-function getLeadingSide(score: CourtScore): LeadingSide {
-  if (score.leftScore > score.rightScore) return "left";
-  if (score.rightScore > score.leftScore) return "right";
-  return null;
-}
-
-function getCourtName(courtNumber: number, courts: readonly Court[]): string {
-  return courts[courtNumber - 1]?.name.trim() ?? "";
-}
-
-function formatPendingCourts(courts: readonly CourtMatch[], clubCourts: readonly Court[]): string {
-  if (courts.length === 0) return "";
-  const labels = courts.map((court) => getCourtName(court.courtNumber, clubCourts) || `Court ${court.courtNumber}`);
-  return `${labels.join(", ")} still pending`;
 }
