@@ -8,7 +8,7 @@ export function deriveSessionPhase(session: Session): SessionPhase {
   return "scoring";
 }
 
-export function isRotaAccessible(rota: Rota, allRotas: Rota[], results: RotaResult[]): boolean {
+export function isRotaAccessible(rota: Rota, allRotas: readonly Rota[], results: readonly RotaResult[]): boolean {
   const isSubmitted = results.some((r) => r.rotaNumber === rota.rotaNumber);
   if (isSubmitted) return true;
   const firstUnsubmittedIndex = allRotas.findIndex(

@@ -1202,6 +1202,12 @@ td:nth-child(6) {
  * ========================================================================= */
 
 .score-panel {
+  --score-left-hover: color-mix(in srgb, var(--left-fill) 88%, var(--left-accent));
+  --score-right-hover: color-mix(in srgb, var(--right-fill) 88%, var(--right-accent));
+  --score-pending-phone: linear-gradient(180deg, var(--surface-2) 0%, var(--bg-sunken) 100%);
+  --score-pending-desktop: linear-gradient(180deg, var(--surface-2) 0%, var(--bg-sunken) 100%);
+  --score-stepper-glass: color-mix(in srgb, var(--surface) 65%, transparent);
+  --score-stepper-glass-muted: color-mix(in srgb, var(--surface) 50%, transparent);
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -1407,7 +1413,7 @@ td:nth-child(6) {
 }
 
 .pair-row.left .stepper .step:hover {
-  background: #d8eee2;
+  background: var(--score-left-hover);
 }
 
 .pair-row.right .stepper .step,
@@ -1416,7 +1422,7 @@ td:nth-child(6) {
 }
 
 .pair-row.right .stepper .step:hover {
-  background: #f7debb;
+  background: var(--score-right-hover);
 }
 
 .pair-row.left.leading .stepper .score {
@@ -1429,12 +1435,13 @@ td:nth-child(6) {
 
 .court-card.pending .pair-row .stepper .step,
 .court-card.pending .pair-row .stepper .score {
-  background: linear-gradient(180deg, #eef0ec 0%, #e2e6df 100%);
+  background: var(--score-pending-phone);
   color: var(--ink-soft);
 }
 
-.court-card.pending .pair-row::before {
-  background: var(--border) !important;
+.court-card.pending .pair-row.left::before,
+.court-card.pending .pair-row.right::before {
+  background: var(--border);
 }
 
 .court-card.pending .pair-chip {
@@ -1589,7 +1596,7 @@ td:nth-child(6) {
   align-items: center;
   background: var(--ink-strong);
   border-radius: var(--r-md);
-  color: #fff;
+  color: var(--on-ink);
   display: grid;
   font-size: 13px;
   font-weight: 500;
@@ -1600,7 +1607,7 @@ td:nth-child(6) {
 }
 
 .submit-toast .icon {
-  color: #67d699;
+  color: var(--success-border);
   height: 18px;
   min-height: 0;
   padding: 0;
@@ -1611,7 +1618,7 @@ td:nth-child(6) {
   background: transparent;
   border: 0;
   border-radius: var(--r-sm);
-  color: #b6ffd1;
+  color: var(--success-fill);
   cursor: pointer;
   font-size: 13px;
   font-weight: 700;
@@ -1741,7 +1748,7 @@ td:nth-child(6) {
 
   .d-pair .stepper .step,
   .d-pair .stepper .score {
-    background: rgba(255, 255, 255, 0.65);
+    background: var(--score-stepper-glass);
   }
 
   .d-pair.left .stepper .score {
@@ -1766,12 +1773,12 @@ td:nth-child(6) {
 
   .d-court-row.pending .d-pair.left,
   .d-court-row.pending .d-pair.right {
-    background: linear-gradient(180deg, #f0f2ee 0%, #e3e6e0 100%);
+    background: var(--score-pending-desktop);
   }
 
   .d-court-row.pending .d-pair .stepper .step,
   .d-court-row.pending .d-pair .stepper .score {
-    background: rgba(255, 255, 255, 0.5);
+    background: var(--score-stepper-glass-muted);
     color: var(--ink-soft);
   }
 

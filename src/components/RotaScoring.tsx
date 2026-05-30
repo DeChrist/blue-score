@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import type { Dispatch, KeyboardEvent, ReactNode, SetStateAction } from "react";
 import { CheckCircle, GripVertical } from "lucide-react";
 import { makePlayerNameLookup } from "../playerLookup";
 import { applyOrReplaceRotaResult, initializeCourtScores, updateCourtScore } from "../scoring";
@@ -32,13 +32,26 @@ interface UndoState {
   readonly expiresAt: number;
 }
 
-let pendingUndoState: UndoState | null = null;
+interface UndoContextValue {
+  readonly undoState: UndoState | null;
+  readonly setUndoState: Dispatch<SetStateAction<UndoState | null>>;
+}
 
-function readPendingUndoState(): UndoState | null {
-  if (pendingUndoState && pendingUndoState.expiresAt <= Date.now()) {
-    pendingUndoState = null;
-  }
-  return pendingUndoState;
+const RotaScoringUndoContext = createContext<UndoContextValue | null>(null);
+
+interface RotaScoringUndoProviderProps {
+  readonly children: ReactNode;
+}
+
+export function RotaScoringUndoProvider({ children }: RotaScoringUndoProviderProps) {
+  const [undoState, setUndoState] = useState<UndoState | null>(null);
+  const value = useMemo(() => ({ undoState, setUndoState }), [undoState]);
+
+  return (
+    <RotaScoringUndoContext.Provider value={value}>
+      {children}
+    </RotaScoringUndoContext.Provider>
+  );
 }
 
 export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRotaChange, clubCourts }: Props) {
@@ -50,17 +63,35 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
     existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []),
   );
   const [touchedCourtNumbers, setTouchedCourtNumbers] = useState<ReadonlySet<number>>(() => new Set());
-  const [undoState, setUndoState] = useState<UndoState | null>(() => readPendingUndoState());
+  const localUndoState = useState<UndoState | null>(null);
+  const undoContext = useContext(RotaScoringUndoContext);
+  const [undoState, setUndoState] = undoContext
+    ? [undoContext.undoState, undoContext.setUndoState]
+    : localUndoState;
   const undoTimerRef = useRef<number | null>(null);
   const toastMessage = undoState?.message ?? "";
+
+  useEffect(() => {
+    const nextScores = existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []);
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setScores(nextScores);
+      setTouchedCourtNumbers(new Set());
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [existingResult?.scores, existingResult?.submittedAt, rota, session.pointsPerCourt]);
 
   useEffect(() => {
     if (!undoState) return undefined;
 
     const remainingMs = Math.max(0, undoState.expiresAt - Date.now());
     undoTimerRef.current = globalThis.setTimeout(() => {
-      if (pendingUndoState === undoState) pendingUndoState = null;
-      setUndoState(null);
+      setUndoState((current) => (current === undoState ? null : current));
       undoTimerRef.current = null;
     }, remainingMs);
 
@@ -68,7 +99,7 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
       if (undoTimerRef.current !== null) globalThis.clearTimeout(undoTimerRef.current);
       undoTimerRef.current = null;
     };
-  }, [undoState]);
+  }, [setUndoState, undoState]);
 
   const getScore = useCallback(
     (courtNumber: number): CourtScore => {
@@ -108,11 +139,10 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
       message: `Rota ${rota.rotaNumber} submitted`,
       expiresAt: Date.now() + 4000,
     };
-    pendingUndoState = nextUndoState;
     setUndoState(nextUndoState);
     onSessionChange(nextSession);
     if (nextOpenRota) onRotaChange(nextOpenRota.rotaNumber);
-  }, [canSubmit, getScore, onRotaChange, onSessionChange, rota, session]);
+  }, [canSubmit, getScore, onRotaChange, onSessionChange, rota, session, setUndoState]);
 
   useEffect(() => {
     function handleKeyDown(event: globalThis.KeyboardEvent) {
@@ -143,7 +173,6 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
     }
     onSessionChange(undoState.session);
     onRotaChange(undoState.rotaNumber);
-    if (pendingUndoState === undoState) pendingUndoState = null;
     setUndoState(null);
   }
 
@@ -419,10 +448,18 @@ interface ScoreSpinnerProps {
 function ScoreSpinner({ value, max, label, disabled, onChange }: ScoreSpinnerProps) {
   const outputRef = useRef<HTMLOutputElement>(null);
   const latestValueRef = useRef(value);
+  const wheelCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     latestValueRef.current = value;
   }, [value]);
+
+  useEffect(() => {
+    return () => {
+      wheelCleanupRef.current?.();
+      wheelCleanupRef.current = null;
+    };
+  }, []);
 
   function clamp(nextValue: number) {
     return Math.max(0, Math.min(max, nextValue));
@@ -447,6 +484,7 @@ function ScoreSpinner({ value, max, label, disabled, onChange }: ScoreSpinnerPro
   function handleOutputFocus() {
     const output = outputRef.current;
     if (!output || disabled) return;
+    if (wheelCleanupRef.current) return;
 
     function handleWheel(event: WheelEvent) {
       event.preventDefault();
@@ -454,7 +492,12 @@ function ScoreSpinner({ value, max, label, disabled, onChange }: ScoreSpinnerPro
     }
 
     output.addEventListener("wheel", handleWheel, { passive: false });
-    output.addEventListener("blur", () => output.removeEventListener("wheel", handleWheel), { once: true });
+    wheelCleanupRef.current = () => output.removeEventListener("wheel", handleWheel);
+  }
+
+  function handleOutputBlur() {
+    wheelCleanupRef.current?.();
+    wheelCleanupRef.current = null;
   }
 
   return (
@@ -480,6 +523,7 @@ function ScoreSpinner({ value, max, label, disabled, onChange }: ScoreSpinnerPro
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={value}
+        onBlur={handleOutputBlur}
         onFocus={handleOutputFocus}
         onKeyDown={handleOutputKeyDown}
       >

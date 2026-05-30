@@ -51,7 +51,7 @@ export function canSubmitRota(
   touchedCourtNumbers: ReadonlySet<number>,
   isSubmitted: boolean,
 ): boolean {
-  return !isSubmitted && courts.length > 0 && getRecordedCourtCount(courts, touchedCourtNumbers, false) === courts.length;
+  return !isSubmitted && courts.length > 0 && getRecordedCourtCount(courts, touchedCourtNumbers, isSubmitted) === courts.length;
 }
 
 export function getLeadingSide(score: CourtScore): LeadingSide {
@@ -77,8 +77,8 @@ function formatConjunction(labels: readonly string[]): string {
 }
 
 export function findNextOpenRota(
-  rotas: Rota[],
-  results: RotaResult[],
+  rotas: readonly Rota[],
+  results: readonly RotaResult[],
 ): Rota | undefined {
   return rotas.find(
     (rota) =>
