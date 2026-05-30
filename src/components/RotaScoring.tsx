@@ -37,6 +37,12 @@ interface UndoContextValue {
   readonly setUndoState: Dispatch<SetStateAction<UndoState | null>>;
 }
 
+interface ScoreDraftState {
+  readonly resetKey: string;
+  readonly scores: readonly CourtScore[];
+  readonly touchedCourtNumbers: ReadonlySet<number>;
+}
+
 const RotaScoringUndoContext = createContext<UndoContextValue | null>(null);
 
 interface RotaScoringUndoProviderProps {
@@ -59,10 +65,29 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
   const existingResult = session.results.find((result) => result.rotaNumber === rota?.rotaNumber);
   const isSubmitted = Boolean(existingResult);
   const playerName = makePlayerNameLookup(session.players);
-  const [scores, setScores] = useState<CourtScore[]>(() =>
-    existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []),
+  const scoreDraftKey = `${session.id}:${rota?.rotaNumber ?? "none"}:${existingResult?.submittedAt ?? "open"}:${session.pointsPerCourt}`;
+  const initialScores = useMemo(
+    () => existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []),
+    [existingResult?.scores, rota, session.pointsPerCourt],
   );
-  const [touchedCourtNumbers, setTouchedCourtNumbers] = useState<ReadonlySet<number>>(() => new Set());
+  const [scoreDraft, setScoreDraft] = useState<ScoreDraftState>(() => ({
+    resetKey: scoreDraftKey,
+    scores: initialScores,
+    touchedCourtNumbers: new Set(),
+  }));
+  const activeDraft = useMemo<ScoreDraftState>(
+    () =>
+      scoreDraft.resetKey === scoreDraftKey
+        ? scoreDraft
+        : {
+            resetKey: scoreDraftKey,
+            scores: initialScores,
+            touchedCourtNumbers: new Set(),
+          },
+    [initialScores, scoreDraft, scoreDraftKey],
+  );
+  const scores = activeDraft.scores;
+  const touchedCourtNumbers = activeDraft.touchedCourtNumbers;
   const localUndoState = useState<UndoState | null>(null);
   const undoContext = useContext(RotaScoringUndoContext);
   const [undoState, setUndoState] = undoContext
@@ -70,21 +95,6 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
     : localUndoState;
   const undoTimerRef = useRef<number | null>(null);
   const toastMessage = undoState?.message ?? "";
-
-  useEffect(() => {
-    const nextScores = existingResult?.scores ?? (rota ? initializeCourtScores(rota.courts, session.pointsPerCourt) : []);
-    let cancelled = false;
-
-    queueMicrotask(() => {
-      if (cancelled) return;
-      setScores(nextScores);
-      setTouchedCourtNumbers(new Set());
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [existingResult?.scores, existingResult?.submittedAt, rota, session.pointsPerCourt]);
 
   useEffect(() => {
     if (!undoState) return undefined;
@@ -111,10 +121,26 @@ export function RotaScoring({ session, selectedRotaNumber, onSessionChange, onRo
   const changeScore = useCallback(
     (courtNumber: number, side: ScoreSide, value: number) => {
       if (isSubmitted) return;
-      setTouchedCourtNumbers((current) => new Set(current).add(courtNumber));
-      setScores((current) => updateCourtScore(current, courtNumber, side, value, session.pointsPerCourt));
+      setScoreDraft((current) => {
+        const currentDraft =
+          current.resetKey === scoreDraftKey
+            ? current
+            : {
+                resetKey: scoreDraftKey,
+                scores: initialScores,
+                touchedCourtNumbers: new Set<number>(),
+              };
+        const nextTouchedCourtNumbers = new Set(currentDraft.touchedCourtNumbers);
+        nextTouchedCourtNumbers.add(courtNumber);
+
+        return {
+          resetKey: scoreDraftKey,
+          scores: updateCourtScore([...currentDraft.scores], courtNumber, side, value, session.pointsPerCourt),
+          touchedCourtNumbers: nextTouchedCourtNumbers,
+        };
+      });
     },
-    [isSubmitted, session.pointsPerCourt],
+    [initialScores, isSubmitted, scoreDraftKey, session.pointsPerCourt],
   );
 
   const recordedCount = rota ? getRecordedCourtCount(rota.courts, touchedCourtNumbers, isSubmitted) : 0;
