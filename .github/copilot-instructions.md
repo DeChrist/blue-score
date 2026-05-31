@@ -12,7 +12,7 @@ The devcontainer runs Node 24 — evaluate package engine constraints against No
 
 ## Precedence
 
-When guidance sources conflict, apply this order: **user request → these instructions → ADRs → backlog → README**. If a conflict touches behavior or design that cannot be resolved by reading, state the conflict and ask the user before proceeding.
+When guidance sources are ambiguous, apply this order: **user request → these instructions → ADRs → backlog → README**. When a request would override a hard constraint (security rules, ADR decisions, CSP policy), surface the conflict explicitly and ask before proceeding — even if the user did not phrase it as a question.
 
 ## Architecture
 
