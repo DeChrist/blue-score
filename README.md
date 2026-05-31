@@ -4,19 +4,9 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DeChrist_blue-score&metric=alert_status)](https://sonarcloud.io/dashboard?id=DeChrist_blue-score)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=DeChrist_blue-score&metric=coverage)](https://sonarcloud.io/component_measures?id=DeChrist_blue-score&metric=coverage)
 
-Single-page, browser-only React + TypeScript app for running a padel Americano scoring session.
+Single-page, browser-only React + TypeScript app for running a padel Americano scoring session. No backend, no authentication, no network calls — everything runs in the browser and persists to `localStorage`.
 
-## Current MVP
-
-- Versioning: Git tags and GitHub Releases are created by CI on `main`
-- Runtime: browser only, no backend, no authentication
-- Persistence: full session in `localStorage` under `padel-americano-session-v1`
-- Club config: one app-bundled `src/clubConfig.json` controls title branding, court labels, and the setup court-count cap; it is not persisted in session exports
-- Rota source: in-browser deterministic generation in standard mode; imported JSON through `StaticRotaProvider` in advanced mode
-- Deployment: GitHub Pages via `.github/workflows/ci-cd.yml`
-- Security: all assets self-contained; production build applies a strict Content-Security-Policy via Vite transform (see [ADR-008](docs/adr/008-browser-security-hardening.md))
-
-Rota generation runs fully in the browser with no backend, randomness, precomputed files, or network calls. `GeneratedRotaProvider` maps numeric technical schedules back to the existing domain `Player.id` values.
+**Public demo:** <https://dechrist.github.io/blue-score/?mode=demo>
 
 ## App Modes
 
@@ -28,70 +18,123 @@ Controlled by the `?mode=` query parameter:
 | `demo` | Pre-loaded sample data for demonstrations |
 | `advanced` | Full JSON import/export for power users |
 
-**Public demo:** <https://dechrist.github.io/blue-score/?mode=demo>
-
-## Commands
-
-```bash
-npm install
-npm run dev           # standard mode
-npm run dev:demo      # demo mode (pre-loaded data)
-npm run dev:advanced  # advanced mode (import/export)
-npm run lint
-npm test
-npm run test:coverage
-npm run build
-```
-
-## CI / CD
-
-CI uses Node 24 and runs lint, `test:coverage`, and build before deployment. Coverage summary text is shown in the job log, and HTML/lcov output is uploaded in the `coverage-report` artifact for SonarQube Cloud analysis.
-
-On pushes to `main`, the workflow then runs a `release` job after `deploy`; it creates and pushes a semantic-versioning-compliant `vX.Y.Z` tag and publishes a GitHub Release with generated notes:
-
-
-- major bump: commits matching `+semver: major`, `BREAKING CHANGE`, or Conventional Commit bang form (for example `feat!:`)
-- minor bump: commits matching `+semver: minor` or `feat:` / `feat(scope):`
-- patch bump: commits matching `+semver: patch` or `fix:` / `fix(scope):`
-- no release: docs/chore-only changes, or any commit set that does not match the rules above
-
 ## Architecture
 
-- ADR index: [docs/adr/README.md](docs/adr/README.md)
-- Technical debt backlog: [docs/technical-debt-backlog.md](docs/technical-debt-backlog.md)
-- Agent instructions: [.github/copilot-instructions.md](.github/copilot-instructions.md)
-- Design system: [design-system/MASTER.md](design-system/MASTER.md)
+Decisions are recorded as ADRs; read the index before changing anything load-bearing:
+
+| Document | Purpose |
+|---|---|
+| [docs/adr/README.md](docs/adr/README.md) | ADR index — durable architectural decisions |
+| [docs/technical-debt-backlog.md](docs/technical-debt-backlog.md) | Known quality work, agent safety flags |
+| [design-system/MASTER.md](design-system/MASTER.md) | UI/CSS rules and component catalogue |
+| [.github/copilot-instructions.md](.github/copilot-instructions.md) | Agent and contributor coding guidance |
 
 Key source boundaries:
 
-- `src/scoring.ts`: deterministic scoring and standings helpers
-- `src/validation.ts`: JSON import parsing and domain validation
-- `src/club.ts`: app-bundled Club config parsing/validation plus app title and court-label helpers
-- `src/storage.ts`: guarded browser storage reads/writes
-- `src/rotaGenerator.ts`: deterministic bounded Americano rota generation using numeric player indexes
-- `src/rotaProvider.ts`: rota provider interface, generated provider, and static import provider
+| File | Responsibility |
+|---|---|
+| `App.tsx` | Owns the current `Session`; persists changes through `storage.ts` |
+| `src/scoring.ts` | Deterministic scoring and standings helpers |
+| `src/validation.ts` | JSON import parsing and domain validation |
+| `src/club.ts` | App-bundled Club config parsing, app title, court-label helpers |
+| `src/storage.ts` | Guarded browser storage reads/writes |
+| `src/rotaGenerator.ts` | Deterministic bounded Americano rota generation (numeric indexes) |
+| `src/rotaProvider.ts` | Rota provider interface; maps generated rotas back to `Player.id` values |
+| `src/sessionPhase.ts` | Derives `SessionPhase` from session data; no side effects |
+| `src/appMode.ts` | Parses `?mode=` query param into `AppMode` |
+| `src/styles.css` | All styling; governed by `design-system/MASTER.md` |
 
-The generator starts iterative deepening from the theoretical lower bound and returns the first fully covered rota found by bounded deterministic beam search. The rotation count is the minimum found by that search, not a proof of global optimality.
+The rota generator starts iterative deepening from the theoretical lower bound and returns the first fully covered schedule found by bounded deterministic beam search. The rotation count is the minimum found by that search, not a proof of global optimality.
 
-Club configuration is loaded at startup and remains separate from `Session`. Fresh sessions still default to three courts, but setup validation and rota start/import flows cannot exceed the active Club's configured court count. Court names from the config are display-only headings such as `Court 2 - Center`.
+Club configuration (`src/clubConfig.json`) is loaded at startup and kept separate from `Session`. It controls title branding, court labels, and the court-count cap — it is never written into session exports.
 
-## Mobile Testing
+---
 
-Same Wi-Fi:
+## Contributor Guide
+
+This project is authored entirely by AI agents under human direction. The guide below applies equally to **humans directing agents** and to **AI agents working directly** in the repository.
+
+### Dev Environment
+
+#### Dev Container — recommended
+
+The repository ships a Dev Container (`.devcontainer/devcontainer.json`) based on `mcr.microsoft.com/devcontainers/javascript-node:24`. It bundles everything needed to develop and run AI-assisted sessions:
+
+- Node 24 + npm
+- GitHub CLI (`gh`)
+- **Claude Code** (`claude` CLI, via `ghcr.io/anthropics/devcontainer-features/claude-code:1.0`)
+
+**Setup (Mac):**
+
+1. Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+2. Add `CLAUDE_CODE_OAUTH_TOKEN` to your host shell profile (`~/.zshrc` or `~/.bashrc`). The container forwards it automatically.
+3. Open the repository in VS Code and choose **Reopen in Container**.
+4. After the container starts, `claude` is available in the integrated terminal alongside the usual `npm` commands.
+
+The Claude state directory (`/home/node/.claude`) is backed by a named Docker volume so the token and session data survive container rebuilds.
+
+> **Platform note:** Tested on **Mac only**. Windows support is TODO.
+
+#### Local Setup
 
 ```bash
-npm run dev
+node --version   # must be 24.x
+npm install
 ```
 
-Open `http://<LAN_IP>:5173` on the phone.
-
-Cloudflare tunnel:
+### Commands
 
 ```bash
-npm run mobile-test
+npm run dev             # dev server — standard mode
+npm run dev:demo        # dev server — demo mode (pre-loaded data)
+npm run dev:advanced    # dev server — advanced mode (import/export)
+npm run mobile-test     # Cloudflare tunnel for on-device testing
+npm run lint            # ESLint with --max-warnings 0
+npm test                # Vitest unit tests
+npm run test:coverage   # coverage report (HTML + lcov in coverage/)
+npm run build           # production build
 ```
 
-Open the generated `trycloudflare.com` URL on the phone.
+### Mobile Testing
+
+**Same Wi-Fi:** run `npm run dev` and open `http://<LAN_IP>:5173` on the device.
+
+**Cloudflare tunnel:** run `npm run mobile-test` and open the generated `trycloudflare.com` URL.
+
+### CI / CD
+
+CI runs on Node 24 and enforces **lint → test:coverage → build → deploy** before any merge reaches GitHub Pages. Coverage output (HTML + lcov) is uploaded as a `coverage-report` artifact and consumed by SonarCloud.
+
+After a successful deploy to `main`, the `release` job creates a `vX.Y.Z` tag and GitHub Release. Bump rules:
+
+| Trigger | Bump |
+|---|---|
+| `+semver: major`, `BREAKING CHANGE`, `feat!:` | major |
+| `+semver: minor`, `feat:` / `feat(scope):` | minor |
+| `+semver: patch`, `fix:` / `fix(scope):` | patch |
+| docs/chore only, or no matching pattern | no release |
+
+Always include a `+semver:` directive in the commit body when the change warrants a version bump.
+
+### Working with AI Agents
+
+The primary coding guidance for agents lives in [`.github/copilot-instructions.md`](.github/copilot-instructions.md). Read it before writing any code.
+
+**Recommended start sequence for an agent picking up a task:**
+
+1. `docs/adr/README.md` — understand durable constraints before proposing solutions
+2. `docs/technical-debt-backlog.md` — check the `Agent` column; `Design↑` items need a human decision before coding starts
+3. Run `npm run lint && npm test` — establish a clean baseline before touching anything
+4. `design-system/MASTER.md` — only when the task touches UI or CSS
+
+**Quality gates an agent must not skip:**
+
+- Lint must pass at zero warnings (`--max-warnings 0`).
+- Any new module with exported pure functions needs a matching `*.test.ts` in the same PR.
+- `vitest` and `@vitest/coverage-v8` must always be bumped to the same version — they are peer-locked.
+- Commits must use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) with a `+semver:` directive where applicable.
+
+---
 
 ## License
 
