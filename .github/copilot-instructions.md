@@ -10,6 +10,10 @@ Agent shortcut: `npx vitest run src/<module>.test.ts` — run a single test file
 
 The devcontainer runs Node 24 — evaluate package engine constraints against Node 24, not the local environment.
 
+## Precedence
+
+When guidance sources conflict, apply this order: **user request → these instructions → ADRs → backlog → README**. If a conflict touches behavior or design that cannot be resolved by reading, state the conflict and ask the user before proceeding.
+
 ## Architecture
 
 Read the ADR index first for durable decisions: `docs/adr/README.md`.

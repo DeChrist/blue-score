@@ -8,6 +8,17 @@ Single-page, browser-only React + TypeScript app for running a padel Americano s
 
 **Public demo:** <https://dechrist.github.io/blue-score/?mode=demo>
 
+## Quick Start
+
+Requires **Node 24**.
+
+```bash
+npm install
+npm run dev   # → http://localhost:5173
+```
+
+No account, backend, or configuration required — the app runs entirely in the browser.
+
 ## App Modes
 
 Controlled by the `?mode=` query parameter:
@@ -71,6 +82,8 @@ The repository ships a Dev Container (`.devcontainer/devcontainer.json`) based o
 3. Open the repository in VS Code and choose **Reopen in Container**.
 4. After the container starts, `claude` is available in the integrated terminal alongside the usual `npm` commands.
 
+> **Token security:** `CLAUDE_CODE_OAUTH_TOKEN` grants access to your Claude account. Store it only in your shell profile or a secrets manager — never in `.env` files, commit history, prompts, issues, or shared terminal output. If you suspect exposure, revoke the token at [claude.ai](https://claude.ai) immediately.
+
 The Claude state directory (`/home/node/.claude`) is backed by a named Docker volume so the token and session data survive container rebuilds.
 
 > **Platform note:** Tested on **Mac only**. Windows support is TODO.
@@ -133,6 +146,16 @@ The primary coding guidance for agents lives in [`.github/copilot-instructions.m
 - Any new module with exported pure functions needs a matching `*.test.ts` in the same PR.
 - `vitest` and `@vitest/coverage-v8` must always be bumped to the same version — they are peer-locked.
 - Commits must use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) with a `+semver:` directive where applicable.
+
+---
+
+## Security & Community
+
+To report a vulnerability, use [GitHub private advisories](https://github.com/DeChrist/blue-score/security/advisories/new) or see [SECURITY.md](SECURITY.md).
+
+To report a bug or request a feature, [open an issue](https://github.com/DeChrist/blue-score/issues).
+
+`CONTRIBUTING.md` and `CODE_OF_CONDUCT.md` are planned for when the project grows beyond its current structure.
 
 ---
 
