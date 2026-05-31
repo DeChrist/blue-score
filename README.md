@@ -10,11 +10,17 @@ Single-page, browser-only React + TypeScript app for running a padel Americano s
 
 ## Quick Start
 
-Requires **Node 24**.
+**Recommended:** use the Dev Container — no local Node install required.
+
+1. Install the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension in VS Code.
+2. Open this folder in VS Code and accept the **Reopen in Container** prompt.
+3. Wait for the container to initialize (`npm install` runs automatically).
+4. Run `npm run dev` in the integrated terminal — app opens at `http://localhost:5173`.
+
+**Local alternative** (requires Node 24):
 
 ```bash
-npm install
-npm run dev   # → http://localhost:5173
+npm install && npm run dev   # → http://localhost:5173
 ```
 
 No account, backend, or configuration required — the app runs entirely in the browser.
