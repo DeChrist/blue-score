@@ -1231,22 +1231,29 @@ td:nth-child(6) {
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-}
-
-.court-card__head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "court  status"
+    "versus versus";
   align-items: center;
-  border-bottom: 1px solid var(--border-soft);
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 14px 8px;
+  padding: 0;
 }
 
 .court-num {
+  grid-area: court;
   align-items: baseline;
   display: inline-flex;
   font-weight: 700;
   gap: 6px;
   min-width: 0;
+  padding: 10px 0 8px 14px;
+}
+
+.court-status {
+  grid-area: status;
+  justify-self: end;
+  padding: 10px 14px 8px 0;
 }
 
 .court-num .label {
@@ -1274,10 +1281,25 @@ td:nth-child(6) {
   white-space: nowrap;
 }
 
+.court-num .court-name::before {
+  content: "· ";
+}
+
 .court-state {
   color: var(--ink-muted);
   flex: 0 0 auto;
   font-size: 12px;
+}
+
+.versus-block {
+  grid-area: versus;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border-soft);
+}
+
+.court-versus {
+  display: none;
 }
 
 .pair-row {
@@ -1290,7 +1312,7 @@ td:nth-child(6) {
   position: relative;
 }
 
-.pair-row + .pair-row {
+.pair-row ~ .pair-row {
   border-top: 1px solid var(--border-soft);
 }
 
@@ -1455,13 +1477,13 @@ td:nth-child(6) {
   content: "Tap a score to record this match";
   display: block;
   font-size: 12px;
+  grid-column: 1 / -1;
   letter-spacing: 0.01em;
   padding: 8px 14px 12px;
   text-align: center;
 }
 
-.court-card.submitted .stepper .step,
-.d-court-row.submitted .stepper .step {
+.court-card.submitted .stepper .step {
   cursor: not-allowed;
   opacity: 0.5;
   pointer-events: none;
@@ -1489,10 +1511,6 @@ td:nth-child(6) {
   border-radius: 50%;
   height: 6px;
   width: 6px;
-}
-
-.d-court-row {
-  display: none;
 }
 
 .sit-outs {
@@ -1649,62 +1667,57 @@ td:nth-child(6) {
   }
 
   .court-card {
-    display: none;
-  }
-
-  .d-court-row {
-    align-items: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--r-lg);
-    box-shadow: var(--shadow-sm);
-    display: grid;
-    gap: 12px;
     grid-template-columns: 56px minmax(0, 1fr) 88px;
+    grid-template-areas: "court versus status";
+    gap: 12px;
     padding: 14px 16px;
   }
 
-  .court-tag {
+  .court-num {
     display: grid;
     gap: 0;
     text-align: left;
     width: 56px;
+    padding: 0;
   }
 
-  .court-tag .label {
-    color: var(--ink-muted);
+  .court-num .label {
     font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
   }
 
-  .court-tag .n {
-    font-family: var(--font-num);
+  .court-num .n {
     font-size: 26px;
-    font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.05;
   }
 
-  .court-tag .court-name {
-    color: var(--ink-muted);
+  .court-num .court-name {
     font-size: 12px;
     min-height: 1em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  }
+
+  .court-num .court-name::before {
+    content: none;
   }
 
   .versus-block {
     align-items: center;
-    display: flex;
+    border-top: 0;
+    flex-direction: row;
     gap: 10px;
     justify-content: space-between;
     min-width: 0;
   }
 
-  .d-pair {
+  .court-versus {
+    color: var(--ink-soft);
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+
+  .versus-block .pair-row {
     flex: 1;
     min-width: 0;
     overflow: hidden;
@@ -1714,101 +1727,105 @@ td:nth-child(6) {
     align-items: center;
     padding: 8px 10px 8px 12px;
     border-radius: var(--r-md);
+    border-top: 0;
     position: relative;
   }
 
-  .d-pair.left {
+  .versus-block .pair-row::before {
+    content: none;
+  }
+
+  .versus-block .pair-row.left {
     background: var(--left-fill);
   }
 
-  .d-pair.right {
+  .versus-block .pair-row.right {
     background: var(--right-fill);
   }
 
-  .d-pair .pair-names {
-    min-width: 0;
-  }
-
-  .d-pair .pair-chip {
+  .versus-block .pair-chip {
     font-size: 13.5px;
     min-width: 0;
   }
 
-  .d-pair .pair-chip .grip {
+  .versus-block .pair-chip .grip {
     height: 12px;
     width: 12px;
   }
 
-  .d-pair .stepper .step {
+  .versus-block .stepper .step {
     font-size: 18px;
     height: 48px;
     width: 40px;
   }
 
-  .d-pair .stepper .score {
+  .versus-block .stepper .score {
     font-size: 26px;
     height: 48px;
     min-width: 56px;
   }
 
-  .d-pair .stepper .step,
-  .d-pair .stepper .score {
+  .versus-block .pair-row .stepper .step,
+  .versus-block .pair-row .stepper .score {
     background: var(--score-stepper-glass);
   }
 
-  .d-pair.left .stepper .score {
+  .versus-block .pair-row.left .stepper .step:hover,
+  .versus-block .pair-row.right .stepper .step:hover {
+    background: var(--score-stepper-glass);
+  }
+
+  .versus-block .pair-row.left .stepper .score {
     color: var(--left-accent);
   }
 
-  .d-pair.right .stepper .score {
+  .versus-block .pair-row.right .stepper .score {
     color: var(--right-accent);
   }
 
-  .d-pair.leading {
+  .versus-block .pair-row.leading {
     box-shadow: inset 0 0 0 2px currentColor;
   }
 
-  .d-pair.left.leading {
+  .versus-block .pair-row.left.leading {
     color: var(--left-accent);
   }
 
-  .d-pair.right.leading {
+  .versus-block .pair-row.right.leading {
     color: var(--right-accent);
   }
 
-  .d-court-row.pending .d-pair.left,
-  .d-court-row.pending .d-pair.right {
+  .court-card.pending .pair-row.left,
+  .court-card.pending .pair-row.right {
     background: var(--score-pending-desktop);
   }
 
-  .d-court-row.pending .d-pair .stepper .step,
-  .d-court-row.pending .d-pair .stepper .score {
+  .court-card.pending .pair-row .stepper .step,
+  .court-card.pending .pair-row .stepper .score {
     background: var(--score-stepper-glass-muted);
     color: var(--ink-soft);
   }
 
-  .d-court-row.pending .d-pair .pair-chip {
+  .court-card.pending .pair-chip {
     color: var(--ink-muted);
   }
 
-  .d-court-row.pending .d-pair.leading {
+  .court-card.pending .pair-row.leading {
     box-shadow: none;
   }
 
-  .d-versus {
-    color: var(--ink-soft);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
+  .court-card.pending::after {
+    content: none;
   }
 
-  .d-court-status {
+  .court-status {
     color: var(--ink-soft);
     font-size: 12px;
     justify-self: end;
+    padding: 0;
   }
 
-  .pending-hint {
+  .court-state {
     align-items: center;
     color: var(--ink-soft);
     display: inline-flex;
@@ -1816,7 +1833,7 @@ td:nth-child(6) {
     white-space: nowrap;
   }
 
-  .pending-hint::before {
+  .court-state::before {
     background: var(--border-strong);
     border-radius: 50%;
     content: "";

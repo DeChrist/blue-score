@@ -304,58 +304,12 @@ function CourtScoreItem({
   ]
     .filter(Boolean)
     .join(" ");
-  const rowStateClass = [
-    "d-court-row",
-    isPending ? "pending" : "",
-    isSubmitted ? "submitted" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
   const statusText = isSubmitted ? "Done" : "Recorded";
 
   return (
     <article className={`court-score ${stateClass}`}>
       <div className={cardStateClass}>
-        <header className="court-card__head">
-          <div className="court-num">
-            <span className="label">Court</span>
-            <span className="n">{court.courtNumber}</span>
-            {courtName && <span className="court-name">· {courtName}</span>}
-          </div>
-          {isPending ? (
-            <span className="court-state">Not entered</span>
-          ) : (
-            <span className="pill success"><span className="dot" />{statusText}</span>
-          )}
-        </header>
-        <PairRow
-          courtNumber={court.courtNumber}
-          disabled={isSubmitted}
-          leading={leading === "left"}
-          pairSide="left"
-          playerIds={[court.leftPair.player1Id, court.leftPair.player2Id]}
-          playerName={playerName}
-          pointsPerCourt={pointsPerCourt}
-          variant="phone"
-          score={score.leftScore}
-          onChange={(value) => onChangeScore(court.courtNumber, "leftScore", value)}
-        />
-        <PairRow
-          courtNumber={court.courtNumber}
-          disabled={isSubmitted}
-          leading={leading === "right"}
-          pairSide="right"
-          playerIds={[court.rightPair.player1Id, court.rightPair.player2Id]}
-          playerName={playerName}
-          pointsPerCourt={pointsPerCourt}
-          variant="phone"
-          score={score.rightScore}
-          onChange={(value) => onChangeScore(court.courtNumber, "rightScore", value)}
-        />
-      </div>
-
-      <div className={rowStateClass}>
-        <div className="court-tag">
+        <div className="court-num">
           <span className="label">Court</span>
           <span className="n">{court.courtNumber}</span>
           {courtName && <span className="court-name">{courtName}</span>}
@@ -369,11 +323,10 @@ function CourtScoreItem({
             playerIds={[court.leftPair.player1Id, court.leftPair.player2Id]}
             playerName={playerName}
             pointsPerCourt={pointsPerCourt}
-            variant="desktop"
             score={score.leftScore}
             onChange={(value) => onChangeScore(court.courtNumber, "leftScore", value)}
           />
-          <span className="d-versus">VS</span>
+          <span className="court-versus" aria-hidden="true">VS</span>
           <PairRow
             courtNumber={court.courtNumber}
             disabled={isSubmitted}
@@ -382,14 +335,13 @@ function CourtScoreItem({
             playerIds={[court.rightPair.player1Id, court.rightPair.player2Id]}
             playerName={playerName}
             pointsPerCourt={pointsPerCourt}
-            variant="desktop"
             score={score.rightScore}
             onChange={(value) => onChangeScore(court.courtNumber, "rightScore", value)}
           />
         </div>
-        <div className="d-court-status">
+        <div className="court-status">
           {isPending ? (
-            <span className="pending-hint">Not entered</span>
+            <span className="court-state">Not entered</span>
           ) : (
             <span className="pill success"><span className="dot" />{statusText}</span>
           )}
@@ -408,7 +360,6 @@ interface PairRowProps {
   readonly playerName: (playerId: string) => string;
   readonly pointsPerCourt: number;
   readonly score: number;
-  readonly variant: "phone" | "desktop";
   readonly onChange: (value: number) => void;
 }
 
@@ -421,11 +372,10 @@ function PairRow({
   playerName,
   pointsPerCourt,
   score,
-  variant,
   onChange,
 }: PairRowProps) {
   const sideLabel = pairSide === "left" ? "left" : "right";
-  const pairClass = [variant === "desktop" ? "d-pair" : "pair-row", pairSide, leading ? "leading" : ""]
+  const pairClass = ["pair-row", pairSide, leading ? "leading" : ""]
     .filter(Boolean)
     .join(" ");
 
