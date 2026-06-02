@@ -88,7 +88,7 @@ The repository ships a Dev Container (`.devcontainer/devcontainer.json`) based o
 3. Open the repository in VS Code and choose **Reopen in Container**.
 4. After the container starts, `claude` is available in the integrated terminal alongside the usual `npm` commands.
 
-> **Token security:** `CLAUDE_CODE_OAUTH_TOKEN` grants access to your Claude account. Store it only in your shell profile or a secrets manager — never in `.env` files, commit history, prompts, issues, or shared terminal output. If you suspect exposure, revoke the token at [claude.ai](https://claude.ai) immediately.
+> **Token security:** `CLAUDE_CODE_OAUTH_TOKEN` grants access to your Claude account. Store it only in your shell profile or a secrets manager — never in source files (like `.env`), commit history, prompts, issues, or shared terminal output. If you suspect exposure, revoke the token at [Claude Code Settings](https://claude.ai/settings/claude-code) immediately.
 
 The Claude state directory (`/home/node/.claude`) is backed by a named Docker volume so the token and session data survive container rebuilds.
 
@@ -122,7 +122,7 @@ npm run build           # production build
 
 ### CI / CD
 
-CI runs on Node 24 and enforces **lint → test:coverage → build → deploy** before any merge reaches GitHub Pages. Coverage output (HTML + lcov) is uploaded as a `coverage-report` artifact and consumed by SonarCloud.
+CI runs on Node 24 and enforces **lint → test:coverage → build** before any merge reaches GitHub Pages. Coverage output (HTML + lcov) is uploaded as a `coverage-report` artifact and consumed by SonarCloud.
 
 After a successful deploy to `main`, the `release` job creates a `vX.Y.Z` tag and GitHub Release. Bump rules:
 
