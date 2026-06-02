@@ -1,24 +1,18 @@
 # Copilot Instructions
 
-Guidance for AI coding agents working in this repository.
+Guidance for AI coding agents working in this repository. For environment setup, dev container details, CI/CD rules, and the recommended agent start sequence, see the [Contributor Guide in README.md](../README.md#contributor-guide).
 
 ## Commands
 
-```bash
-npm run dev           
-npm run dev:demo      
-npm run dev:advanced  
-npm run mobile-test
-npm run lint
-npm test
-npm run test:coverage
-npm run build
-npx vitest run src/scoring.test.ts
-```
+Full command reference: [README.md — Commands](../README.md#commands).
 
-CI/CD runs in `.github/workflows/ci-cd.yml` on Node 24. It enforces lint, `test:coverage` (uploads a coverage artifact), and build before GitHub Pages deployment, then runs an automated `release` job on pushes to `main`.
+Agent shortcut: `npx vitest run src/<module>.test.ts` — run a single test file without the full suite.
 
-The project uses a devcontainer (`.devcontainer/devcontainer.json`) running Node 24. Evaluate package engine constraints against Node 24, not the local environment.
+The devcontainer runs Node 24 — evaluate package engine constraints against Node 24, not the local environment.
+
+## Precedence
+
+When guidance sources are ambiguous, apply this order: **user request → these instructions → ADRs → backlog → README**. When a request would override a hard constraint (security rules, ADR decisions, CSP policy), surface the conflict explicitly and ask before proceeding — even if the user did not phrase it as a question.
 
 ## Architecture
 
