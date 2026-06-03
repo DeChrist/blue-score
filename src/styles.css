@@ -1871,7 +1871,7 @@ td:nth-child(6) {
 .standings-sort button {
   font-size: 0.85rem;
   font-weight: 700;
-  min-height: 32px;
+  min-height: var(--touch);
   padding: 0.3rem 0.7rem;
 }
 
