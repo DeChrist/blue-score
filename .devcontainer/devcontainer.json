@@ -13,13 +13,16 @@
       "installOhMyZsh": true,
       "upgradePackages": true
     },
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {},
+    "ghcr.io/rocker-org/devcontainer-features/apt-packages:latest": {
+      "packages": "ripgrep"
+    }
   },
-  "postCreateCommand": "sudo chown -R node:node /home/node/.claude && npm install && node -e \"const fs=require('fs'),os=require('os'),p=os.homedir()+'/.claude.json',c=fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):{};c.hasCompletedOnboarding=true;fs.writeFileSync(p,JSON.stringify(c,null,2))\"",
+  "postCreateCommand": "mkdir -p ~/.npm-global && npm config set prefix ~/.npm-global && sudo chown -R node:node /home/node/.claude && npm install && node -e \"const fs=require('fs'),os=require('os'),p=os.homedir()+'/.claude.json',c=fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')):{};c.hasCompletedOnboarding=true;fs.writeFileSync(p,JSON.stringify(c,null,2))\"",
   "mounts": [
     "source=claude-code-${devcontainerId},target=/home/node/.claude,type=volume"
   ],
   "containerEnv": {
-  "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN}"
+    "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN}"
   }
 }
