@@ -23,28 +23,82 @@ export const sampleRotas: Rota[] = [
   {
     rotaNumber: 1,
     courts: [
-      { courtNumber: 1, leftPair: { player1Id: "marcus", player2Id: "david" }, rightPair: { player1Id: "laurent", player2Id: "christopherw" } },
-      { courtNumber: 2, leftPair: { player1Id: "robert", player2Id: "nic" }, rightPair: { player1Id: "jonathan", player2Id: "michael" } },
-      { courtNumber: 3, leftPair: { player1Id: "daniel", player2Id: "james" }, rightPair: { player1Id: "kevin", player2Id: "christopherb" } },
+      { courtNumber: 1, leftPair: { player1Id: "david", player2Id: "laurent" }, rightPair: { player1Id: "christopherw", player2Id: "robert" } },
+      { courtNumber: 2, leftPair: { player1Id: "nic", player2Id: "jonathan" }, rightPair: { player1Id: "michael", player2Id: "james" } },
+      { courtNumber: 3, leftPair: { player1Id: "daniel", player2Id: "kevin" }, rightPair: { player1Id: "christopherb", player2Id: "thomas" } },
     ],
-    sitOutPlayerIds: ["thomas", "alex", "bartholomew", "igor"],
+    sitOutPlayerIds: ["marcus", "alex", "bartholomew", "igor"],
   },
   {
     rotaNumber: 2,
     courts: [
-      { courtNumber: 1, leftPair: { player1Id: "thomas", player2Id: "alex" }, rightPair: { player1Id: "bartholomew", player2Id: "igor" } },
-      { courtNumber: 2, leftPair: { player1Id: "marcus", player2Id: "laurent" }, rightPair: { player1Id: "robert", player2Id: "jonathan" } },
-      { courtNumber: 3, leftPair: { player1Id: "david", player2Id: "christopherw" }, rightPair: { player1Id: "nic", player2Id: "michael" } },
+      { courtNumber: 1, leftPair: { player1Id: "marcus", player2Id: "david" }, rightPair: { player1Id: "nic", player2Id: "daniel" } },
+      { courtNumber: 2, leftPair: { player1Id: "laurent", player2Id: "christopherw" }, rightPair: { player1Id: "jonathan", player2Id: "alex" } },
+      { courtNumber: 3, leftPair: { player1Id: "robert", player2Id: "michael" }, rightPair: { player1Id: "bartholomew", player2Id: "igor" } },
     ],
-    sitOutPlayerIds: ["daniel", "james", "kevin", "christopherb"],
+    sitOutPlayerIds: ["james", "kevin", "christopherb", "thomas"],
   },
   {
     rotaNumber: 3,
     courts: [
-      { courtNumber: 1, leftPair: { player1Id: "daniel", player2Id: "kevin" }, rightPair: { player1Id: "thomas", player2Id: "bartholomew" } },
-      { courtNumber: 2, leftPair: { player1Id: "james", player2Id: "christopherb" }, rightPair: { player1Id: "alex", player2Id: "igor" } },
-      { courtNumber: 3, leftPair: { player1Id: "marcus", player2Id: "robert" }, rightPair: { player1Id: "david", player2Id: "nic" } },
+      { courtNumber: 1, leftPair: { player1Id: "marcus", player2Id: "laurent" }, rightPair: { player1Id: "kevin", player2Id: "bartholomew" } },
+      { courtNumber: 2, leftPair: { player1Id: "david", player2Id: "christopherw" }, rightPair: { player1Id: "christopherb", player2Id: "igor" } },
+      { courtNumber: 3, leftPair: { player1Id: "robert", player2Id: "james" }, rightPair: { player1Id: "thomas", player2Id: "alex" } },
     ],
-    sitOutPlayerIds: ["laurent", "christopherw", "jonathan", "michael"],
+    sitOutPlayerIds: ["nic", "jonathan", "michael", "daniel"],
+  },
+  {
+    rotaNumber: 4,
+    courts: [
+      { courtNumber: 1, leftPair: { player1Id: "marcus", player2Id: "jonathan" }, rightPair: { player1Id: "thomas", player2Id: "igor" } },
+      { courtNumber: 2, leftPair: { player1Id: "nic", player2Id: "michael" }, rightPair: { player1Id: "kevin", player2Id: "alex" } },
+      { courtNumber: 3, leftPair: { player1Id: "daniel", player2Id: "christopherb" }, rightPair: { player1Id: "james", player2Id: "bartholomew" } },
+    ],
+    sitOutPlayerIds: ["david", "laurent", "christopherw", "robert"],
+  },
+  {
+    rotaNumber: 5,
+    courts: [
+      { courtNumber: 1, leftPair: { player1Id: "david", player2Id: "james" }, rightPair: { player1Id: "christopherw", player2Id: "kevin" } },
+      { courtNumber: 2, leftPair: { player1Id: "laurent", player2Id: "michael" }, rightPair: { player1Id: "daniel", player2Id: "thomas" } },
+      { courtNumber: 3, leftPair: { player1Id: "robert", player2Id: "nic" }, rightPair: { player1Id: "jonathan", player2Id: "christopherb" } },
+    ],
+    sitOutPlayerIds: ["marcus", "alex", "bartholomew", "igor"],
+  },
+  {
+    rotaNumber: 6,
+    courts: [
+      { courtNumber: 1, leftPair: { player1Id: "marcus", player2Id: "robert" }, rightPair: { player1Id: "christopherw", player2Id: "michael" } },
+      { courtNumber: 2, leftPair: { player1Id: "david", player2Id: "jonathan" }, rightPair: { player1Id: "alex", player2Id: "bartholomew" } },
+      { courtNumber: 3, leftPair: { player1Id: "laurent", player2Id: "daniel" }, rightPair: { player1Id: "nic", player2Id: "igor" } },
+    ],
+    sitOutPlayerIds: ["james", "kevin", "christopherb", "thomas"],
+  },
+  {
+    rotaNumber: 7,
+    courts: [
+      { courtNumber: 1, leftPair: { player1Id: "marcus", player2Id: "christopherb" }, rightPair: { player1Id: "laurent", player2Id: "alex" } },
+      { courtNumber: 2, leftPair: { player1Id: "david", player2Id: "bartholomew" }, rightPair: { player1Id: "christopherw", player2Id: "thomas" } },
+      { courtNumber: 3, leftPair: { player1Id: "robert", player2Id: "igor" }, rightPair: { player1Id: "james", player2Id: "kevin" } },
+    ],
+    sitOutPlayerIds: ["nic", "jonathan", "michael", "daniel"],
+  },
+  {
+    rotaNumber: 8,
+    courts: [
+      { courtNumber: 1, leftPair: { player1Id: "marcus", player2Id: "michael" }, rightPair: { player1Id: "james", player2Id: "christopherb" } },
+      { courtNumber: 2, leftPair: { player1Id: "nic", player2Id: "kevin" }, rightPair: { player1Id: "thomas", player2Id: "bartholomew" } },
+      { courtNumber: 3, leftPair: { player1Id: "jonathan", player2Id: "igor" }, rightPair: { player1Id: "daniel", player2Id: "alex" } },
+    ],
+    sitOutPlayerIds: ["david", "laurent", "christopherw", "robert"],
+  },
+  {
+    rotaNumber: 9,
+    courts: [
+      { courtNumber: 1, leftPair: { player1Id: "david", player2Id: "michael" }, rightPair: { player1Id: "laurent", player2Id: "james" } },
+      { courtNumber: 2, leftPair: { player1Id: "christopherw", player2Id: "nic" }, rightPair: { player1Id: "robert", player2Id: "daniel" } },
+      { courtNumber: 3, leftPair: { player1Id: "jonathan", player2Id: "thomas" }, rightPair: { player1Id: "kevin", player2Id: "christopherb" } },
+    ],
+    sitOutPlayerIds: ["marcus", "alex", "bartholomew", "igor"],
   },
 ];
