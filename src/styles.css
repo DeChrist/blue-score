@@ -1854,3 +1854,97 @@ td:nth-child(6) {
     right: auto;
   }
 }
+
+/* =========================================================================
+ * PR4 — Standings list
+ *
+ * Responsive standings surface: a native list on phone/tablet, switching to
+ * the full table at the desktop breakpoint (1080px) — in sync with the side
+ * rail mini-standings. Component-scoped selectors only; the frozen shell,
+ * .mini-stand, .empty-state, and generic table rules are left untouched.
+ * ========================================================================= */
+.standings-sort {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.standings-sort button {
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-height: 32px;
+  padding: 0.3rem 0.7rem;
+}
+
+.standings-sort button.is-selected {
+  background: var(--ink);
+  color: var(--on-brand);
+}
+
+/* Phone/tablet list view (default). */
+.standings-list {
+  display: grid;
+  gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.standings-row {
+  align-items: center;
+  border-bottom: 1px solid var(--border-soft);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 2rem 1fr auto;
+  padding: 0.7rem 0.25rem;
+}
+
+.standings-row:last-child {
+  border-bottom: 0;
+}
+
+.standings-row__rank {
+  color: var(--ink-muted);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.standings-row__player {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standings-row__points {
+  color: var(--ink-strong);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* The desktop table is hidden until the rail appears. */
+.standings-panel .table-wrap {
+  display: none;
+}
+
+/* Rank is a row header (<th scope="row">) but holds a number, so it should
+ * read like a numeric cell rather than an uppercased column heading. */
+.standings-table th[scope="row"] {
+  color: inherit;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: inherit;
+  font-weight: 400;
+  text-align: right;
+  text-transform: none;
+}
+
+@media (min-width: 1080px) {
+  .standings-panel .standings-list {
+    display: none;
+  }
+
+  .standings-panel .table-wrap {
+    display: block;
+  }
+}
