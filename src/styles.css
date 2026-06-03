@@ -1927,6 +1927,18 @@ td:nth-child(6) {
   display: none;
 }
 
+/* Right-align numeric column headers so they sit over their right-aligned
+ * value cells; only Player (2nd column) stays left-aligned. The generic
+ * `th` rule left-aligns every header, which left numeric headers misaligned
+ * with their values. */
+.standings-table thead th {
+  text-align: right;
+}
+
+.standings-table thead th:nth-child(2) {
+  text-align: left;
+}
+
 /* Rank is a row header (<th scope="row">) but holds a number, so it should
  * read like a numeric cell rather than an uppercased column heading. */
 .standings-table th[scope="row"] {
