@@ -20,7 +20,7 @@ describe("import parsers", () => {
     const result = parseImportedRotas(sampleRotas);
     expect(result.value).not.toBeNull();
     expect(result.errors).toHaveLength(0);
-    expect(result.value?.length).toBe(3);
+    expect(result.value?.length).toBe(9);
   });
 
   it("rejects invalid rotas JSON shape", () => {

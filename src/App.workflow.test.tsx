@@ -193,14 +193,14 @@ describe("complete phase", () => {
     seed(
       baseSession({
         rotas: sampleRotas,
-        results: [resultFor(sampleRotas[0]), resultFor(sampleRotas[1])],
-        currentRotaNumber: 3,
+        results: sampleRotas.slice(0, -1).map(resultFor),
+        currentRotaNumber: 9,
       }),
     );
     await renderAndContinue(user);
 
     await recordEveryCourt(user);
-    await user.click(screen.getByRole("button", { name: "Submit Rota 3" }));
+    await user.click(screen.getByRole("button", { name: "Submit Rota 9" }));
 
     // Complete UI appears.
     expect(await screen.findByRole("heading", { name: "Session complete" })).toBeInTheDocument();
@@ -216,9 +216,9 @@ describe("complete phase", () => {
     // the final rota's court scores and a Review / edit affordance are present.
     await user.click(screen.getByRole("button", { name: "History" }));
     const history = screen.getByRole("heading", { name: "History" }).closest("section") as HTMLElement;
-    const rota3Entry = within(history).getByText("Rota 3").closest("article") as HTMLElement;
-    expect(within(rota3Entry).getByRole("button", { name: "Review / edit" })).toBeInTheDocument();
-    expect(within(rota3Entry).getAllByText("13").length).toBeGreaterThan(0); // recorded left scores
-    expect(within(rota3Entry).getAllByText("11").length).toBeGreaterThan(0); // recorded right scores
+    const rota9Entry = within(history).getByText("Rota 9").closest("article") as HTMLElement;
+    expect(within(rota9Entry).getByRole("button", { name: "Review / edit" })).toBeInTheDocument();
+    expect(within(rota9Entry).getAllByText("13").length).toBeGreaterThan(0); // recorded left scores
+    expect(within(rota9Entry).getAllByText("11").length).toBeGreaterThan(0); // recorded right scores
   });
 });
