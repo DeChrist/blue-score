@@ -833,7 +833,7 @@ export default function App() {
       aria-label="Export standings CSV"
       onClick={() => downloadText("standings.csv", standingsCsv, "text/csv")}
     >
-      <Upload size={22} />
+      <FileDown size={22} />
     </button>
   );
 
