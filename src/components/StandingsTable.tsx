@@ -32,7 +32,7 @@ export function StandingsTable({ standings }: Props) {
       <h2 id="standings-heading" className="sr-only">Standings</h2>
       <div className="section-title standings-sort-bar">
         <span className="caps">Sort</span>
-        <div className="standings-sort" role="group" aria-label="Sort standings">
+        <fieldset className="standings-sort" aria-label="Sort standings">
           {SORT_OPTIONS.map((option) => (
             <button
               key={option.key}
@@ -44,7 +44,7 @@ export function StandingsTable({ standings }: Props) {
               {option.label}
             </button>
           ))}
-        </div>
+        </fieldset>
       </div>
 
       {/* Phone/tablet: native list (Rank · Name · Points). */}

@@ -25,7 +25,7 @@ import { exportResultsCsv, exportStandingsCsv } from "./exporters";
 import { GeneratedRotaProvider, StaticRotaProvider } from "./rotaProvider";
 import { calculateStandings } from "./scoring";
 import { samplePlayers, sampleRotas } from "./sampleData";
-import { deriveSessionPhase } from "./sessionPhase";
+import { deriveSessionPhase, type SessionPhase } from "./sessionPhase";
 import { clearSession, loadSession, saveSession } from "./storage";
 import type { Player, Session, StandingRow } from "./types";
 import {
@@ -79,7 +79,7 @@ function sessionHasData(session: Session): boolean {
   return session.players.length > 0 || session.rotas.length > 0 || session.results.length > 0;
 }
 
-function setupStatusLabel(phase: "setup" | "scoring" | "complete", setupValid: boolean): string {
+function setupStatusLabel(phase: SessionPhase, setupValid: boolean): string {
   if (phase === "setup") return setupValid ? "Ready" : "Needs setup";
   if (phase === "scoring") return "In progress";
   return "Complete";
@@ -162,7 +162,7 @@ function AppTitle() {
   );
 }
 
-function shellMeta(session: Session, phase: "setup" | "scoring" | "complete"): string {
+function shellMeta(session: Session, phase: SessionPhase): string {
   if (phase === "setup") {
     return `${session.players.length} players · ${session.courtCount} courts`;
   }
@@ -172,7 +172,7 @@ function shellMeta(session: Session, phase: "setup" | "scoring" | "complete"): s
 // Standings screen subtitle: progress through the session plus a live/complete
 // flag. "live" while the latest rota is still being scored, "complete" once
 // every rota is in.
-function standingsMeta(session: Session, phase: "setup" | "scoring" | "complete"): string {
+function standingsMeta(session: Session, phase: SessionPhase): string {
   const state = phase === "complete" ? "complete" : "live";
   return `After Rota ${session.results.length} of ${session.rotas.length} · ${state}`;
 }

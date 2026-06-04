@@ -1891,7 +1891,10 @@ td:nth-child(6) {
 .standings-sort {
   display: inline-flex;
   background: var(--bg-sunken);
+  border: 0;
   border-radius: var(--r-pill);
+  margin: 0;
+  min-inline-size: 0;
   padding: 3px;
   gap: 0;
 }
