@@ -27,8 +27,8 @@ export function StandingsTable({ standings }: Props) {
 
   return (
     <section className="panel standings-panel">
-      <div className="section-title">
-        <h2>Standings</h2>
+      <div className="section-title standings-sort-bar">
+        <span className="caps">Sort</span>
         <div className="standings-sort" role="group" aria-label="Sort standings">
           {SORT_OPTIONS.map((option) => (
             <button

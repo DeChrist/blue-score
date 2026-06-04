@@ -1866,6 +1866,27 @@ td:nth-child(6) {
  * .empty-state, and generic table rules are left untouched.
  * ========================================================================= */
 
+/* Transparent surface so the white cards sit on the shell background and
+ * stand out — matching the Score tab's court cards rather than a white panel
+ * on white. */
+.standings-panel {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* Sort bar: SORT caps label (left) · pill segment (right). The app bar now
+ * carries the "Standings" title, so this row leads with the sort affordance
+ * rather than a duplicate heading. */
+.standings-sort-bar .caps {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 /* Sort segment: floating pill on a sunken track */
 .standings-sort {
   display: inline-flex;
@@ -2000,6 +2021,16 @@ td:nth-child(6) {
 @media (min-width: 1080px) {
   .standings-panel .standings-list {
     display: none;
+  }
+
+  /* Desktop shows the table instead of cards; restore a surface so it reads
+   * as a panel rather than bare rows on the shell background. */
+  .standings-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    box-shadow: var(--shadow-sm);
+    padding: 1rem;
   }
 
   .standings-panel .table-wrap {

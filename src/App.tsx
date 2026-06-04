@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
+  ChevronLeft,
   ChevronUp,
   Clipboard,
   Download,
@@ -166,6 +167,14 @@ function shellMeta(session: Session, phase: "setup" | "scoring" | "complete"): s
     return `${session.players.length} players · ${session.courtCount} courts`;
   }
   return `${session.results.length} of ${session.rotas.length} rotas played · ${session.players.length} players`;
+}
+
+// Standings screen subtitle: progress through the session plus a live/complete
+// flag. "live" while the latest rota is still being scored, "complete" once
+// every rota is in.
+function standingsMeta(session: Session, phase: "setup" | "scoring" | "complete"): string {
+  const state = phase === "complete" ? "complete" : "live";
+  return `After Rota ${session.results.length} of ${session.rotas.length} · ${state}`;
 }
 
 interface EmptyStateProps {
@@ -790,7 +799,12 @@ export default function App() {
   //   </button>
   // );
 
-  const trailingAction = (
+  // On the Standings tab the shell swaps to a dedicated screen header
+  // (back · "Standings / After Rota N of Y · live" · export) instead of the
+  // session-level header, and the rota strip is hidden.
+  const isStandings = activeTab === "standings" && phase !== "setup";
+
+  const moreAction = (
     <button
       className="icon-btn"
       type="button"
@@ -800,6 +814,31 @@ export default function App() {
       <MoreHorizontal size={22} />
     </button>
   );
+
+  const standingsBackAction = (
+    <button
+      className="icon-btn"
+      type="button"
+      aria-label="Back to score"
+      onClick={() => setActiveTab("score")}
+    >
+      <ChevronLeft size={22} />
+    </button>
+  );
+
+  const standingsExportAction = (
+    <button
+      className="icon-btn"
+      type="button"
+      aria-label="Export standings CSV"
+      onClick={() => downloadText("standings.csv", standingsCsv, "text/csv")}
+    >
+      <Upload size={22} />
+    </button>
+  );
+
+  const leadingAction = isStandings ? standingsBackAction : undefined;
+  const trailingAction = isStandings ? standingsExportAction : moreAction;
 
   const rotaStrip = (
     <RotaStrip
@@ -826,11 +865,11 @@ export default function App() {
 
   return (
     <AppShell
-      sessionName={appTitle}
-      meta={shellMeta(session, phase)}
-      // leadingAction={leadingAction}
+      sessionName={isStandings ? "Standings" : appTitle}
+      meta={isStandings ? standingsMeta(session, phase) : shellMeta(session, phase)}
+      leadingAction={leadingAction}
       trailingAction={trailingAction}
-      rotaStrip={rotaStrip}
+      rotaStrip={activeTab === "score" ? rotaStrip : undefined}
       sideRail={sideRail}
       notice={notice ? <div className="notice shell-notice-body" role="status"><ListChecks size={16} aria-hidden="true" />{notice}</div> : null}
       activeTab={activeTab}
