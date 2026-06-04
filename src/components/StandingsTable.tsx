@@ -26,7 +26,10 @@ export function StandingsTable({ standings }: Props) {
   }
 
   return (
-    <section className="panel standings-panel">
+    <section className="panel standings-panel" aria-labelledby="standings-heading">
+      {/* The shell app bar shows the "Standings" title visually; this keeps a
+          semantic heading for assistive tech without duplicating it on screen. */}
+      <h2 id="standings-heading" className="sr-only">Standings</h2>
       <div className="section-title standings-sort-bar">
         <span className="caps">Sort</span>
         <div className="standings-sort" role="group" aria-label="Sort standings">

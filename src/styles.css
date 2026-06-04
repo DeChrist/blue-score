@@ -1903,8 +1903,9 @@ td:nth-child(6) {
   color: var(--ink-muted);
   font-size: 13px;
   font-weight: 600;
-  /* 38px button + 3px track padding top/bottom = 44px touch target. */
-  min-height: 38px;
+  /* The button itself is the tap/focus target, so it must meet the 44px
+   * touch target; the pill stays visually compact via padding and color. */
+  min-height: var(--touch);
   padding: 0 14px;
 }
 
