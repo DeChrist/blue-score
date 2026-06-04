@@ -1,31 +1,87 @@
+import { useMemo, useState } from "react";
 import type { StandingRow } from "../types";
+import { sortStandings, type SortKey } from "../standingsSort";
 
 interface Props {
   readonly standings: StandingRow[];
 }
 
+const SORT_OPTIONS: ReadonlyArray<{ key: SortKey; label: string }> = [
+  { key: "points", label: "Points" },
+  { key: "avg", label: "Avg" },
+  { key: "name", label: "Name" },
+];
+
 export function StandingsTable({ standings }: Props) {
+  const [sortKey, setSortKey] = useState<SortKey>("points");
+  const sorted = useMemo(() => sortStandings(standings, sortKey), [standings, sortKey]);
+
+  if (standings.length === 0) {
+    return (
+      <section className="panel empty-state">
+        <h2>No standings yet</h2>
+        <p className="muted">Submit a rota to see results.</p>
+      </section>
+    );
+  }
+
   return (
-    <section className="panel">
-      <div className="section-title">
-        <h2>Standings</h2>
+    <section className="panel standings-panel" aria-labelledby="standings-heading">
+      {/* The shell app bar shows the "Standings" title visually; this keeps a
+          semantic heading for assistive tech without duplicating it on screen. */}
+      <h2 id="standings-heading" className="sr-only">Standings</h2>
+      <div className="section-title standings-sort-bar">
+        <span className="caps">Sort</span>
+        <fieldset className="standings-sort" aria-label="Sort standings">
+          {SORT_OPTIONS.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              className={option.key === sortKey ? "is-selected" : undefined}
+              aria-pressed={option.key === sortKey}
+              onClick={() => setSortKey(option.key)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </fieldset>
       </div>
+
+      {/* Phone/tablet: native list (Rank · Name · Points). */}
+      <ol className="standings-list" aria-label="Standings list">
+        {sorted.map((row) => (
+          <li key={row.playerId} className="standings-row" data-rank={row.rank}>
+            <span className="standings-row__rank">{row.rank}</span>
+            <span className="standings-row__player">
+              <span className="standings-row__player-name">{row.displayName}</span>
+              <span className="standings-row__player-meta">
+                {row.rotasPlayed} played · {row.rotasSatOut} sit · avg {row.averagePointsWhenPlaying.toFixed(1)}
+              </span>
+            </span>
+            <span className="standings-row__points">{row.totalPoints}</span>
+          </li>
+        ))}
+      </ol>
+
+      {/* Desktop: full table. */}
       <div className="table-wrap">
-        <table>
+        <table className="standings-table" aria-label="Standings table">
           <thead>
             <tr>
-              <th>Rank</th>
-              <th>Player</th>
-              <th>Points</th>
-              <th>Played</th>
-              <th>Sat out</th>
-              <th>Avg</th>
+              <th scope="col">Rank</th>
+              <th scope="col">Player</th>
+              <th scope="col">Points</th>
+              <th scope="col">Played</th>
+              <th scope="col">Sat out</th>
+              <th scope="col">Avg</th>
             </tr>
           </thead>
           <tbody>
-            {standings.map((row) => (
+            {sorted.map((row) => (
               <tr key={row.playerId}>
-                <td data-label="Rank">{row.rank}</td>
+                <th scope="row" data-label="Rank">
+                  {row.rank}
+                </th>
                 <td data-label="Player">{row.displayName}</td>
                 <td data-label="Points" className="numeric strong">
                   {row.totalPoints}
