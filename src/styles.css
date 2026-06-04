@@ -1858,58 +1858,102 @@ td:nth-child(6) {
 /* =========================================================================
  * PR4 — Standings list
  *
- * Responsive standings surface: a native list on phone/tablet, switching to
+ * Responsive standings surface: a card list on phone/tablet, switching to
  * the full table at the desktop breakpoint (1080px) — in sync with the side
- * rail mini-standings. Component-scoped selectors only; the frozen shell,
- * .mini-stand, .empty-state, and generic table rules are left untouched.
+ * rail mini-standings. The sort control is a segmented pill; cards carry a
+ * rank accent (rank 1) and a two-line player cell (name + played/sit/avg
+ * meta). Component-scoped selectors only; the frozen shell, .mini-stand,
+ * .empty-state, and generic table rules are left untouched.
  * ========================================================================= */
+
+/* Sort segment: floating pill on a sunken track */
 .standings-sort {
   display: inline-flex;
-  gap: 0.25rem;
+  background: var(--bg-sunken);
+  border-radius: var(--r-pill);
+  padding: 3px;
+  gap: 0;
 }
 
 .standings-sort button {
-  font-size: 0.85rem;
-  font-weight: 700;
-  min-height: var(--touch);
-  padding: 0.3rem 0.7rem;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+  /* 38px button + 3px track padding top/bottom = 44px touch target. */
+  min-height: 38px;
+  padding: 0 14px;
 }
 
 .standings-sort button.is-selected {
-  background: var(--ink);
-  color: var(--on-brand);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
 }
 
-/* Phone/tablet list view (default). */
+/* Phone/tablet card list (default) */
 .standings-list {
   display: grid;
-  gap: 0;
+  gap: 8px;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 4px 0 8px;
 }
 
 .standings-row {
   align-items: center;
-  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
   display: grid;
   gap: 12px;
-  grid-template-columns: 2rem 1fr auto;
-  padding: 0.7rem 0.25rem;
+  grid-template-columns: 36px 1fr auto;
+  padding: 12px 14px;
 }
 
-.standings-row:last-child {
-  border-bottom: 0;
+/* Rank 1 left accent */
+.standings-row[data-rank="1"] {
+  border-color: var(--brand-tint);
+  box-shadow: inset 3px 0 0 var(--brand);
 }
 
 .standings-row__rank {
   color: var(--ink-muted);
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
+  font-size: 18px;
+  font-weight: 700;
   text-align: center;
 }
 
+/* Top-3 rank numbers in brand color */
+.standings-row[data-rank="1"] .standings-row__rank,
+.standings-row[data-rank="2"] .standings-row__rank,
+.standings-row[data-rank="3"] .standings-row__rank {
+  color: var(--brand);
+}
+
+/* Two-line player column */
 .standings-row__player {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.standings-row__player-name {
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standings-row__player-meta {
+  font-size: 12px;
+  color: var(--ink-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1919,10 +1963,12 @@ td:nth-child(6) {
   color: var(--ink-strong);
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
+  font-size: 22px;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-/* The desktop table is hidden until the rail appears. */
+/* Desktop table hidden until wide breakpoint */
 .standings-panel .table-wrap {
   display: none;
 }

@@ -47,9 +47,14 @@ export function StandingsTable({ standings }: Props) {
       {/* Phone/tablet: native list (Rank · Name · Points). */}
       <ol className="standings-list" aria-label="Standings list">
         {sorted.map((row) => (
-          <li key={row.playerId} className="standings-row">
+          <li key={row.playerId} className="standings-row" data-rank={row.rank}>
             <span className="standings-row__rank">{row.rank}</span>
-            <span className="standings-row__player">{row.displayName}</span>
+            <span className="standings-row__player">
+              <span className="standings-row__player-name">{row.displayName}</span>
+              <span className="standings-row__player-meta">
+                {row.rotasPlayed} played · {row.rotasSatOut} sit · avg {row.averagePointsWhenPlaying.toFixed(1)}
+              </span>
+            </span>
             <span className="standings-row__points">{row.totalPoints}</span>
           </li>
         ))}
