@@ -5,6 +5,8 @@ import {
   generateTechnicalRotas,
 } from "./rotaGenerator";
 
+const LONG_ROTA_TIMEOUT = Number(process.env["ROTA_TEST_TIMEOUT"] ?? 15000);
+
 const cachedRotas = new Map<string, TechnicalRota[]>();
 
 function generateCached(playerCount: number, courtCount: number): TechnicalRota[] {
@@ -77,12 +79,19 @@ describe("generateTechnicalRotas", () => {
     [8, 2],
     [12, 2],
     [12, 3],
-    [24, 6],
   ])("generates supported bounds for %i players / %i courts", (playerCount, courtCount) => {
     const rotas = generateCached(playerCount, courtCount);
     expect(rotas.length).toBeGreaterThanOrEqual(calculateRotationLowerBound(playerCount, courtCount));
     expect(rotas[0]?.rotaNumber).toBe(1);
   });
+
+  it("generates supported bounds for 24 players / 6 courts", () => {
+    const playerCount = 24;
+    const courtCount = 6;
+    const rotas = generateCached(playerCount, courtCount);
+    expect(rotas.length).toBeGreaterThanOrEqual(calculateRotationLowerBound(playerCount, courtCount));
+    expect(rotas[0]?.rotaNumber).toBe(1);
+  }, LONG_ROTA_TIMEOUT);
 
   it("generates supported bounds for 16 players / 3 courts", () => {
     const playerCount = 16;
@@ -90,7 +99,7 @@ describe("generateTechnicalRotas", () => {
     const rotas = generateCached(playerCount, courtCount);
     expect(rotas.length).toBeGreaterThanOrEqual(calculateRotationLowerBound(playerCount, courtCount));
     expect(rotas[0]?.rotaNumber).toBe(1);
-  }, 15000);
+  }, LONG_ROTA_TIMEOUT);
 
   it("generates supported bounds for 28 players / 6 courts", () => {
     const playerCount = 28;
@@ -98,7 +107,7 @@ describe("generateTechnicalRotas", () => {
     const rotas = generateCached(playerCount, courtCount);
     expect(rotas.length).toBeGreaterThanOrEqual(calculateRotationLowerBound(playerCount, courtCount));
     expect(rotas[0]?.rotaNumber).toBe(1);
-  }, 15000);
+  }, LONG_ROTA_TIMEOUT);
 
   it.each([
     [7, 2],

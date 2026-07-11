@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      rota_test_timeout:
+        description: "Timeout in ms for long-running rota generator tests"
+        required: false
+        default: "15000"
 
 permissions: {}
 
@@ -29,6 +35,8 @@ jobs:
         run: npm run lint
 
       - name: Test with coverage
+        env:
+          ROTA_TEST_TIMEOUT: ${{ inputs.rota_test_timeout || '15000' }}
         run: npm run test:coverage
 
       - name: Upload coverage artifact
