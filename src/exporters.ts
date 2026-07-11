@@ -4,7 +4,11 @@ import type { Session, StandingRow } from "./types";
 
 function csvValue(value: string | number): string {
   const raw = String(value);
-  return /[",\n]/.test(raw) ? `"${raw.replaceAll('"', '""')}"` : raw;
+  // Neutralize spreadsheet formula injection (ADR-012): a leading =, +, -, or @
+  // in an untrusted field (e.g. a player name) is executed as a formula by
+  // Excel/Sheets. Prefix such fields with a tab so they render as literal text.
+  const safe = /^[=+@-]/.test(raw) ? `\t${raw}` : raw;
+  return /[",\n]/.test(safe) ? `"${safe.replaceAll('"', '""')}"` : safe;
 }
 
 function line(values: Array<string | number>): string {
