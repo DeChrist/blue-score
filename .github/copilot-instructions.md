@@ -43,6 +43,8 @@ The project is monitored by [SonarCloud](https://sonarcloud.io/project/overview?
 
 SonarCloud uses CI-based analysis (not Automatic Analysis). If the workflow or `sonar-project.properties` is reconfigured, Automatic Analysis must remain disabled in SonarCloud → Administration → Analysis Method — enabling it alongside the CI scanner causes duplicate, conflicting analyses.
 
+[docs/agent-pitfalls.md](../docs/agent-pitfalls.md) lists recurring bug patterns distilled from this repo's fix-commit history. Consult it when generating IDs/keys, writing validation, adding union-type guards, or writing negative test assertions. Some pitfalls are lint-enforced; the rest are your responsibility.
+
 ## Testing Rules
 
 - Keep warnings at zero; lint uses `--max-warnings 0`. 
