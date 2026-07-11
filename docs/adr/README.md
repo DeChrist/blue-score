@@ -16,3 +16,5 @@ Quality follow-up items are tracked separately in the [Technical Debt (TD) Backl
 | [ADR-008](008-browser-security-hardening.md) | Apply layered browser security controls: production-only CSP, referrer policy, self-contained assets |
 | [ADR-009](009-session-phase-workflow.md) | Derive session phase (setup/scoring/complete) from data; phase gates setup mutations and sequential play |
 | [ADR-010](010-club-configuration.md) | Load one app-bundled Club config for title branding, court labels, and setup court-count cap |
+| [ADR-011](011-app-modes.md) | Select app mode (standard/demo/advanced) from `?mode=`; mode is entry config, not session data |
+| [ADR-012](012-data-export.md) | Export results/standings as local CSV with RFC-4180 quoting and formula-injection guarding |

@@ -22,6 +22,23 @@ describe("CSV escaping", () => {
     expect(csv).toContain('"Line\nBreak"');
   });
 
+  it("neutralizes spreadsheet formula injection in standings names by prefixing a tab", () => {
+    const csv = exportStandingsCsv([
+      makeStanding("=HYPERLINK(0)", 24, 1),
+      makeStanding("+cmd", 18, 2),
+      makeStanding("-1+2", 12, 3),
+      makeStanding("@SUM(A1)", 6, 4),
+    ]);
+
+    // Leading formula-trigger characters are rendered as literal text.
+    expect(csv).toContain("\t=HYPERLINK(0)");
+    expect(csv).toContain("\t+cmd");
+    expect(csv).toContain("\t-1+2");
+    expect(csv).toContain("\t@SUM(A1)");
+    // A raw formula (no tab prefix) must not survive.
+    expect(csv).not.toContain(",=HYPERLINK(0),");
+  });
+
   it("quotes results-CSV pair cells when a player name contains a comma", () => {
     const session: Session = {
       id: "s1",
