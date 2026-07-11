@@ -12,6 +12,15 @@
             "command": "case \"$CLAUDE_FILE_PATHS\" in *.ts|*.tsx|*.js|*.jsx) npx eslint --fix \"$CLAUDE_FILE_PATHS\" 2>/dev/null || true ;; esac"
           }
         ]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"Plan approved. Execute it via the execute-plan skill: dispatch each step to the plan-executor subagent (Sonnet 5). Do NOT pass a model override to the Agent tool.\"}}'"
+          }
+        ]
       }
     ]
   }
