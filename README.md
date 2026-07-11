@@ -94,6 +94,17 @@ The Claude state directory (`/home/node/.claude`) is backed by a named Docker vo
 
 > **Platform note:** Tested on **Mac only**. Windows support is TODO.
 
+##### (Re-)Authenticating to Claude in the Dev Container
+
+`claude setup-token` currently issues long-lived tokens (valid ~1 year). If `claude` still prompts for login inside the container — e.g. the token was revoked, or an older short-lived token expired:
+
+1. On the **host**, run `claude setup-token` and copy the new token.
+2. Update it in your shell profile (`~/.zshrc` / `~/.bashrc`) and `source` it.
+3. Quit VS Code fully and relaunch it from that same terminal (`code .`) — GUI-launched apps don't inherit shell-profile updates made after launch.
+4. **Dev Containers: Rebuild Container** — a reload/restart won't re-evaluate `containerEnv`, only a rebuild will.
+
+Verify with `echo $CLAUDE_CODE_OAUTH_TOKEN` (should print the token) and `claude` (should start without prompting).
+
 #### Local Setup
 
 ```bash
