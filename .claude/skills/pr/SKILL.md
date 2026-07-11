@@ -8,14 +8,16 @@ Finish the current work and open a pull request, following this project's PR wor
 
 2. **Run lint** — `npm run lint`. Fix all warnings and errors. Zero warnings allowed (`--max-warnings 0`).
 
-3. **Check for uncommitted changes** — run `git status` and review what's dirty. Stage and commit only files directly related to the current task. If unrelated files are modified (e.g. `clubConfig.json`, scratch files, unrelated config), leave them unstaged and call them out explicitly. Never use `git add -A` or `git add .`. Use conventional commit format with a `+semver:` directive in the body where applicable. Never use `git commit --amend`.
+3. **Check the diff against `docs/agent-pitfalls.md`** — for prose-only pitfalls (PIT-2 validation gaps, PIT-4 enum-incomplete if-guards), confirm the diff does not reintroduce them; if one is relevant, note it in the PR body's test plan. Lint-enforced pitfalls are covered by the lint step. Also read the `bug-retro:last-analyzed` marker at the bottom of `docs/agent-pitfalls.md` and count commits since it (`git rev-list --count <marker-sha>..HEAD`); if more than 25, tell the user a `/bug-retro` run is due (do not run it automatically).
 
-4. **Open the PR** — use `gh pr create`. Write a clear title (under 70 characters) and a body that covers:
+4. **Check for uncommitted changes** — run `git status` and review what's dirty. Stage and commit only files directly related to the current task. If unrelated files are modified (e.g. `clubConfig.json`, scratch files, unrelated config), leave them unstaged and call them out explicitly. Never use `git add -A` or `git add .`. Use conventional commit format with a `+semver:` directive in the body where applicable. Never use `git commit --amend`.
+
+5. **Open the PR** — use `gh pr create`. Write a clear title (under 70 characters) and a body that covers:
    - What changed and why
    - Any review findings addressed (if this is a follow-up)
    - Test plan checklist
 
-5. **Report** — return the PR URL and a one-line summary of what's in it.
+6. **Report** — return the PR URL and a one-line summary of what's in it.
 
 ## Hard rules
 
