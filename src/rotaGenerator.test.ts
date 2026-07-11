@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-
-const LONG_ROTA_TIMEOUT = Number(process.env["ROTA_TEST_TIMEOUT"] ?? 15000);
 import type { TechnicalRota } from "./rotaGenerator";
 import {
   calculateRotationLowerBound,
   generateTechnicalRotas,
 } from "./rotaGenerator";
+
+const LONG_ROTA_TIMEOUT = Number(process.env["ROTA_TEST_TIMEOUT"] ?? 15000);
 
 const cachedRotas = new Map<string, TechnicalRota[]>();
 
